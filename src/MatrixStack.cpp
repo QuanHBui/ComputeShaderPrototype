@@ -32,6 +32,12 @@ void MatrixStack::loadIdentity()
 	top = glm::mat4(1.f);
 }
 
+void MatrixStack::perspective(float fovy, float aspect, float zNear, float zFar)
+{
+	glm::mat4 &top = stack.top();
+	top *= glm::perspective(fovy, aspect, zNear, zFar);
+}
+
 void MatrixStack::translate(const glm::vec3 &offset)
 {
 	glm::mat4 &top = stack.top();
@@ -75,15 +81,6 @@ void MatrixStack::ortho(float left, float right, float bottom, float top, float 
 	glm::mat4 &ctm = stack.top();
 	ctm *= glm::ortho(left, right, bottom, top, zNear, zFar);
 }
-void MatrixStack::perspective(float fovy, float width, float height, float zNear, float zFar)
-{
-	assert(zFar != zNear);
-
-	glm::mat4 &ctm = stack.top();
-	//ctm *= glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.f);
-	ctm *= glm::perspective(fovy, width/ height, zNear, zFar);
-}
-
 
 void MatrixStack::frustum(float left, float right, float bottom, float top, float zNear, float zFar)
 {
@@ -104,16 +101,22 @@ const glm::mat4 &MatrixStack::topMatrix() const
 
 void MatrixStack::print(const glm::mat4 &mat, const char *name)
 {
-	if (name) {
+	if (name)
+	{
 		printf("%s = [\n", name);
 	}
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
 			printf("%- 5.2f ", mat[i][j]);
 		}
 		printf("\n");
 	}
-	if (name) {
+
+	if (name)
+	{
 		printf("];");
 	}
 	printf("\n");

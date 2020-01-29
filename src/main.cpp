@@ -1,53 +1,27 @@
-﻿/*
-CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
-*/
-//		showcase:
-///		uniforms in CS
-///		atomic counters
-///		atomic operations
-///		texture handling
-///		workgroups
+/*
+ * Program 2 base code - includes modifications to shape and initGeom in preparation to load
+ * multi shape objects 
+ * CPE 471 Cal Poly Z. Wood + S. Sueda + I. Dunn
+ */
 
 #include <iostream>
 #include <glad/glad.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+
 #include "GLSL.h"
 #include "Program.h"
-#include "MatrixStack.h"
-#include <time.h>
-#include "WindowManager.h"
 #include "Shape.h"
+#include "MatrixStack.h"
+#include "WindowManager.h"
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader/tiny_obj_loader.h>
+
 // value_ptr for glm
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 using namespace std;
 using namespace glm;
-shared_ptr<Shape> shape;
-
-#define STARCOUNT 1024
-class ssbo_data
-	{
-	public:
-		vec4 dataA[STARCOUNT];
-		ivec4 dataB[STARCOUNT];
-	
-	};
-float frand()
-	{
-	return (float)rand() / (float)RAND_MAX;
-	}
-
-double get_last_elapsed_time()
-{
-	static double lasttime = glfwGetTime();
-	double actualtime =glfwGetTime();
-	double difference = actualtime- lasttime;
-	lasttime = actualtime;
-	return difference;
-}
-
-
 
 class Application : public EventCallbacks
 {
@@ -55,192 +29,228 @@ class Application : public EventCallbacks
 public:
 
 	WindowManager * windowManager = nullptr;
-	//texture data
-	GLuint Texture;
-	
-	ssbo_data ssbo_CPUMEM;
-	GLuint ssbo_GPU_id;
-	GLuint computeProgram;
-	GLuint atomicsBuffer;
 
-	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {}
-	void mouseCallback(GLFWwindow *window, int button, int action, int mods) {}
-	void resizeCallback(GLFWwindow *window, int in_width, int in_height) {}
+	// Our shader program
+	std::shared_ptr<Program> prog;
 
-	/*Note that any gl calls must always happen after a GL state is initialized */
-	void init_atomic()
-	{
-		glGenBuffers(1, &atomicsBuffer);
-		// bind the buffer and define its initial storage capacity
-		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
-		glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint) * 1, NULL, GL_DYNAMIC_DRAW);
-		// unbind the buffer 
-		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
-	}
-	void reset_atomic()
-	{
-		GLuint *userCounters;
-		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
-		// map the buffer, userCounters will point to the buffers data
-		userCounters = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-			0,
-			sizeof(GLuint),
-			GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT
-		);
-		// set the memory to zeros, resetting the values in the buffer
-		memset(userCounters, 0, sizeof(GLuint));
-		// unmap the buffer
-		glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-	}
-	void read_atomic()
-	{
-		GLuint *userCounters;
-		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
-		// again we map the buffer to userCounters, but this time for read-only access
-		userCounters = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-			0,
-			sizeof(GLuint),
-			GL_MAP_READ_BIT
-		);
-		// copy the values to other variables because...
-		cout << endl << *userCounters << endl;
-		// ... as soon as we unmap the buffer
-		// the pointer userCounters becomes invalid.
-		glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-	}
-	void initGeom()
-	{
-		
-		string resourceDirectory = "../resources";			
-		int width, height, channels;
-		char filepath[1000];
-		//texture 1
-		string str = resourceDirectory + "/Blue_Giant.jpg";
-		strcpy(filepath, str.c_str());
-		unsigned char* data = stbi_load(filepath, &width, &height, &channels, 4);
-		glGenTextures(1, &Texture);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glBindImageTexture(0, Texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
-		glGenerateMipmap(GL_TEXTURE_2D);		
-		
-		//make an SSBO
-		for (int ii = 0; ii < STARCOUNT; ii++)
-			{
-			ssbo_CPUMEM.dataA[ii] = vec4(ii, 0.0, 0.0, 0.0);
-			ssbo_CPUMEM.dataB[ii] = vec4(0.0, 0.0, 0.0, 0.0);
-			}
-		glGenBuffers(1, &ssbo_GPU_id);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_GPU_id);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssbo_data), &ssbo_CPUMEM, GL_DYNAMIC_COPY);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_GPU_id);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
+	// Shape to be used (from  file) - modify to support multiple
+	shared_ptr<Shape> mesh;
 
+	// Contains vertex information for OpenGL
+	GLuint VertexArrayID;
 
+	// Data necessary to give our triangle to OpenGL
+	GLuint VertexBufferID;
+
+	//example data that might be useful when trying to compute bounds on multi-shape
+	vec3 gMin;
+
+	//animation data
+	float sTheta = 0;
+	float gTrans = 0;
+
+	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+	{
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+			gTrans -= 0.2;
+		}
+		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+			gTrans += 0.2;
+		}
+		if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		}
+		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
+			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		}
 	}
 
-	//General OGL initialization - set OGL state here
-	void init()
+	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
+	{
+		double posX, posY;
+
+		if (action == GLFW_PRESS)
+		{
+			 glfwGetCursorPos(window, &posX, &posY);
+			 cout << "Pos X " << posX <<  " Pos Y " << posY << endl;
+		}
+	}
+
+	void resizeCallback(GLFWwindow *window, int width, int height)
+	{
+		glViewport(0, 0, width, height);
+	}
+
+	void init(const std::string& resourceDirectory)
 	{
 		GLSL::checkVersion();
-		//load the compute shader
-		std::string ShaderString = readFileAsString("../resources/compute.glsl");
-		const char *shader = ShaderString.c_str();
-		GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
-		glShaderSource(computeShader, 1, &shader, nullptr);
 
-		GLint rc;
-		CHECKED_GL_CALL(glCompileShader(computeShader));
-		CHECKED_GL_CALL(glGetShaderiv(computeShader, GL_COMPILE_STATUS, &rc));
-		if (!rc)	//error compiling the shader file
-			{
-			GLSL::printShaderInfoLog(computeShader);
-			std::cout << "Error compiling fragment shader " << std::endl;
-			exit(1);
-			}
+		// Set background color.
+		glClearColor(.12f, .34f, .56f, 1.0f);
+		// Enable z-buffer test.
+		glEnable(GL_DEPTH_TEST);
 
-		computeProgram = glCreateProgram();
-		glAttachShader(computeProgram, computeShader);
-		glLinkProgram(computeProgram);
-		glUseProgram(computeProgram);
-		
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(computeProgram, GL_SHADER_STORAGE_BLOCK, "shader_data");
-		GLuint ssbo_binding_point_index = 2;
-		glShaderStorageBlockBinding(computeProgram, block_index, ssbo_binding_point_index);
+		// Initialize the GLSL program.
+		prog = make_shared<Program>();
+		prog->setVerbose(true);
+		prog->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/simple_frag.glsl");
+		prog->init();
+		prog->addUniform("P");
+		prog->addUniform("V");
+		prog->addUniform("M");
+		prog->addAttribute("vertPos");
+		prog->addAttribute("vertNor");
+	}
+
+	void initGeom(const std::string& resourceDirectory)
+	{
+
+		//EXAMPLE set up to read one shape from one obj file - convert to read several
+		// Initialize mesh
+		// Load geometry
+ 		// Some obj files contain material information.We'll ignore them for this assignment.
+ 		vector<tinyobj::shape_t> TOshapes;
+ 		vector<tinyobj::material_t> objMaterials;
+ 		string errStr;
+		//load in the mesh and make the shape(s)
+ 		bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, (resourceDirectory + "/SmoothSphere.obj").c_str());
+		if (!rc) {
+			cerr << errStr << endl;
+		} else {
+			mesh = make_shared<Shape>();
+			mesh->createShape(TOshapes[0]);
+			mesh->measure();
+			mesh->init();
+		}
+		//read out information stored in the shape about its size - something like this...
+		//then do something with that information.....
+		gMin.x = mesh->min.x;
+		gMin.y = mesh->min.y;
+	}
+
+	void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M) {
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
+   }
+
+	void render() {
+		// Get current frame buffer size.
+		int width, height;
+		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+		glViewport(0, 0, width, height);
+
+		// Clear framebuffer.
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		//Use the matrix stack for Lab 6
+		float aspect = width/(float)height;
+
+		// Create the matrix stacks - please leave these alone for now
+		auto Projection = make_shared<MatrixStack>();
+		auto View = make_shared<MatrixStack>();
+		auto Model = make_shared<MatrixStack>();
+
+		// Apply perspective projection.
+		Projection->pushMatrix();
+		Projection->perspective(45.0f, aspect, 0.01f, 100.0f);
+
+		// View is global translation along negative z for now
+		View->pushMatrix();
+			View->loadIdentity();
+			View->translate(vec3(0, 0, -5));
+
+		// Draw a stack of cubes with indiviudal transforms
+		prog->bind();
+		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+
+		// draw mesh 
+		Model->pushMatrix();
+			Model->loadIdentity();
+			Model->translate(vec3(gTrans, 0, 0));
+			/* draw top cube - aka head */
+			Model->pushMatrix();
+				Model->translate(vec3(0, 1.4, 0));
+				Model->scale(vec3(0.5, 0.5, 0.5));
+				setModel(prog, Model);
+				mesh->draw(prog);
+			Model->popMatrix();
+			//draw the torso with these transforms
+			Model->pushMatrix();
+			  Model->scale(vec3(1.25, 1.35, 1.25));
+			  setModel(prog, Model);
+			  mesh->draw(prog);
+			Model->popMatrix();
+			// draw the upper 'arm' - relative 
+			//note you must change this to include 3 components!
+			Model->pushMatrix();
+			  //place at shoulder
+			  Model->translate(vec3(0.8, 0.8, 0));
+			  //rotate shoulder joint
+			  Model->rotate(sTheta, vec3(0, 0, 1));
+			  //move to shoulder joint
+			  Model->translate(vec3(0.8, 0, 0));
+			  //non-uniform scale
+			  Model->scale(vec3(1.2, 0.25, 0.25));
+			  setModel(prog, Model);
+			  mesh->draw(prog);
+			Model->popMatrix();
+		Model->popMatrix();
+
+		prog->unbind();
+
+		//animation update example
+		sTheta = sin(glfwGetTime());
+
+		// Pop matrix stacks.
+		Projection->popMatrix();
+		View->popMatrix();
 
 	}
-	void compute()
-		{
-		//print data before compute shader
-		cout << endl << endl << "BUFFER BEFORE COMPUTE SHADER" << endl << endl;		
-		//for (int i = 0; i < STARCOUNT; i++)
-			//cout << "dataA: " << ssbo_CPUMEM.dataA[i].x << ", " << ssbo_CPUMEM.dataA[i].y << ", " << ssbo_CPUMEM.dataA[i].z << ", " << ssbo_CPUMEM.dataA[i].w << "   dataB: "<<ssbo_CPUMEM.dataB[i].x << ", " << ssbo_CPUMEM.dataB[i].y << ", " << ssbo_CPUMEM.dataB[i].z << ssbo_CPUMEM.dataB[i].w << endl;
-
-		
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(computeProgram, GL_SHADER_STORAGE_BLOCK, "shader_data");
-		GLuint ssbo_binding_point_index = 0;
-		glShaderStorageBlockBinding(computeProgram, block_index, ssbo_binding_point_index);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_GPU_id);
-		glUseProgram(computeProgram);
-		//activate atomic counter
-		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
-		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomicsBuffer);
-				
-		glDispatchCompute((GLuint)2, (GLuint)1, 1);				//start compute shader
-		//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
-		
-		//copy data back to CPU MEM
-
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_GPU_id);
-		GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-		int siz = sizeof(ssbo_data);
-		memcpy(&ssbo_CPUMEM,p, siz);
-		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-		//print data after compute shader
-		cout << endl << endl << "BUFFER AFTER COMPUTE SHADER" << endl << endl;
-		//for (int i = 0; i < STARCOUNT; i++)
-		cout << "dataB: " << ssbo_CPUMEM.dataB[0].y << endl;
-		}
 };
-//******************************************************************************************
-int main(int argc, char **argv)
+
+int main(int argc, char *argv[])
 {
-		Application *application = new Application();
-	srand(time(0));
+	// Where the resources are loaded from
+	std::string resourceDir = "../resources";
 
-	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(32, 32, "Dummy", nullptr, nullptr);
-	glfwMakeContextCurrent(window);
-	gladLoadGL();
+	if (argc >= 2)
+	{
+		resourceDir = argv[1];
+	}
 
-	int work_grp_cnt[3];
+	Application *application = new Application();
 
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+	// Your main will always include a similar set up to establish your window
+	// and GL context, etc.
 
-	printf("max global (total) work group size x:%i y:%i z:%i\n",
-		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+	WindowManager *windowManager = new WindowManager();
+	windowManager->init(640, 480);
+	windowManager->setEventCallbacks(application);
+	application->windowManager = windowManager;
 
+	// This is the code that will likely change program to program as you
+	// may need to initialize or set up different data and state
 
-	application->init();
-	application->initGeom();
+	application->init(resourceDir);
+	application->initGeom(resourceDir);
 
-	application->init_atomic();
-	
-	application->compute();
+	// Loop until the user closes the window.
+	while (! glfwWindowShouldClose(windowManager->getHandle()))
+	{
+		// Render scene.
+		application->render();
 
-	application->read_atomic();
-	
-	system("pause");
+		// Swap front and back buffers.
+		glfwSwapBuffers(windowManager->getHandle());
+		// Poll for and process events.
+		glfwPollEvents();
+	}
+
+	// Quit program.
+	windowManager->shutdown();
 	return 0;
 }

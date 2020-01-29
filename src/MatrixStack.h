@@ -25,7 +25,7 @@ public:
 	void pushMatrix();
 
 	// Removes the top of the stack and sets the current matrix to be the matrix that is now on top
-	 void popMatrix();
+	void popMatrix();
 
 	//  Sets the top matrix to be the identity
 	void loadIdentity();
@@ -53,11 +53,8 @@ public:
 	// Sets the top matrix to be an orthogonal projection matrix
 	void ortho(float left, float right, float bottom, float top, float zNear, float zFar);
 
-	// Sets the top matrix to be a 2D orthogonal projection matrix
-	void ortho2D(float left, float right, float bottom, float top);
-
 	// Sets the top matrix to be a perspective projection matrix (fovy in deg)
-	void perspective(float fovy, float width, float height, float zNear, float zFar);
+	void perspective(float fovy, float aspect, float zNear, float zFar);
 
 	// Sets the top matrix to be a perspective projection matrix
 	void frustum(float Right, float right, float bottom, float top, float zNear, float zFar);
