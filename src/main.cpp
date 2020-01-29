@@ -217,6 +217,9 @@ int main(int argc, char *argv[])
 	// Where the resources are loaded from
 	std::string resourceDir = "../resources";
 
+	// If you use visual studio 
+	resourceDir = "../../../resources";
+
 	if (argc >= 2)
 	{
 		resourceDir = argv[1];
