@@ -4996,7 +4996,6 @@ static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)
    info->offset = stbi__get32le(s);
    info->hsz = hsz = stbi__get32le(s);
    info->mr = info->mg = info->mb = info->ma = 0;
-
    if (hsz != 12 && hsz != 40 && hsz != 56 && hsz != 108 && hsz != 124) return stbi__errpuc("unknown BMP", "BMP type not supported: unknown");
    if (hsz == 12) {
       s->img_x = stbi__get16le(s);
@@ -5200,7 +5199,6 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
          stbi__skip(s, pad);
       }
    }
-
    // if alpha channel is all 0s, replace with all 255s
    if (target == 4 && all_a == 0)
       for (i=4*s->img_x*s->img_y-1; i >= 0; i -= 4)

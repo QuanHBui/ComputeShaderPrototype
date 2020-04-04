@@ -131,6 +131,10 @@ GLint getAttribLocation(const GLuint program, const char varname[], bool verbose
 	return r;
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5bebe64a863e3e1b3b6862d224f3e3d6108e79ec
 GLint getUniformLocation(const GLuint program, const char varname[], bool verbose)
 {
 	GLint r = glGetUniformLocation(program, varname);
@@ -141,6 +145,10 @@ GLint getUniformLocation(const GLuint program, const char varname[], bool verbos
 	return r;
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5bebe64a863e3e1b3b6862d224f3e3d6108e79ec
 void enableVertexAttribArray(const GLint handle)
 {
 	if (handle >= 0)

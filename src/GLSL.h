@@ -29,13 +29,21 @@ namespace GLSL
 
 
 #ifndef DISABLE_OPENGL_ERROR_CHECKS
+<<<<<<< HEAD
 #define CHECKED_GL_CALL(x) do {\
 	GLSL::printOpenGLErrors("{{BEFORE}} "#x, __FILE__, __LINE__);\
 	(x);\
 	GLSL::printOpenGLErrors(#x, __FILE__, __LINE__);\
 	} while (0)
+=======
+#define CHECKED_GL_CALL(x) do { GLSL::printOpenGLErrors("{{BEFORE}} "#x, __FILE__, __LINE__); (x); GLSL::printOpenGLErrors(#x, __FILE__, __LINE__); } while (0)
+>>>>>>> 5bebe64a863e3e1b3b6862d224f3e3d6108e79ec
 #else
 #define CHECKED_GL_CALL(x) (x)
 #endif
 
+<<<<<<< HEAD
 #endif // LAB471_GLSL_H_INCLUDED
+=======
+#endif // LAB471_GLSL_H_INCLUDED
+>>>>>>> 5bebe64a863e3e1b3b6862d224f3e3d6108e79ec
