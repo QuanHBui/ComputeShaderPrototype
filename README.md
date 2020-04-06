@@ -1,2 +1,2 @@
 # ComputeShaderPrototype
-Prototype for a compute shader based Newtonian Physics Engine
+Prototype for a lightweight OpenGL rendering engine featuring compute shader
