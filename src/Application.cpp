@@ -5,6 +5,7 @@
 #include "Program.h"
 #include "GLSL.h"
 #include "stb_image.h"
+#include "GLSL.h"
 
 // General OGL initialization - set OGL state here
 void Application::init()
@@ -123,8 +124,12 @@ void Application::compute()
 {
 	//print data before compute shader
 	std::cout << "\n\nBUFFER BEFORE COMPUTE SHADER\n\n";
-	//for (int i = 0; i < STARCOUNT; i++)
-		//cout << "dataA: " << ssbo_CPUMEM.dataA[i].x << ", " << ssbo_CPUMEM.dataA[i].y << ", " << ssbo_CPUMEM.dataA[i].z << ", " << ssbo_CPUMEM.dataA[i].w << "   dataB: "<<ssbo_CPUMEM.dataB[i].x << ", " << ssbo_CPUMEM.dataB[i].y << ", " << ssbo_CPUMEM.dataB[i].z << ssbo_CPUMEM.dataB[i].w << endl;
+	for (int i = 0; i < STAR_COUNT; i++) {
+		std::cout << "dataA: " << ssbo_CPUMEM.dataA[i].x << ", " << ssbo_CPUMEM.dataA[i].y
+			<< ", " << ssbo_CPUMEM.dataA[i].z << ", " << ssbo_CPUMEM.dataA[i].w
+			<< "   dataB: "<<ssbo_CPUMEM.dataB[i].x << ", " << ssbo_CPUMEM.dataB[i].y
+			<< ", " << ssbo_CPUMEM.dataB[i].z << ssbo_CPUMEM.dataB[i].w << std::endl;
+	}
 
 	GLuint block_index = 0;
 	block_index = glGetProgramResourceIndex(computeProgram, GL_SHADER_STORAGE_BLOCK, "shader_data");
@@ -145,11 +150,11 @@ void Application::compute()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_GPU_id);
 	GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	int siz = sizeof(ssbo_data);
-	memcpy(&ssbo_CPUMEM,p, siz);
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	memcpy(&ssbo_CPUMEM, p, siz);
+	CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 
-	//print data after compute shader
+	// print data after compute shader
 	std::cout << "\n\nBUFFER AFTER COMPUTE SHADER\n\n";
-	//for (int i = 0; i < STARCOUNT; i++)
-	std::cout << "dataB: " << ssbo_CPUMEM.dataB[0].y << std::endl;
+	for (int i = 0; i < STAR_COUNT; i++)
+		std::cout << "dataB: " << ssbo_CPUMEM.dataB[i].y << std::endl;
 }

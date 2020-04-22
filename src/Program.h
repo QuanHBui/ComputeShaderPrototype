@@ -31,13 +31,10 @@ private:
 	std::map<std::string, GLint> uniforms;
 	bool verbose = true;
 
-	bool compileShaders();
-	bool attachShaders();
-	bool linkShaders();
-
 protected:
 	std::string vShaderName;
 	std::string fShaderName;
+	std::string computeShaderName;
 
 public:
 	~Program();
@@ -47,6 +44,10 @@ public:
 
 	void setShaderNames(const std::string &, const std::string &);
 	virtual bool init();
+
+	bool initComputeShader(std::string const &);
+	void initSSBO();
+
 	virtual void bind();
 	virtual void unbind();
 
@@ -54,10 +55,6 @@ public:
 	void addUniform(const std::string &);
 	GLint getAttribute(const std::string &) const;
 	GLint getUniform(const std::string &) const;
-
-	bool addGeometryShader();
-	bool addComputeShader();
-
 };
 
 #endif // LAB471_PROGRAM_H_INCLUDED

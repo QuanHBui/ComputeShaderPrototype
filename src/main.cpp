@@ -1,4 +1,4 @@
-﻿/*
+﻿/**
  * CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
  *
  * This prototype showcases compute shader, specifically:
@@ -17,6 +17,7 @@
 #include <iostream>
 #include <time.h>
 
+#include "Program.h"	// This shouldn't be here
 #include "Application.h"
 #include "GLSL.h"
 
@@ -31,7 +32,7 @@ double get_last_elapsed_time()
 {
 	static double lasttime = glfwGetTime();
 	double actualtime = glfwGetTime();
-	double difference = actualtime- lasttime;
+	double difference = actualtime - lasttime;
 	lasttime = actualtime;
 	return difference;
 }
@@ -44,7 +45,7 @@ int main(int argc, char **argv)
 	srand(static_cast<unsigned int>(time(0)));
 
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(32, 32, "Dummy", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(32, 32, "Dummy", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 	gladLoadGL();
 
@@ -59,10 +60,14 @@ int main(int argc, char **argv)
 
 	application->init();
 	application->initGeom();
+	application->initTex();
 	application->initAtomic();
 	application->compute();
 	application->readAtomic();
 
 	system("pause");
+
+	glfwDestroyWindow(window);
+
 	return 0;
 }

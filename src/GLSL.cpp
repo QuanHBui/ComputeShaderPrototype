@@ -42,7 +42,16 @@ void printOpenGLErrors(const char *const Function, const char * const File, int 
 	if (Error != GL_NO_ERROR)
 	{
 		const char *const ErrorString = errorString(Error);
-		printf("OpenGL error in file '%s' at line %d calling function '%s': '%s' '%d 0x%X'\n", File, Line, Function, ErrorString, Error, Error);
+		printf("OpenGL error in file '%s' at line %d calling function '%s': '%s' '%d 0x%X'\n",
+			File, Line, Function, ErrorString, Error, Error);
+
+		// Activate break point. Only works for visual studio
+		//  so we need to check for what compiler
+		#ifndef _MSC_VER
+			exit(EXIT_FAILURE);
+		#else
+			__debugbreak();
+		#endif
 	}
 }
 

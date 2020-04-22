@@ -3,9 +3,10 @@
  *  openGL render engine. This can also be used for general computing purposes (GPGPU),
  *  featuring compute shader.
  *
- * @author: unknown. Assuming professors from Cal Poly Computer Science department
+ * @author: unknown. Assuming professors from Cal Poly Computer Science department.
+ *  Compute shader was initially introduced by Christian Eckhardt.
  *  Modified by Quan Bui.
- * @version: 04/05/2020
+ * @version: 04/22/2020
  */
 
 #pragma once
@@ -31,7 +32,7 @@ public:
 class Application
 {
 protected:
-	WindowManager * windowManager = nullptr;
+	WindowManager *windowManager = nullptr;
 	GLuint texture;
 	ssbo_data ssbo_CPUMEM;
 	GLuint ssbo_GPU_id;
@@ -47,6 +48,8 @@ public:
 	void resetAtomic();
 	void readAtomic();
 	void compute();
+
+	void render();
 };
 
 #endif // APPLICATION_H
