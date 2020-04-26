@@ -158,3 +158,8 @@ void Application::compute()
 	for (int i = 0; i < STAR_COUNT; i++)
 		std::cout << "dataB: " << ssbo_CPUMEM.dataB[i].y << std::endl;
 }
+
+void Application::render()
+{
+
+}

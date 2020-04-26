@@ -62,8 +62,11 @@ int main(int argc, char **argv)
 	application->initGeom();
 	application->initTex();
 	application->initAtomic();
-	application->compute();
+	//application->compute();
 	application->readAtomic();
+
+	while(true)
+		application->render();
 
 	system("pause");
 
