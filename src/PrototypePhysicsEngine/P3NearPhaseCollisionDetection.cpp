@@ -9,7 +9,7 @@ bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 cons
 
 }
 
-// Fast test for general 3D tri tri intersection
+// Fast test for general 3D tri tri intersection. Does not return intersection segment
 bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
 							glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
@@ -31,7 +31,9 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	if (glm::abs(distU1) < EPSILON) distU1 = 0.0f;
 	if (glm::abs(distU2) < EPSILON) distU2 = 0.0f;
 	// If same sign and non-zero, no intersection. Early rejection
-	if (distU0*distU1 > 0.0f && distU0*distU2 > 0.0f)
+	float prodDistU0DistU1 = distU0 * distU1;
+	float prodDistU0DistU2 = distU0 * distU2;
+	if (prodDistU0DistU1 > 0.0f && prodDistU0DistU2 > 0.0f)
 		return false;
 
 	// 2 edges originating from u0 of the second triangle
@@ -52,7 +54,9 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	if (glm::abs(distV1) < EPSILON) distV1 = 0.0f;
 	if (glm::abs(distV2) < EPSILON) distV2 = 0.0f;
 	// If same sign and non-zero, no intersection. Early rejection
-	if (distV0*distV1 > 0.0f && distV0*distV2 > 0.0f)
+	float prodDistV0DistV1 = distV0 * distV1;
+	float prodDistV0DistV2 = distV0 * distV2;
+	if (prodDistV0DistV1 > 0.0f && prodDistV0DistV2 > 0.0f)
 		return false;
 
 	// Compute direction of intersection line
@@ -80,6 +84,47 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	// Compute intersection interval for triangle 2
 
 	return true;
+}
+
+void computeIntersectInterval(	float projVert0, float projVert1, float projVert2,
+								float distVert0, float distVert1, float distVert2,
+								float prodDistVert0DistVert1, float prodDistVert0DistVert2,
+								float &scalarTTermA, float &scalarTTermB, float &scalarTTermC,
+								float &diffDistVertPair0, float &diffDistVertPair1,
+								bool &isCoplanar)
+{
+	// Check for which 2 edges are intersecting the plane by looking at the
+	//  product of their vertices' signed distances.
+
+	// Vert0 and Vert1 on the same side, look at edge Vert0...Vert2 and
+	//  edge Vert1...Vert2
+	if (prodDistVert0DistVert1 > 0.0f) {
+		scalarTTermA = projVert2;
+		scalarTTermB = projVert0 - projVert2;
+	}
+	// Vert0 and Vert2 on the same side, look at edge Vert0...Vert1 and
+	//  edge Vert2...Vert1
+	else if (prodDistVert0DistVert2 > 0.0f) {
+
+	}
+	// Vert1 and Vert2 on the same side, look at edge Vert1...Vert0 and
+	//  edge Vert2...Vert0. Note that there's an extra check if Vert0 is
+	//  in the plane.
+	else if (distVert1*distVert2 > 0.0f || distVert0) {
+
+	}
+	// At this point, Vert0 is in the plane.
+	else if (distVert1) {
+
+	}
+	// Both Vert0 and Vert1 are in the plane.
+	else if (distVert2) {
+
+	}
+	// Triange is coplanar to the plane.
+	else {
+		isCoplanar = true;
+	}
 }
 
 // Edge to edge test

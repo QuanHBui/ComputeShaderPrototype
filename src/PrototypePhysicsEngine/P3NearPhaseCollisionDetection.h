@@ -16,19 +16,23 @@
 
 #define pragma once
 
-#ifndef P3NEARPHASECOLLISIONDETECTION_H
-#define P3NEARPHASECOLLISIONDETECTION_H
+#ifndef P3_NEAR_PHASE_COLLISION_DETECTION_H
+#define P3_NEAR_PHASE_COLLISION_DETECTION_H
 
 #include <glm/glm.hpp>
-
 
 bool coplanarTriTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 						glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool fastTriTriIntersect3DTest(	glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 								glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
-bool computeIntersectInterval();
+void computeIntersectInterval(	float, float, float,
+								float, float, float,
+								float, float,
+								float &, float &, float &,
+								float &, float &,
+								bool &);
 bool edgeEdgeTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool edgeTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 
-#endif
+#endif // P3_NEAR_PHASE_COLLISION_DETECTION_H
