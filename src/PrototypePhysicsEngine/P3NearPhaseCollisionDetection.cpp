@@ -2,6 +2,11 @@
 
 #define EPSILON 0.000001f
 
+// We are going old school
+#define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\
+			isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
+			isectEnd = projVert0 + (projVert2 - projVert0) * distVert0/(distVert0 - distVert2);
+
 // Test for intersection between coplanar triangles
 bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
 						glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
@@ -79,19 +84,25 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	float projU1 = u1[index];
 	float projU2 = u2[index];
 
+	float isect0[2];
+	float isect1[2];
+
 	// Compute intersection interval for triangle 1
+	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
+							prodDistV0DistV1, prodDistV0DistV2,
+							isect0[0], isect0[1]);
 
 	// Compute intersection interval for triangle 2
-
+	computeIntersectInterval(projU0, projU1, projU2, distU0, distU1, distU2,
+							prodDistU0DistU1, prodDistU0DistU2,
+							isect1[0], isect1[1]);
 	return true;
 }
 
 void computeIntersectInterval(	float projVert0, float projVert1, float projVert2,
 								float distVert0, float distVert1, float distVert2,
 								float prodDistVert0DistVert1, float prodDistVert0DistVert2,
-								float &scalarTTermA, float &scalarTTermB, float &scalarTTermC,
-								float &diffDistVertPair0, float &diffDistVertPair1,
-								bool &isCoplanar)
+								float &isectStart, float &isectEnd, bool &isCoplanar)
 {
 	// Check for which 2 edges are intersecting the plane by looking at the
 	//  product of their vertices' signed distances.
@@ -99,27 +110,26 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 	// Vert0 and Vert1 on the same side, look at edge Vert0...Vert2 and
 	//  edge Vert1...Vert2
 	if (prodDistVert0DistVert1 > 0.0f) {
-		scalarTTermA = projVert2;
-		scalarTTermB = projVert0 - projVert2;
+		ISECT(projVert2, projVert0, projVert1, distVert2, distVert0, distVert1, isectStart, isectEnd);
 	}
 	// Vert0 and Vert2 on the same side, look at edge Vert0...Vert1 and
 	//  edge Vert2...Vert1
 	else if (prodDistVert0DistVert2 > 0.0f) {
-
+		ISECT(projVert1, projVert0, projVert2, distVert1, distVert0, distVert2, isectStart, isectEnd);
 	}
 	// Vert1 and Vert2 on the same side, look at edge Vert1...Vert0 and
 	//  edge Vert2...Vert0. Note that there's an extra check if Vert0 is
 	//  in the plane.
-	else if (distVert1*distVert2 > 0.0f || distVert0) {
-
+	else if (distVert1*distVert2 > 0.0f || distVert0 != 0.0f) {
+		ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd);
 	}
 	// At this point, Vert0 is in the plane.
-	else if (distVert1) {
-
+	else if (distVert1 != 0.0f) {
+		ISECT(projVert1, projVert0, projVert2, distVert1, distVert0, distVert2, isectStart, isectEnd);
 	}
 	// Both Vert0 and Vert1 are in the plane.
-	else if (distVert2) {
-
+	else if (distVert2 != 0.0f) {
+		ISECT(projVert2, projVert0, projVert1, distVert2, distVert0, distVert1, isectStart, isectEnd);
 	}
 	// Triange is coplanar to the plane.
 	else {

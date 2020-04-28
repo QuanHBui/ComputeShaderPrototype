@@ -4,12 +4,7 @@
  *
  * @author: Quan Bui
  * @version: 04/22/2020
- * @reference: 	"A Fast Triangle To Triangle Intersection Test For Collision Detection"
- * 				https://webee.technion.ac.il/~ayellet/Ps/TroppTalShimshoni.pdf
- * 					- Oren Tropp, Ayellet Tal, Ilan Shimshoni
- *
- *
- *				"A Fast Triangle-Triangle Intersection Test"
+ * @reference: 	"A Fast Triangle-Triangle Intersection Test"
  *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
  *					- Tomas Moller
  */
@@ -28,9 +23,7 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &, glm::vec3 const &, glm::vec3 
 void computeIntersectInterval(	float, float, float,
 								float, float, float,
 								float, float,
-								float &, float &, float &,
-								float &, float &,
-								bool &);
+								float &, float &, bool &);
 bool edgeEdgeTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool edgeTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
