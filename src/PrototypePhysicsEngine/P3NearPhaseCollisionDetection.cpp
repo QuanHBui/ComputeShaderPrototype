@@ -9,7 +9,8 @@
 
 // Test for intersection between coplanar triangles
 bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
-						glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+						glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2,
+						glm::vec3 const &N1)
 {
 
 }
@@ -86,16 +87,23 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 
 	float isect0[2];
 	float isect1[2];
+	bool isCoplanar = false;
 
 	// Compute intersection interval for triangle 1
 	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
 							prodDistV0DistV1, prodDistV0DistV2,
-							isect0[0], isect0[1]);
+							isect0[0], isect0[1], isCoplanar);
 
 	// Compute intersection interval for triangle 2
 	computeIntersectInterval(projU0, projU1, projU2, distU0, distU1, distU2,
 							prodDistU0DistU1, prodDistU0DistU2,
-							isect1[0], isect1[1]);
+							isect1[0], isect1[1], isCoplanar);
+
+	// If the first triangle is coplanar, then the second should too, so
+	//  perform this check only once.
+	if (isCoplanar)
+		return coplanarTriTriTest(v0, v1, v2, u0, u1, u2, N1);
+
 	return true;
 }
 
@@ -131,7 +139,7 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 	else if (distVert2 != 0.0f) {
 		ISECT(projVert2, projVert0, projVert1, distVert2, distVert0, distVert1, isectStart, isectEnd);
 	}
-	// Triange is coplanar to the plane.
+	// Triangle is coplanar to the plane.
 	else {
 		isCoplanar = true;
 	}

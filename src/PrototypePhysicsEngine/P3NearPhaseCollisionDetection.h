@@ -3,7 +3,7 @@
  *  There are 2 special cases to worry about: (1) Degenerate tri input, (2) coplanar tri-tri
  *
  * @author: Quan Bui
- * @version: 04/22/2020
+ * @version: 04/28/2020
  * @reference: 	"A Fast Triangle-Triangle Intersection Test"
  *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
  *					- Tomas Moller
@@ -17,7 +17,8 @@
 #include <glm/glm.hpp>
 
 bool coplanarTriTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
-						glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
+						glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
+						glm::vec3 const &);
 bool fastTriTriIntersect3DTest(	glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 								glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 void computeIntersectInterval(	float, float, float,
