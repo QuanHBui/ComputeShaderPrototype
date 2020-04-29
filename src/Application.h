@@ -29,7 +29,7 @@ public:
 	glm::ivec4 dataB[STAR_COUNT];
 };
 
-class Application
+class Application : public EventCallbacks
 {
 protected:
 	WindowManager *windowManager = nullptr;
@@ -45,9 +45,16 @@ public:
 	void initAtomic();
 	void initTex();
 
+	void setWindowManager(WindowManager *i_windowManager) { windowManager = i_windowManager; }
 	void resetAtomic();
 	void readAtomic();
 	void compute();
+
+	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
+	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
+	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
+	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) override {};
+	void cursorCallback(GLFWwindow* window, double xpos, double ypos) override {};
 
 	void render();
 };

@@ -16,10 +16,12 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <time.h>
+#include <glm/glm.hpp>
 
 #include "Program.h"	// This shouldn't be here
 #include "Application.h"
 #include "GLSL.h"
+#include "P3NearPhaseCollisionDetection.h"
 
 #define UNUSED(x) static_cast<void>(x)
 
@@ -39,15 +41,16 @@ double get_last_elapsed_time()
 
 int main(int argc, char **argv)
 {
-	UNUSED(argv);
-
-	Application *application = new Application();
+	UNUSED(argv);	// Disable command line argument
 	srand(static_cast<unsigned int>(time(0)));
 
-	glfwInit();
-	GLFWwindow *window = glfwCreateWindow(32, 32, "Dummy", nullptr, nullptr);
-	glfwMakeContextCurrent(window);
-	gladLoadGL();
+	Application *application = new Application();
+
+	WindowManager *windowManager = new WindowManager();
+	windowManager->init(1080, 810);
+	windowManager->setEventCallbacks(application);
+
+	application->setWindowManager(windowManager);
 
 	int work_grp_cnt[3];
 
@@ -55,22 +58,57 @@ int main(int argc, char **argv)
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
 
-	printf("max global (total) work group size x:%i y:%i z:%i\n",
+	printf("max global (total) work group size x:%i y:%i z:%i\n\n",
 		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
 
-	application->init();
-	application->initGeom();
-	application->initTex();
-	application->initAtomic();
-	//application->compute();
-	application->readAtomic();
+	// application->init();
+	// application->initGeom();
+	// application->initTex();
+	// application->initAtomic();
+	// application->compute();
+	// application->readAtomic();
 
-	while(true)
+	// Unit test triangle-triangle intersection test
+
+	// Definitely collide
+	// glm::vec3 v0{-0.5f, 0.0f, 0.0f};
+	// glm::vec3 v1{0.0f, 0.5f, 0.0f};
+	// glm::vec3 v2{0.5f, 0.0f, 0.0f};
+
+	// glm::vec3 u0{-0.5f, 0.0f, 0.0f};
+	// glm::vec3 u1{0.0f, 1.0f, 2.0f};
+	// glm::vec3 u2{-0.5f, 0.0f, -2.0f};
+
+	// Definitely not collide
+	glm::vec3 v0{-0.5f, 0.0f, 5.0f};
+	glm::vec3 v1{0.0f, 0.5f, 5.0f};
+	glm::vec3 v2{0.5f, 0.0f, 5.0f};
+
+	glm::vec3 u0{-0.5f, 0.0f, 0.0f};
+	glm::vec3 u1{0.0f, 1.0f, 2.0f};
+	glm::vec3 u2{-0.5f, 0.0f, -2.0f};
+
+	printf("Collided?\t%s\n\n", fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2) ? "true" : "false");
+
+	// Render loop
+	while (!glfwWindowShouldClose(windowManager->getHandle()))
+	{
+		// Render scene.
 		application->render();
 
-	system("pause");
+		// Swap front and back buffers.
+		glfwSwapBuffers(windowManager->getHandle());
+		// Poll for and process events.
+		glfwPollEvents();
+	}
 
-	glfwDestroyWindow(window);
+	windowManager->shutdown();
+
+	delete application;
+	delete windowManager;
+
+	application = nullptr;
+	windowManager = nullptr;
 
 	return 0;
 }

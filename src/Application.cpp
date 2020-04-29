@@ -5,7 +5,6 @@
 #include "Program.h"
 #include "GLSL.h"
 #include "stb_image.h"
-#include "GLSL.h"
 
 // General OGL initialization - set OGL state here
 void Application::init()
@@ -24,7 +23,7 @@ void Application::init()
 	if (!rc)	// error compiling the shader file
 	{
 		GLSL::printShaderInfoLog(computeShader);
-		std::cout << "Error compiling fragment shader " << std::endl;
+		std::cout << "Error compiling compute shader " << std::endl;
 		exit(1);
 	}
 
@@ -159,7 +158,25 @@ void Application::compute()
 		std::cout << "dataB: " << ssbo_CPUMEM.dataB[i].y << std::endl;
 }
 
+void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+}
+
 void Application::render()
 {
+	// Get current frame buffer size.
+	int width, height;
+	glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
 
+	// Prevent assertion when minimize the window
+	if (!width && !height) return;
+
+	glViewport(0, 0, width, height);
+
+	// Clear framebuffer.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

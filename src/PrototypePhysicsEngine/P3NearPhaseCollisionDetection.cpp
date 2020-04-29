@@ -12,7 +12,7 @@ bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 cons
 						glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2,
 						glm::vec3 const &N1)
 {
-
+	return false;
 }
 
 // Fast test for general 3D tri tri intersection. Does not return intersection segment

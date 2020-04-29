@@ -4,9 +4,8 @@
  *
  * @author: Quan Bui
  * @version: 04/28/2020
- * @reference: 	"A Fast Triangle-Triangle Intersection Test"
+ * @reference: 	Tomas Moller, "A Fast Triangle-Triangle Intersection Test"
  *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
- *					- Tomas Moller
  */
 
 #define pragma once

@@ -24,12 +24,13 @@
 
 // This interface let's us write our own class that can be notified by input
 // events, such as key presses and mouse movement.
-class EventCallbacks
+struct EventCallbacks
 {
-public:
 	virtual void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) = 0;
 	virtual void mouseCallback(GLFWwindow *window, int button, int action, int mods) = 0;
 	virtual void resizeCallback(GLFWwindow *window, int in_width, int in_height) = 0;
+	virtual void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) = 0;
+	virtual void cursorCallback(GLFWwindow *window, double xpos, double ypos) = 0;
 };
 
 // This class is responsible for all window management code, i.e. GLFW3 code
