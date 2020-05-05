@@ -62,7 +62,7 @@ bool Program::init()
 		if (isVerbose()) {
 			GLSL::printShaderInfoLog(vs);
 			std::cerr << "Error compiling vertex shader " << vShaderName << '\n'
-				<< "Shader object will be deleted" << std::endl;
+				<< "Shader object will be deleted\n";
 		}
 
 		glDeleteShader(vs);
@@ -77,7 +77,7 @@ bool Program::init()
 		if (isVerbose()) {
 			GLSL::printShaderInfoLog(fs);
 			std::cerr << "Error compiling fragment shader " << fShaderName << '\n'
-				<< "Shader object will be deleted" << std::endl;
+				<< "Shader object will be deleted\n";
 		}
 
 		glDeleteShader(fs);
@@ -95,11 +95,11 @@ bool Program::init()
 		if (isVerbose()) {
 			GLSL::printProgramInfoLog(pid);
 			std::cerr << "Error linking shaders " << vShaderName << " and " << fShaderName << '\n'
-				<< "Program object and its associated shader objects will be deleted" << std::endl;
+				<< "Program object and its associated shader objects will be deleted\n";
 		}
 
 		glDeleteProgram(pid);
-		pid = static_cast<GLuint>(0);
+		pid = 0u;
 
 		glDetachShader(pid, vs);
 		glDetachShader(pid, fs);
@@ -119,71 +119,6 @@ bool Program::init()
 	glDeleteShader(fs);
 
 	return true;
-}
-
-bool Program::initComputeShader(std::string const &computeName)
-{
-	computeShaderName = computeName;
-	GLint success = false;
-
-	GLuint cs = glCreateShader(GL_COMPUTE_SHADER);
-
-	std::string cShaderString = readFileAsString(computeShaderName);
-	const char *cShaderCStringPtr = cShaderString.c_str();
-	CHECKED_GL_CALL(glShaderSource(cs, 1, &cShaderCStringPtr, nullptr));
-
-	CHECKED_GL_CALL(glCompileShader(cs));
-	CHECKED_GL_CALL(glGetShaderiv(cs, GL_COMPILE_STATUS, &success));
-
-	if (!success) {
-		if (verbose) {
-			GLSL::printShaderInfoLog(cs);
-			std::cerr << "Error compiling compute shader " << computeShaderName << '\n'
-				<< "Shader object will be deleted...\n";
-		}
-		glDeleteShader(cs);
-		return false;
-	}
-
-	// Potentially some error here since the shader program already linked to the GPU
-	//  and we are trying to attach shader post-linking, might be a major yikes
-	if (pid)
-		pid = glCreateProgram();
-
-	CHECKED_GL_CALL(glAttachShader(pid, cs));
-	CHECKED_GL_CALL(glLinkProgram(pid));
-	CHECKED_GL_CALL(glGetProgramiv(pid, GL_LINK_STATUS, &success));
-
-	if (!success) {
-		if (verbose) {
-			GLSL::printProgramInfoLog(pid);
-			std::cerr << "Error linking shader" << computeShaderName << '\n'
-				<< "Program object and its associated shader objects will be deleted" << std::endl;
-		}
-
-		glDeleteProgram(pid);
-		pid = static_cast<GLuint>(0);
-
-		glDetachShader(pid, cs);
-		glDeleteShader(cs);
-
-		return false;
-	}
-
-	glDetachShader(pid, cs);
-	glDeleteShader(cs);
-
-	return true;
-}
-
-void Program::initSSBO()
-{
-	bind();
-
-	GLuint blockIdx = 0u;
-	blockIdx = glGetProgramResourceIndex(pid, GL_SHADER_STORAGE_BLOCK, "shaderData");
-	GLuint ssboBindingPointIdx = 2;
-	glShaderStorageBlockBinding(pid, blockIdx, ssboBindingPointIdx);
 }
 
 void Program::bind()

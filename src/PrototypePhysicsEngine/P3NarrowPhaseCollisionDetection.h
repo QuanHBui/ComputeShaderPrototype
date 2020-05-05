@@ -10,8 +10,8 @@
 
 #define pragma once
 
-#ifndef P3_NEAR_PHASE_COLLISION_DETECTION_H
-#define P3_NEAR_PHASE_COLLISION_DETECTION_H
+#ifndef P3_NARROW_PHASE_COLLISION_DETECTION_H
+#define P3_NARROW_PHASE_COLLISION_DETECTION_H
 
 #include <glm/glm.hpp>
 
@@ -28,4 +28,4 @@ bool edgeEdgeTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool edgeTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 
-#endif // P3_NEAR_PHASE_COLLISION_DETECTION_H
+#endif // P3_NARROW_PHASE_COLLISION_DETECTION_H

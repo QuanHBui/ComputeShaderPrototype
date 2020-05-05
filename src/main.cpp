@@ -6,7 +6,7 @@
  *		atomic counters
  *		atomic operations
  *		texture handling
- * 		workgroups
+ *		workgroups
  *
  * Modified by Quan Bui
  */
@@ -21,28 +21,44 @@
 #include "Program.h"	// This shouldn't be here
 #include "Application.h"
 #include "GLSL.h"
-#include "P3NearPhaseCollisionDetection.h"
+#include "P3NarrowPhaseCollisionDetection.h"
 
 #define UNUSED(x) static_cast<void>(x)
 
-float frand()
+void getComputeGroupInfo()
 {
-	return (float)rand() / (float)RAND_MAX;
-}
+	int work_grp_cnt[3];
 
-double get_last_elapsed_time()
-{
-	static double lasttime = glfwGetTime();
-	double actualtime = glfwGetTime();
-	double difference = actualtime - lasttime;
-	lasttime = actualtime;
-	return difference;
+	CHECKED_GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]));
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+
+	printf("max global (total) work group counts x:%i y:%i z:%i\n",
+		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+
+	int work_grp_size[3];
+
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+
+	printf("max local (in one shader) work group size x:%i y:%i z:%i \n",
+		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
+
+	int work_grp_inv;
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+	printf("max local work group invocations %i\n", work_grp_inv);
+
+	int max_shader_storage_buffer_bindings;
+
+	glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &max_shader_storage_buffer_bindings);
+	printf("max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
 }
 
 int main(int argc, char **argv)
 {
 	UNUSED(argv);	// Disable command line argument
-	srand(static_cast<unsigned int>(time(0)));
 
 	Application *application = new Application();
 
@@ -52,43 +68,10 @@ int main(int argc, char **argv)
 
 	application->setWindowManager(windowManager);
 
-	int work_grp_cnt[3];
-
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-
-	printf("max global (total) work group size x:%i y:%i z:%i\n\n",
-		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
-
-	// application->init();
+	application->init();
 	// application->initGeom();
-	// application->initTex();
-	// application->initAtomic();
-	// application->compute();
-	// application->readAtomic();
-
-	// Unit test triangle-triangle intersection test
-
-	// Definitely collide
-	// glm::vec3 v0{-0.5f, 0.0f, 0.0f};
-	// glm::vec3 v1{0.0f, 0.5f, 0.0f};
-	// glm::vec3 v2{0.5f, 0.0f, 0.0f};
-
-	// glm::vec3 u0{-0.5f, 0.0f, 0.0f};
-	// glm::vec3 u1{0.0f, 1.0f, 2.0f};
-	// glm::vec3 u2{-0.5f, 0.0f, -2.0f};
-
-	// Definitely not collide
-	glm::vec3 v0{-0.5f, 0.0f, 5.0f};
-	glm::vec3 v1{0.0f, 0.5f, 5.0f};
-	glm::vec3 v2{0.5f, 0.0f, 5.0f};
-
-	glm::vec3 u0{-0.5f, 0.0f, 0.0f};
-	glm::vec3 u1{0.0f, 1.0f, 2.0f};
-	glm::vec3 u2{-0.5f, 0.0f, -2.0f};
-
-	printf("Collided?\t%s\n\n", fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2) ? "true" : "false");
+	application->initSSBO();
+	application->compute();
 
 	// Render loop
 	while (!glfwWindowShouldClose(windowManager->getHandle()))
@@ -102,12 +85,12 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 
-	windowManager->shutdown();
-
+	// Destroy application before deleting the current OpenGL context
 	delete application;
-	delete windowManager;
-
 	application = nullptr;
+
+	windowManager->shutdown();
+	delete windowManager;
 	windowManager = nullptr;
 
 	return 0;

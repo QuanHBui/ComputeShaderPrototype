@@ -22,33 +22,30 @@
 #define STAR_COUNT 1024
 #endif
 
-class ssbo_data
+struct SSBO
 {
-public:
-	glm::vec4 dataA[STAR_COUNT];
-	glm::ivec4 dataB[STAR_COUNT];
+	glm::vec4 vertexBuffer_A[STAR_COUNT];
+	glm::vec4 vertexBuffer_B[STAR_COUNT];
+	glm::uvec4 elementBuffer_A[STAR_COUNT];
+	glm::uvec4 elementBuffer_B[STAR_COUNT];
 };
 
 class Application : public EventCallbacks
 {
-protected:
+private:
 	WindowManager *windowManager = nullptr;
-	GLuint texture;
-	ssbo_data ssbo_CPUMEM;
-	GLuint ssbo_GPU_id;
-	GLuint computeProgram;
-	GLuint atomicsBuffer;
+	GLuint ssboGPU_id;
+	GLuint computeProgram_id;
+	SSBO ssboCPUMEM;
 
 public:
+	~Application();
+
 	void init();
 	void initGeom();
-	void initAtomic();
-	void initTex();
+	void initSSBO();
 
 	void setWindowManager(WindowManager *i_windowManager) { windowManager = i_windowManager; }
-	void resetAtomic();
-	void readAtomic();
-	void compute();
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
@@ -56,6 +53,7 @@ public:
 	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) override {};
 	void cursorCallback(GLFWwindow* window, double xpos, double ypos) override {};
 
+	void compute();
 	void render();
 };
 

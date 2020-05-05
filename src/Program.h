@@ -26,7 +26,7 @@ std::string readFileAsString(const std::string &fileName);
 class Program
 {
 private:
-	GLuint pid = static_cast<GLuint>(0);
+	GLuint pid = 0u;
 	std::map<std::string, GLint> attributes;
 	std::map<std::string, GLint> uniforms;
 	bool verbose = true;
@@ -34,7 +34,6 @@ private:
 protected:
 	std::string vShaderName;
 	std::string fShaderName;
-	std::string computeShaderName;
 
 public:
 	~Program();
@@ -44,9 +43,6 @@ public:
 
 	void setShaderNames(const std::string &, const std::string &);
 	virtual bool init();
-
-	bool initComputeShader(std::string const &);
-	void initSSBO();
 
 	virtual void bind();
 	virtual void unbind();
