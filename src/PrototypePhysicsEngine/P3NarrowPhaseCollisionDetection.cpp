@@ -1,3 +1,8 @@
+/**
+ * The goal is to implement this on the gpu, specifically the compute shader
+ *
+ */
+
 #include "P3NarrowPhaseCollisionDetection.h"
 
 #define EPSILON 0.000001f
@@ -17,7 +22,7 @@ bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 cons
 
 // Fast test for general 3D tri tri intersection. Does not return intersection segment
 bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
-							glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+								glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	// 2 edges originating from v0 of the first triangle
 	glm::vec3 p1 = v1 - v0;

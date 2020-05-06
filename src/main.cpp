@@ -25,37 +25,6 @@
 
 #define UNUSED(x) static_cast<void>(x)
 
-void getComputeGroupInfo()
-{
-	int work_grp_cnt[3];
-
-	CHECKED_GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]));
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-
-	printf("max global (total) work group counts x:%i y:%i z:%i\n",
-		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
-
-	int work_grp_size[3];
-
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-
-	printf("max local (in one shader) work group size x:%i y:%i z:%i \n",
-		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
-
-	int work_grp_inv;
-
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	printf("max local work group invocations %i\n", work_grp_inv);
-
-	int max_shader_storage_buffer_bindings;
-
-	glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &max_shader_storage_buffer_bindings);
-	printf("max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
-}
-
 int main(int argc, char **argv)
 {
 	UNUSED(argv);	// Disable command line argument
@@ -68,9 +37,10 @@ int main(int argc, char **argv)
 
 	application->setWindowManager(windowManager);
 
-	application->init();
-	// application->initGeom();
+	application->initGeom();
 	application->initSSBO();
+	application->initRenderProgram();
+	application->initComputeProgram();
 	application->compute();
 
 	// Render loop

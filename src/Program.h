@@ -38,6 +38,7 @@ protected:
 public:
 	~Program();
 
+	GLuint getPID() const { return pid; }
 	void setVerbose(const bool v) { verbose = v; }
 	bool isVerbose() const { return verbose; }
 

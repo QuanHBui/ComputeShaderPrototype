@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED 14)
 set(CMAKE_CXX_STANDARD 14)
 
 # Use glob to get the list of all source files.
-file(GLOB_RECURSE SOURCES 	"${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/ext/*/*.cpp"
+file(GLOB_RECURSE SOURCES	"${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/ext/*/*.cpp"
 							"${CMAKE_SOURCE_DIR}/ext/glad/src/*.c"
 							"${CMAKE_SOURCE_DIR}/src/PrototypePhysicsEngine/*.cpp"
 							"${CMAKE_SOURCE_DIR}/unit_test/*.cpp")

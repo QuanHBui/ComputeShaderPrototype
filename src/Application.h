@@ -14,20 +14,27 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include <glm/glm.hpp>
+#include <memory>
+#include <vector>
+
+#include "Shape.h"
 #include "WindowManager.h"
 
-#include <glm/glm.hpp>
-
-#ifndef STAR_COUNT
-#define STAR_COUNT 1024
+#ifndef NUM_TRIANGLES
+#define NUM_TRIANGLES 1024
 #endif
+
+class Program;
+
+void getComputeGroupInfo();
 
 struct SSBO
 {
-	glm::vec4 vertexBuffer_A[STAR_COUNT];
-	glm::vec4 vertexBuffer_B[STAR_COUNT];
-	glm::uvec4 elementBuffer_A[STAR_COUNT];
-	glm::uvec4 elementBuffer_B[STAR_COUNT];
+	glm::vec4 transformedVertexBuffer_A[NUM_TRIANGLES];
+	glm::vec4 transformedVertexBuffer_B[NUM_TRIANGLES];
+	glm::uvec4 elementBuffer_A[NUM_TRIANGLES];
+	glm::uvec4 elementBuffer_B[NUM_TRIANGLES];
 };
 
 class Application : public EventCallbacks
@@ -37,21 +44,24 @@ private:
 	GLuint ssboGPU_id;
 	GLuint computeProgram_id;
 	SSBO ssboCPUMEM;
+	std::unique_ptr<Program> renderProgramPtr = nullptr;
+	std::vector<std::unique_ptr<Shape>> meshContainer;
 
 public:
 	~Application();
 
-	void init();
 	void initGeom();
 	void initSSBO();
+	void initRenderProgram();
+	void initComputeProgram();
 
 	void setWindowManager(WindowManager *i_windowManager) { windowManager = i_windowManager; }
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
 	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
-	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) override {};
-	void cursorCallback(GLFWwindow* window, double xpos, double ypos) override {};
+	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
+	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override {};
 
 	void compute();
 	void render();

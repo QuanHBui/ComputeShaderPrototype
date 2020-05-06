@@ -14,9 +14,7 @@ class Program;
 
 class Shape
 {
-
 public:
-
 	void createShape(tinyobj::shape_t const &shape);
 	void init();
 	void measure();
@@ -28,17 +26,18 @@ public:
 	void setMat(tinyobj::material_t const &mat) { mat_ = mat;}
 	tinyobj::material_t getMat() const { return mat_; }
 
-private:
 
 	std::vector<unsigned int> eleBuf;
 	std::vector<float> posBuf;
 	std::vector<float> norBuf;
 	std::vector<float> texBuf;
+
 	unsigned int eleBufID = 0;
 	unsigned int posBufID = 0;
 	unsigned int norBufID = 0;
 	unsigned int texBufID = 0;
 	unsigned int vaoID = 0;
+
 	tinyobj::material_t mat_;
 
 	void normalGen();

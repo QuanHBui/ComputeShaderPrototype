@@ -36,7 +36,7 @@ void Shape::measure()
 	minX = minY = minZ = std::numeric_limits<float>::max();
 	maxX = maxY = maxZ = -std::numeric_limits<float>::max();
 
-	//Go through all vertices to determine min and max of each dimension
+	// Go through all vertices to determine min and max of each dimension
 	for (size_t v = 0; v < posBuf.size() / 3; v++)
 	{
 		if (posBuf[3*v + 0] < minX) minX = posBuf[3*v + 0];
@@ -60,21 +60,16 @@ void Shape::measure()
 void Shape::normalGen()
 {
 	// Have to make sure that the normal buffer is empty. Maybe not
-	if (!norBuf.empty() || posBuf.empty()) {
+	if (!norBuf.empty() || posBuf.empty())
 		return;
-	}
 
-	glm::vec3 v0;
-	glm::vec3 v1;
-	glm::vec3 v2;
-	glm::vec3 normalVec;
-	glm::vec3 sumNorm;
+	glm::vec3 v0, v1, v2, normalVec, sumNorm;
 
 	// Initialize normal buffer. Its size should be number of faces x 3 or just the number of vertices
 	norBuf.assign(posBuf.size(), 0.f);
 
 	int faceLoopCounter;
-	std::vector<unsigned int>::iterator faceIter;
+	std::vector<unsigned int>::const_iterator faceIter;
 	for (faceIter = eleBuf.begin(), faceLoopCounter = 0; faceIter != eleBuf.end(); faceIter += 3u, faceLoopCounter++) {
 		v0 = glm::vec3(	posBuf.at(*(faceIter) * 3u),
 						posBuf.at(*(faceIter) * 3u + 1u),
