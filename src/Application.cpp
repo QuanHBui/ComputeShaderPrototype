@@ -57,6 +57,20 @@ void Application::printSSBO()
 	const glm::vec4 *vertexBuffer_B = &ssboCPUMEM.vertexBuffer_B[0];
 	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
 	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
+	const glm::mat4 &model_A = ssboCPUMEM.model_A;
+	const glm::mat4 &model_B = ssboCPUMEM.model_B;
+
+	printf("model_A:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
+			model_A[0][0], model_A[0][1], model_A[0][2], model_A[0][3],
+			model_A[1][0], model_A[1][1], model_A[1][2], model_A[1][3],
+			model_A[2][0], model_A[2][1], model_A[2][2], model_A[2][3],
+			model_A[3][0], model_A[3][1], model_A[3][2], model_A[3][3]);
+
+	printf("model_B:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
+			model_B[0][0], model_B[0][1], model_B[0][2], model_B[0][3],
+			model_B[1][0], model_B[1][1], model_B[1][2], model_B[1][3],
+			model_B[2][0], model_B[2][1], model_B[2][2], model_B[2][3],
+			model_B[3][0], model_B[3][1], model_B[3][2], model_B[3][3]);
 
 	// Print out nicely the first 5 elements of the ssbo
 	for (int i = 0; i < 5; ++i) {
@@ -78,6 +92,38 @@ void Application::printSSBO()
 											<< elementBuffer_B[i].w << "\n\n";
 	}
 	std::cout << std::endl;
+}
+
+void Application::interpretComputedSSBO()
+{
+	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
+	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
+
+	// 5522 is the number of triangles in the bunny mesh
+	// Loop through the element buffer and if w component is 1, that
+	//  triangle has collided
+
+	// Two loops but this is for better cache locality. Computers love
+	//  tightly packed arrays
+	std::cout << "In mesh A, collided triangles are:\n";
+	for (int i = 0; i < 5522; ++i) {
+		if (elementBuffer_A[i].w == 1u) {
+			std::cout << i;
+
+			if (i != 5521) std::cout << ", ";
+		}
+	}
+	std::cout << "\n\n";
+
+	std::cout << "In mesh B, collided triangles are:\n";
+	for (int j = 0; j < 5522; ++j) {
+		if (elementBuffer_B[j].w == 1u) {
+			std::cout << j;
+
+			if (j != 5521) std::cout << ", ";
+		}
+	}
+	std::cout << '\n' << std::endl;
 }
 
 void Application::initGeom()
@@ -136,8 +182,10 @@ void Application::initSSBO()
 	// The two meshes move positive x direction:
 	//  Mesh A moves 1 unit
 	//  Mesh B moves 1.1 unit
-	ssboCPUMEM.model_A = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	ssboCPUMEM.model_B = glm::translate(glm::mat4(1.0f), glm::vec3(1.1f, 0.0f, 0.0f));
+	ssboCPUMEM.model_A =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	ssboCPUMEM.model_B =	glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f)) *
+							glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f)) *
+							glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
 
 	// Make an SSBO
 	glGenBuffers(1, &ssboGPU_id);
@@ -212,25 +260,28 @@ void Application::compute()
 				<< "-----------------------------------------------\n";
 	printSSBO();
 
-	GLuint block_index = 0;
-	block_index = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
+	GLuint blockIndex = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
 
-	GLuint ssbo_binding_point_index = 0;
-	CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, block_index, ssbo_binding_point_index));
-	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboGPU_id));
+	if (blockIndex != GL_INVALID_INDEX) {
+		GLuint ssbo_binding_point_index = 0;
+		CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, blockIndex, ssbo_binding_point_index));
+		CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboGPU_id));
+	} else {
+		std::cerr << "Warning: binding SSBO failed because it was not found on GPU.\n";
+		exit(EXIT_FAILURE);
+	}
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	CHECKED_GL_CALL(glDispatchCompute(145, 145, 1));
+	CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));
 	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0));
 
-	// Wait for compute shader to finish
-	glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+	// Wait for compute shader to finish writing to ssbo
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// Copy data back to CPU MEM
 	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id));
-	GLvoid *p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	int siz = sizeof(SSBO);
-	memcpy(&ssboCPUMEM, p, siz);
+	GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	memcpy(&ssboCPUMEM, dataGPUPtr, sizeof(SSBO));
 	CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 
 	// Unbind storage buffer and program objects
@@ -240,6 +291,8 @@ void Application::compute()
 	std::cout	<< "ssbo AFTER compute dispatch call:\n"
 				<< "-----------------------------------------------\n";
 	printSSBO();
+
+	interpretComputedSSBO();
 }
 
 // Bind SSBO to render program and draw

@@ -46,6 +46,7 @@ private:
 	std::vector<std::unique_ptr<Shape>> meshContainer;
 
 	void printSSBO();
+	void interpretComputedSSBO();
 
 public:
 	~Application();

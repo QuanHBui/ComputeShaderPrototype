@@ -2,7 +2,7 @@
 #extension GL_ARB_compute_shader : require
 #extension GL_ARB_shader_storage_buffer_object : require
 
-layout(local_size_x = 39, local_size_y = 39) in;
+layout(local_size_x = 1, local_size_y = 1) in;
 
 layout(std430, binding = 0) volatile buffer ssbo_data
 {
@@ -164,19 +164,30 @@ void main()
 	uint index_A = gl_GlobalInvocationID.x;
 	uint index_B = gl_GlobalInvocationID.y;
 
-	vertexBuffer_A[index_A].x = 111.1f;
-	vertexBuffer_A[index_A].y = 222.2f;
-	vertexBuffer_A[index_A].z = 333.3f;
+	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	// uvec3 tri_B = elementBuffer_B[index_B].xyz;
 
-	vertexBuffer_B[index_B].x = 55.0f;
-	vertexBuffer_B[index_B].y = 66.0f;
-	vertexBuffer_B[index_B].z = 99.0f;
+	// vec3 u0 = (model_A * vertexBuffer_A[tri_A.x]).xyz;
+	// vec3 u1 = (model_A * vertexBuffer_A[tri_A.y]).xyz;
+	// vec3 u2 = (model_A * vertexBuffer_A[tri_A.z]).xyz;
 
-	elementBuffer_A[index_A].x = 11u;
-	elementBuffer_A[index_A].y = 22u;
-	elementBuffer_A[index_A].z = 33u;
+	// vec3 v0 = (model_B * vertexBuffer_B[tri_B.x]).xyz;
+	// vec3 v1 = (model_B * vertexBuffer_B[tri_B.y]).xyz;
+	// vec3 v2 = (model_B * vertexBuffer_B[tri_B.z]).xyz;
 
-	elementBuffer_B[index_B].x = 555u;
-	elementBuffer_B[index_B].y = 666u;
-	elementBuffer_B[index_B].z = 777u;
+	// Definitely collide
+	vec3 v0 = vec3(-0.5f, 0.0f, 0.0f);
+	vec3 v1 = vec3(0.0f, 0.5f, 0.0f);
+	vec3 v2 = vec3(0.5f, 0.0f, 0.0f);
+
+	vec3 u0 = vec3(-0.5f, 0.0f, 0.0f);
+	vec3 u1 = vec3(0.0f, 1.0f, 2.0f);
+	vec3 u2 = vec3(-0.5f, 0.0f, -2.0f);
+
+	bool collide = fastTriTriIntersect3DTest(u0, u1, u2, v0, v1, v2);
+
+	if (collide) {
+		elementBuffer_A[index_A].w = 1u;
+		elementBuffer_B[index_B].w = index_B;
+	}
 }
