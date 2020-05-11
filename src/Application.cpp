@@ -40,7 +40,7 @@ void getComputeGroupInfo()
 	GLint max_shader_storage_buffer_bindings;
 
 	glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &max_shader_storage_buffer_bindings);
-	printf("max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
+	printf("max shader storage buffer bindings %i\n\n", max_shader_storage_buffer_bindings);
 }
 
 Application::~Application()
@@ -49,6 +49,35 @@ Application::~Application()
 	windowManager = nullptr;
 	CHECKED_GL_CALL(glDeleteBuffers(1, &ssboGPU_id));
 	CHECKED_GL_CALL(glDeleteProgram(computeProgram_id));
+}
+
+void Application::printSSBO()
+{
+	const glm::vec4 *vertexBuffer_A = &ssboCPUMEM.vertexBuffer_A[0];
+	const glm::vec4 *vertexBuffer_B = &ssboCPUMEM.vertexBuffer_B[0];
+	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
+	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
+
+	// Print out nicely the first 5 elements of the ssbo
+	for (int i = 0; i < 5; ++i) {
+		std::cout << "vertexBuffer_A: "	<< vertexBuffer_A[i].x << ", "
+										<< vertexBuffer_A[i].y << ", "
+										<< vertexBuffer_A[i].z << ", "
+										<< vertexBuffer_A[i].w << '\n';
+		std::cout << "vertexBuffer_B: "	<< vertexBuffer_B[i].x << ", "
+										<< vertexBuffer_B[i].y << ", "
+										<< vertexBuffer_B[i].z << ", "
+										<< vertexBuffer_B[i].w << '\n';
+		std::cout << "elementBuffer_A: "	<< elementBuffer_A[i].x << ", "
+											<< elementBuffer_A[i].y << ", "
+											<< elementBuffer_A[i].z << ", "
+											<< elementBuffer_A[i].w << "\n";
+		std::cout << "elementBuffer_B: "	<< elementBuffer_B[i].x << ", "
+											<< elementBuffer_B[i].y << ", "
+											<< elementBuffer_B[i].z << ", "
+											<< elementBuffer_B[i].w << "\n\n";
+	}
+	std::cout << std::endl;
 }
 
 void Application::initGeom()
@@ -68,7 +97,7 @@ void Application::initGeom()
 	}
 
 	// Check for the size of the bunny mesh vertex buffer
-	printf("\nSize of bunny vertex buffer: %d\nSize of bunny element buffer: %d\n",
+	printf("\nSize of bunny vertex buffer: %zd\nSize of bunny element buffer: %zd\n\n",
 			meshContainer.back()->posBuf.size(), meshContainer.back()->eleBuf.size());
 	fflush(stdout);
 }
@@ -76,17 +105,39 @@ void Application::initGeom()
 // Initialize SSBO with the vertex and element buffers from loading mesh obj, pre-transformed
 void Application::initSSBO()
 {
-	// We prep ssbo with only one vertex and elemeent buffers because we "clone" one mesh
-	std::vector<float> vertexBuffer_A = meshContainer.back()->posBuf;
-	std::vector<unsigned int> elementBuffer = meshContainer.back()->eleBuf;
+	// We prep ssbo with only one vertex and element buffers because we "clone" one mesh
+	const std::vector<float> &vertexBuffer = meshContainer.back()->posBuf;
+	const std::vector<unsigned int> &elementBuffer = meshContainer.back()->eleBuf;
 
 	// We are going to test the first 1024 triangles of the bunny mesh
-	for (int i = 0; i < NUM_TRIANGLES; i++) {
-		ssboCPUMEM.transformedVertexBuffer_A[i] = glm::vec4{ 0.0f, 0.0f, 0.0f, 0.0f };
-		ssboCPUMEM.transformedVertexBuffer_B[i] = glm::vec4{ 0.0f, 0.0f, 0.0f, 0.0f };
-		ssboCPUMEM.elementBuffer_A[i] = glm::uvec4{ 0u, 0u, 0u, 0u };
-		ssboCPUMEM.elementBuffer_B[i] = glm::uvec4{ 0u, 0u, 0u, 0u };
+	for (int i = 0; i < 2763; ++i) {
+		// Last index is just for "padding." It might serve a purpose in the future
+		ssboCPUMEM.vertexBuffer_A[i] = glm::vec4{	vertexBuffer[3 * i],
+													vertexBuffer[(3 * i) + 1],
+													vertexBuffer[(3 * i) + 2],
+													0.0f };
+		ssboCPUMEM.vertexBuffer_B[i] = glm::vec4{	vertexBuffer[3 * i],
+													vertexBuffer[(3 * i) + 1],
+													vertexBuffer[(3 * i) + 2],
+													0.0f };
 	}
+
+	for (int j = 0; j < 5522; ++j) {
+		ssboCPUMEM.elementBuffer_A[j] = glm::uvec4{ elementBuffer[3 * j],
+													elementBuffer[(3 * j) + 1],
+													elementBuffer[(3 * j) + 2],
+													0.0f };
+		ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ elementBuffer[3 * j],
+													elementBuffer[(3 * j) + 1],
+													elementBuffer[(3 * j) + 2],
+													0.0f };
+	}
+
+	// The two meshes move positive x direction:
+	//  Mesh A moves 1 unit
+	//  Mesh B moves 1.1 unit
+	ssboCPUMEM.model_A = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	ssboCPUMEM.model_B = glm::translate(glm::mat4(1.0f), glm::vec3(1.1f, 0.0f, 0.0f));
 
 	// Make an SSBO
 	glGenBuffers(1, &ssboGPU_id);
@@ -157,16 +208,23 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 // Bind SSBO to compute program and dispatch work group
 void Application::compute()
 {
+	std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
+				<< "-----------------------------------------------\n";
+	printSSBO();
+
 	GLuint block_index = 0;
-	block_index = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "shader_data");
+	block_index = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
 
 	GLuint ssbo_binding_point_index = 0;
 	CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, block_index, ssbo_binding_point_index));
 	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboGPU_id));
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	CHECKED_GL_CALL(glDispatchCompute(2, 1, 1));
+	CHECKED_GL_CALL(glDispatchCompute(145, 145, 1));
 	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0));
+
+	// Wait for compute shader to finish
+	glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
 
 	// Copy data back to CPU MEM
 	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id));
@@ -178,6 +236,10 @@ void Application::compute()
 	// Unbind storage buffer and program objects
 	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 	CHECKED_GL_CALL(glUseProgram(0));
+
+	std::cout	<< "ssbo AFTER compute dispatch call:\n"
+				<< "-----------------------------------------------\n";
+	printSSBO();
 }
 
 // Bind SSBO to render program and draw
@@ -199,18 +261,4 @@ void Application::render()
 
 	glm::mat4 projection = glm::mat4(1.0f) * glm::perspective(45.0f, aspect, 0.01f, 1000.0f);
 	glm::mat4 model = glm::mat4(1.0f);
-
-	// renderProgramPtr->bind();
-	CHECKED_GL_CALL(glGetProgramResourceIndex(renderProgramPtr->getPID(), GL_UNIFORM_BLOCK, "TransformMatrixBlock"));
-
-	GLuint pid = renderProgramPtr->getPID();
-
-	std::cout << "Location for interface block: "
-		<< "projection "<< glGetProgramResourceIndex(pid, GL_UNIFORM, "TransformMatrixBlock.projection") << std::endl
-		<< "view " << glGetProgramResourceIndex(pid, GL_UNIFORM, "TransformMatrixBlock.view") << std::endl
-		<< "model " << glGetProgramResourceIndex(pid, GL_UNIFORM, "TransformMatrixBlock.model") << std::endl
-		<< glGetAttribLocation(pid, "vertPos") << std::endl
-		<< glGetAttribLocation(pid, "vertNor") << std::endl
-		<< std::endl;
-	std::cout << GL_INVALID_INDEX << std::endl;
 }

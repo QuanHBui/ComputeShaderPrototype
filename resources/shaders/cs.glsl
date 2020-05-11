@@ -1,16 +1,17 @@
 #version 430 core
+#extension GL_ARB_compute_shader : require
+#extension GL_ARB_shader_storage_buffer_object : require
 
-#extension GL_ARB_compute_shader : enable
-#extension GL_ARB_shader_storage_buffer_object : enable
+layout(local_size_x = 39, local_size_y = 39) in;
 
-layout(local_size_x = 1024, local_size_y = 1) in;
-
-layout(std430, binding = 0) volatile buffer shader_data
+layout(std430, binding = 0) volatile buffer ssbo_data
 {
-	vec4 transformedVertexBuffer_A[1024];
-	vec4 transformedVertexBuffer_B[1024];
-	uvec4 elementBuffer_A[1024];
-	uvec4 elementBuffer_B[1024];
+	vec4 vertexBuffer_A[2763];
+	vec4 vertexBuffer_B[2763];
+	uvec4 elementBuffer_A[5522];
+	uvec4 elementBuffer_B[5522];
+	mat4 model_A;
+	mat4 model_B;
 };
 
 #define EPSILON 0.000001f
@@ -160,6 +161,22 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 void main()
 {
-	uint index = gl_LocalInvocationID.x;
-	vec3 data = transformedVertexBuffer_A[index].xyz;
+	uint index_A = gl_GlobalInvocationID.x;
+	uint index_B = gl_GlobalInvocationID.y;
+
+	vertexBuffer_A[index_A].x = 111.1f;
+	vertexBuffer_A[index_A].y = 222.2f;
+	vertexBuffer_A[index_A].z = 333.3f;
+
+	vertexBuffer_B[index_B].x = 55.0f;
+	vertexBuffer_B[index_B].y = 66.0f;
+	vertexBuffer_B[index_B].z = 99.0f;
+
+	elementBuffer_A[index_A].x = 11u;
+	elementBuffer_A[index_A].y = 22u;
+	elementBuffer_A[index_A].z = 33u;
+
+	elementBuffer_B[index_B].x = 555u;
+	elementBuffer_B[index_B].y = 666u;
+	elementBuffer_B[index_B].z = 777u;
 }

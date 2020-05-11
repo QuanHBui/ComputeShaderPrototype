@@ -21,20 +21,18 @@
 #include "Shape.h"
 #include "WindowManager.h"
 
-#ifndef NUM_TRIANGLES
-#define NUM_TRIANGLES 1024
-#endif
-
 class Program;
 
 void getComputeGroupInfo();
 
 struct SSBO
 {
-	glm::vec4 transformedVertexBuffer_A[NUM_TRIANGLES];
-	glm::vec4 transformedVertexBuffer_B[NUM_TRIANGLES];
-	glm::uvec4 elementBuffer_A[NUM_TRIANGLES];
-	glm::uvec4 elementBuffer_B[NUM_TRIANGLES];
+	glm::vec4 vertexBuffer_A[2763];
+	glm::vec4 vertexBuffer_B[2763];
+	glm::uvec4 elementBuffer_A[5522];
+	glm::uvec4 elementBuffer_B[5522];
+	glm::mat4 model_A;
+	glm::mat4 model_B;
 };
 
 class Application : public EventCallbacks
@@ -46,6 +44,8 @@ private:
 	SSBO ssboCPUMEM;
 	std::unique_ptr<Program> renderProgramPtr = nullptr;
 	std::vector<std::unique_ptr<Shape>> meshContainer;
+
+	void printSSBO();
 
 public:
 	~Application();
