@@ -37,10 +37,11 @@ int main(int argc, char **argv)
 
 	application->setWindowManager(windowManager);
 
+	// Must be called strictly in this order
 	application->initGeom();
-	application->initSSBO();
 	application->initRenderProgram();
 	application->initComputeProgram();
+	application->initSSBO();
 	application->compute();
 
 	// Render loop

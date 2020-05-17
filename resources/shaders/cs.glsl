@@ -4,17 +4,21 @@
 
 layout(local_size_x = 1, local_size_y = 1) in;
 
-layout(std430, binding = 0) volatile buffer ssbo_data
+layout(std140, binding = 0) uniform transform_matrices
+{
+	mat4 model_A;
+	mat4 model_B;
+};
+
+layout(std430, binding = 1) volatile buffer ssbo_data
 {
 	vec4 vertexBuffer_A[2763];
 	vec4 vertexBuffer_B[2763];
 	uvec4 elementBuffer_A[5522];
 	uvec4 elementBuffer_B[5522];
-	mat4 model_A;
-	mat4 model_B;
 };
 
-#define EPSILON 0.000001f
+#define EPSILON 0.001f
 
 #define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\
 			isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
@@ -25,7 +29,7 @@ bool coplanarTriTriTest(const vec3 v0, const vec3 v1, const vec3 v2,
 						const vec3 u0, const vec3 u1, const vec3 u2,
 						const vec3 N1)
 {
-	return false;
+	return true;
 }
 
 // Apparent there's no pointer or reference in GLSL
@@ -153,7 +157,7 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
-	if (isCoplanar)
+	if (isCoplanar == true)
 		return coplanarTriTriTest(v0, v1, v2, u0, u1, u2, N1);
 
 	return true;
@@ -164,30 +168,30 @@ void main()
 	uint index_A = gl_GlobalInvocationID.x;
 	uint index_B = gl_GlobalInvocationID.y;
 
-	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
-	// uvec3 tri_B = elementBuffer_B[index_B].xyz;
+	uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	uvec3 tri_B = elementBuffer_B[index_B].xyz;
 
-	// vec3 u0 = (model_A * vertexBuffer_A[tri_A.x]).xyz;
-	// vec3 u1 = (model_A * vertexBuffer_A[tri_A.y]).xyz;
-	// vec3 u2 = (model_A * vertexBuffer_A[tri_A.z]).xyz;
+	vec3 v0 = (model_A * vertexBuffer_A[tri_A.x]).xyz;
+	vec3 v1 = (model_A * vertexBuffer_A[tri_A.y]).xyz;
+	vec3 v2 = (model_A * vertexBuffer_A[tri_A.z]).xyz;
 
-	// vec3 v0 = (model_B * vertexBuffer_B[tri_B.x]).xyz;
-	// vec3 v1 = (model_B * vertexBuffer_B[tri_B.y]).xyz;
-	// vec3 v2 = (model_B * vertexBuffer_B[tri_B.z]).xyz;
+	vec3 u0 = (model_B * vertexBuffer_B[tri_B.x]).xyz;
+	vec3 u1 = (model_B * vertexBuffer_B[tri_B.y]).xyz;
+	vec3 u2 = (model_B * vertexBuffer_B[tri_B.z]).xyz;
 
-	// Definitely collide
-	vec3 v0 = vec3(-0.5f, 0.0f, 0.0f);
-	vec3 v1 = vec3(0.0f, 0.5f, 0.0f);
-	vec3 v2 = vec3(0.5f, 0.0f, 0.0f);
+	// Definitely collide. This is for debugging
+	// vec3 v0 = vec3(-0.5f, 0.0f, 0.0f);
+	// vec3 v1 = vec3(0.0f, 0.5f, 0.0f);
+	// vec3 v2 = vec3(0.5f, 0.0f, 0.0f);
 
-	vec3 u0 = vec3(-0.5f, 0.0f, 0.0f);
-	vec3 u1 = vec3(0.0f, 1.0f, 2.0f);
-	vec3 u2 = vec3(-0.5f, 0.0f, -2.0f);
+	// vec3 u0 = vec3(-0.5f, 0.0f, 0.0f);
+	// vec3 u1 = vec3(0.0f, 1.0f, 2.0f);
+	// vec3 u2 = vec3(-0.5f, 0.0f, -2.0f);
 
-	bool collide = fastTriTriIntersect3DTest(u0, u1, u2, v0, v1, v2);
+	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
-	if (collide) {
+	if (collide == true) {
 		elementBuffer_A[index_A].w = 1u;
-		elementBuffer_B[index_B].w = index_B;
+		elementBuffer_B[index_B].w = 1u;
 	}
 }

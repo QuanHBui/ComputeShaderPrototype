@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <string>
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -40,7 +41,7 @@ void getComputeGroupInfo()
 	GLint max_shader_storage_buffer_bindings;
 
 	glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &max_shader_storage_buffer_bindings);
-	printf("max shader storage buffer bindings %i\n\n", max_shader_storage_buffer_bindings);
+	printf("max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
 }
 
 Application::~Application()
@@ -57,8 +58,6 @@ void Application::printSSBO()
 	const glm::vec4 *vertexBuffer_B = &ssboCPUMEM.vertexBuffer_B[0];
 	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
 	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
-	const glm::mat4 &model_A = ssboCPUMEM.model_A;
-	const glm::mat4 &model_B = ssboCPUMEM.model_B;
 
 	printf("model_A:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
 			model_A[0][0], model_A[0][1], model_A[0][2], model_A[0][3],
@@ -179,20 +178,64 @@ void Application::initSSBO()
 													0.0f };
 	}
 
-	// The two meshes move positive x direction:
-	//  Mesh A moves 1 unit
-	//  Mesh B moves 1.1 unit
-	ssboCPUMEM.model_A =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	ssboCPUMEM.model_B =	glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f)) *
-							glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f)) *
-							glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
-
-	// Make an SSBO
+	// Allocate an SSBO on GPU
 	glGenBuffers(1, &ssboGPU_id);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_DYNAMIC_COPY);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboGPU_id);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+
+	// Get the block index of the ssbo
+	GLuint ssboBlockIndex = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
+
+	if (ssboBlockIndex != GL_INVALID_INDEX) {
+		GLuint ssboBindingPointIndex = 1u;
+
+		// Link the ssbo block on the GPU to the binding index
+		CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, ssboBlockIndex, ssboBindingPointIndex));
+		// Link the ssbo on the CPU to the same binding index
+		CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssboBindingPointIndex, ssboGPU_id));
+	} else {
+		std::cerr << "Warning: linking SSBO to a binding point failed because it was not found on GPU.\n";
+		exit(EXIT_FAILURE);
+	}
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind ssbo
+
+	// Allocate an UBO
+	glGenBuffers(1, &uboGPU_id);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboGPU_id);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
+
+	// Get the block index of the ubo
+	GLuint uboBlockIndex = glGetUniformBlockIndex(computeProgram_id, "transform_matrices");
+
+	if (uboBlockIndex != GL_INVALID_INDEX) {
+		GLuint uboBindingPointIndex = 0u;
+
+		glUniformBlockBinding(computeProgram_id, uboBlockIndex, uboBindingPointIndex);
+		glBindBufferBase(GL_UNIFORM_BUFFER, uboBindingPointIndex, uboGPU_id);
+	} else {
+		std::cerr << "Warning: linking UBO to a binding point failed because it was not found on GPU.\n";
+		exit(EXIT_FAILURE);
+	}
+
+	// Prep and send data to GPU
+	// The two meshes move positive x direction:
+	//  Mesh A moves 1 unit
+	//  Mesh B moves 1.1 unit
+	// ssboCPUMEM.model_A =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model_A = glm::mat4(1.0f);
+	// ssboCPUMEM.model_B =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+	//						glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f)) *
+	//						glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+	// ssboCPUMEM.model_B =	glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f));
+	model_B =	glm::translate(glm::vec3(57.0f, 57.0f, 57.0f)) *
+				glm::rotate(glm::radians(90.0f), glm::vec3(1.0f)) *
+				glm::scale(glm::vec3(1.0f, 3.0f, 1.0f));
+
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &model_A);
+	glBufferSubData(GL_UNIFORM_BUFFER, 16 * 4, sizeof(glm::mat4), &model_B);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Application::initRenderProgram()
@@ -259,17 +302,6 @@ void Application::compute()
 	std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
 				<< "-----------------------------------------------\n";
 	printSSBO();
-
-	GLuint blockIndex = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
-
-	if (blockIndex != GL_INVALID_INDEX) {
-		GLuint ssbo_binding_point_index = 0;
-		CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, blockIndex, ssbo_binding_point_index));
-		CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboGPU_id));
-	} else {
-		std::cerr << "Warning: binding SSBO failed because it was not found on GPU.\n";
-		exit(EXIT_FAILURE);
-	}
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
 	CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));

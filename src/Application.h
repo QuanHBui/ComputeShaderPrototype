@@ -31,17 +31,15 @@ struct SSBO
 	glm::vec4 vertexBuffer_B[2763];
 	glm::uvec4 elementBuffer_A[5522];
 	glm::uvec4 elementBuffer_B[5522];
-	glm::mat4 model_A;
-	glm::mat4 model_B;
 };
 
 class Application : public EventCallbacks
 {
 private:
 	WindowManager *windowManager = nullptr;
-	GLuint ssboGPU_id;
-	GLuint computeProgram_id;
+	GLuint ssboGPU_id, uboGPU_id, computeProgram_id;
 	SSBO ssboCPUMEM;
+	glm::mat4 model_A, model_B;
 	std::unique_ptr<Program> renderProgramPtr = nullptr;
 	std::vector<std::unique_ptr<Shape>> meshContainer;
 
