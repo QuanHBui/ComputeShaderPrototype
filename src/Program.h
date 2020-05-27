@@ -14,8 +14,8 @@
 
 #pragma once
 
-#ifndef LAB471_PROGRAM_H_INCLUDED
-#define LAB471_PROGRAM_H_INCLUDED
+#ifndef PROGRAM_H
+#define PROGRAM_H
 
 #include <map>
 #include <string>
@@ -54,4 +54,4 @@ public:
 	GLint getUniform(const std::string &) const;
 };
 
-#endif // LAB471_PROGRAM_H_INCLUDED
+#endif // PROGRAM_H
