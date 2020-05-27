@@ -106,6 +106,25 @@ void Application::printSSBO()
 	std::cout << std::endl;
 }
 
+void Application::printColorSSBO()
+{
+	const glm::vec4 *localColorBuffer_A = &colorOutSSBO.colorBuffer_A[0];
+	const glm::vec4 *localColorBuffer_B = &colorOutSSBO.colorBuffer_B[0];
+
+	// Print out nicely the first 5 elements of the ssbo
+	for (int i = 0; i < 5; ++i) {
+		std::cout << "localColorBuffer_A: "	<< localColorBuffer_A[i].r << ", "
+											<< localColorBuffer_A[i].g << ", "
+											<< localColorBuffer_A[i].b << ", "
+											<< localColorBuffer_A[i].q << '\n';
+		std::cout << "localColorBuffer_B: "	<< localColorBuffer_B[i].r << ", "
+											<< localColorBuffer_B[i].g << ", "
+											<< localColorBuffer_B[i].b << ", "
+											<< localColorBuffer_B[i].q << "\n\n";
+	}
+	std::cout << std::endl;
+}
+
 void Application::interpretComputedSSBO()
 {
 	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
@@ -206,39 +225,31 @@ void Application::initSSBO()
 		}
 	}
 
-	// for (int j = 0; j < 2763; ++j) {
-	// 	ssboCPUMEM.colorBuffer_A[j] = glm::vec4{ 0.0f };
-	// }
-
-	// for (int j = 0; j < 2763; ++j) {
-	// 	ssboCPUMEM.colorBuffer_B[j] = glm::vec4{ 0.0f };
-	// }
-
-	for (int k = 0; k < 5522; ++k) {
-		ssboCPUMEM.elementBuffer_A[k] = glm::uvec4{ localElementBuffer_A[3 * k],
-													localElementBuffer_A[(3 * k) + 1],
-													localElementBuffer_A[(3 * k) + 2],
+	for (int j = 0; j < 5522; ++j) {
+		ssboCPUMEM.elementBuffer_A[j] = glm::uvec4{ localElementBuffer_A[3 * j],
+													localElementBuffer_A[(3 * j) + 1],
+													localElementBuffer_A[(3 * j) + 2],
 													0u };
 	}
 
-	for (int k = 0; k < 5522; ++k) {
-		if (k < 2) {
-			ssboCPUMEM.elementBuffer_B[k] = glm::uvec4{ localElementBuffer_B[3 * k],
-														localElementBuffer_B[(3 * k) + 1],
-														localElementBuffer_B[(3 * k) + 2],
+	for (int j = 0; j < 5522; ++j) {
+		if (j < 2) {
+			ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ localElementBuffer_B[3 * j],
+														localElementBuffer_B[(3 * j) + 1],
+														localElementBuffer_B[(3 * j) + 2],
 														0u };
 		} else {
-			ssboCPUMEM.elementBuffer_B[k] = glm::uvec4{ 0u };
+			ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ 0u };
 		}
 	}
 
 	// Allocate 2 SSBOs on GPU: 1 for input, and 1 for output
 	glGenBuffers(2, ssboGPU_id);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[0]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_DYNAMIC_READ);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[1]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 2 * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(colorOutSSBO), nullptr, GL_STREAM_COPY);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind ssbo
 
@@ -336,9 +347,9 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 void Application::compute()
 {
 	if (COMPUTE_DEBUG && firstRun) {
-		std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
+		std::cout	<< "\nColor SSBO BEFORE compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
-		printSSBO();
+		printColorSSBO();
 	}
 
 	// Prob don't have to set binding points every time. Should check ===================
@@ -355,7 +366,6 @@ void Application::compute()
 	//===================================================================================
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	// CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));
 	CHECKED_GL_CALL(glDispatchCompute(5522, 2, 1));
 
 	// Wait for compute shader to finish writing to ssbo before reading from ssbo
@@ -364,7 +374,7 @@ void Application::compute()
 	if (COMPUTE_DEBUG && firstRun) {
 		// Copy data back to CPU MEM
 		GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-		memcpy(&ssboCPUMEM, dataGPUPtr, sizeof(SSBO));
+		memcpy(&colorOutSSBO, dataGPUPtr, sizeof(colorOutSSBO));
 		CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 	}
 
@@ -379,9 +389,9 @@ void Application::compute()
 	CHECKED_GL_CALL(glUseProgram(0));
 
 	if (COMPUTE_DEBUG && firstRun) {
-		std::cout	<< "ssbo AFTER compute dispatch call:\n"
+		std::cout	<< "Color SSBO AFTER compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
-		printSSBO();
+		printColorSSBO();
 	// interpretComputedSSBO();
 
 		firstRun = false;

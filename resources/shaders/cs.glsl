@@ -18,7 +18,7 @@ layout(std430, binding = 1) readonly buffer ssbo_data
 	uvec4 elementBuffer_B[5522];
 };
 
-layout(std430, binding = 2) volatile buffer ssbo_color_out
+layout(std430, binding = 2) writeonly buffer ssbo_color_out
 {
 	vec4 colorBuffer_A[2763];
 	vec4 colorBuffer_B[2763];
@@ -40,7 +40,7 @@ bool coplanarTriTriTest(const vec3 v0, const vec3 v1, const vec3 v2,
 						const vec3 u0, const vec3 u1, const vec3 u2,
 						const vec3 N1)
 {
-	return true;
+	return false;
 }
 
 // Apparent there's no pointer or reference in GLSL
@@ -190,29 +190,13 @@ void main()
 	vec3 u1 = (model_B * positionBuffer_B[tri_B.y]).xyz;
 	vec3 u2 = (model_B * positionBuffer_B[tri_B.z]).xyz;
 
-	// Definitely collide. This is for debugging
-	// vec3 v0 = vec3(-0.5f, 0.0f, 0.0f);
-	// vec3 v1 = vec3(0.0f, 0.5f, 0.0f);
-	// vec3 v2 = vec3(0.5f, 0.0f, 0.0f);
-
-	// vec3 u0 = vec3(-0.5f, 0.0f, 0.0f);
-	// vec3 u1 = vec3(0.0f, 1.0f, 2.0f);
-	// vec3 u2 = vec3(-0.5f, 0.0f, -2.0f);
-
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
-	colorBuffer_A[index_A].r = 1.0f;
-	colorBuffer_A[index_A].g = 2.0f;
-
-	colorBuffer_B[index_B].r = 1.0f;
-	colorBuffer_B[index_B].b = 3.0f;
-
-
-	// if (collide == true) {
-	// 	colorBuffer_A[index_A].r = 1.0f;
-	// 	colorBuffer_B[index_B].r = 1.0f;
-	// } else {
-	// 	colorBuffer_A[index_A].r = 0.0f;
-	// 	colorBuffer_B[index_B].r = 0.0f;
-	// }
+	if (collide == true) {
+		colorBuffer_A[index_A].r = 1.0f;
+		colorBuffer_B[index_B].r = 1.0f;
+	} else {
+		colorBuffer_A[index_A].r = 0.0f;
+		colorBuffer_B[index_B].r = 0.0f;
+	}
 }

@@ -56,6 +56,7 @@ private:
 	} colorOutSSBO;
 
 	void printSSBO();
+	void printColorSSBO();
 	void interpretComputedSSBO();
 
 public:
