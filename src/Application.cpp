@@ -12,7 +12,10 @@
 #include "Shape.h"
 #include "stb_image.h"
 
+#define EPSILON 0.0001f
 #define COMPUTE_DEBUG true
+
+static bool firstRun = true;
 
 void getComputeGroupInfo()
 {
@@ -212,9 +215,8 @@ void Application::initSSBO()
 
 	// Prep and send data to GPU
 	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	uboCPUMEM.model_B =	glm::translate(glm::vec3(57.0f, 57.0f, 57.0f)) *
-						glm::rotate(glm::radians(90.0f), glm::vec3(1.0f)) *
-						glm::scale(glm::vec3(1.0f, 3.0f, 1.0f));
+	uboCPUMEM.model_B =	glm::translate(glm::vec3(-2.0f, 0.0f, -1.0f)) *
+						glm::rotate(glm::radians(90.0f), glm::vec3(1.0f));
 
 	// Fill the buffers with data
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
@@ -299,13 +301,12 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 // Bind SSBO to compute program and dispatch work group
 void Application::compute()
 {
-	if (COMPUTE_DEBUG) {
+	if (COMPUTE_DEBUG && firstRun) {
 		std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
 		printSSBO();
 	}
 
-	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
 	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id));
 	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id));
 
@@ -314,15 +315,18 @@ void Application::compute()
 	// Bind UBO to binding point 0
 	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, computeUBOGPU_id));
 
+	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
 	CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));
 
 	// Wait for compute shader to finish writing to ssbo before reading from ssbo
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	// Copy data back to CPU MEM
-	GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	memcpy(&ssboCPUMEM, dataGPUPtr, sizeof(SSBO));
-	CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
+	if (COMPUTE_DEBUG && firstRun) {
+		// Copy data back to CPU MEM
+		GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+		memcpy(&ssboCPUMEM, dataGPUPtr, sizeof(SSBO));
+		CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
+	}
 
 	// I guess this trying to unbind the CPU ssbo from the binding point 1
 	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, 0u));
@@ -334,11 +338,13 @@ void Application::compute()
 	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 	CHECKED_GL_CALL(glUseProgram(0));
 
-	if (COMPUTE_DEBUG) {
+	if (COMPUTE_DEBUG && firstRun) {
 		std::cout	<< "ssbo AFTER compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
 		printSSBO();
 	// interpretComputedSSBO();
+
+		firstRun = false;
 	}
 }
 
@@ -360,8 +366,8 @@ void Application::render()
 	float aspect = width/(float)height;
 
 	uboCPUMEM.projection = glm::perspective(45.0f, aspect, 0.01f, 150.0f);
-	uboCPUMEM.view = glm::lookAt(	glm::vec3{ 0.0f, 0.0f, 0.0f },
-									glm::vec3{ 0.0f, 0.0f, -1.0f },
+	uboCPUMEM.view = glm::lookAt(	glm::vec3{ 0.0f, 3.0f, 3.0f },
+									glm::vec3{ 0.0f, -0.5f, -2.0f },
 									glm::vec3{ 0.0f, 1.0f, 0.0f });
 
 	// Bind rendering UBO
@@ -378,7 +384,10 @@ void Application::render()
 	// Send model matrix
 	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"), 
 						1, GL_FALSE, glm::value_ptr(uboCPUMEM.model_A));
+	meshContainer.at(0)->draw(renderProgramPtr);
 
+	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"), 
+						1, GL_FALSE, glm::value_ptr(uboCPUMEM.model_B));
 	meshContainer.at(0)->draw(renderProgramPtr);
 
 	// When done, unbind UBO
@@ -386,4 +395,22 @@ void Application::render()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	renderProgramPtr->unbind();
+}
+
+void Application::update()
+{
+	static bool stop = false;
+	// Update translation of bunny 2
+	if (!stop && abs(-2.0 + 3.0f * sinf(0.3f * (float)glfwGetTime()) - 1.0f) > EPSILON) {
+		uboCPUMEM.model_B =	glm::translate(glm::vec3( -2.0f + 3.0f * sinf(0.3f * (float)glfwGetTime()), 0.0f, -1.0f)) *
+							glm::rotate(glm::radians(90.0f), glm::vec3(1.0f));
+	} else {
+		stop = true;
+	}
+
+	// Update UBO
+	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

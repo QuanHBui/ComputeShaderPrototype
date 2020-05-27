@@ -74,6 +74,7 @@ public:
 
 	void compute();
 	void render();
+	void update();
 };
 
 #endif // APPLICATION_H

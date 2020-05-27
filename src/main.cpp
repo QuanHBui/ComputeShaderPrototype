@@ -14,13 +14,12 @@
 #define _USE_MATH_DEFINES
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <time.h>
-#include <glm/glm.hpp>
 
 #include "Application.h"
 #include "GLSL.h"
-#include "P3NarrowPhaseCollisionDetection.h"
 
 #define UNUSED(x) static_cast<void>(x)
 
@@ -41,13 +40,30 @@ int main(int argc, char **argv)
 	application->initRenderProgram();
 	application->initComputeProgram();
 	application->initSSBO();
-	application->compute();
 
-	// Render loop
+	// application->compute();
+
+	double lastTime = glfwGetTime();
+ 	int numFrames = 0;
+
+	// Render and computeloop
 	while (!glfwWindowShouldClose(windowManager->getHandle()))
 	{
-		// Render scene.
+		application->compute();
 		application->render();
+		
+		// Measure fps and frame time
+		double currentTime = glfwGetTime();
+		numFrames++;
+		// If last prinf() was more than 3 sec ago
+		if (currentTime - lastTime >= 3.0) {
+			// printf and reset timer
+			printf("FPS: %d | Frame time: %f\n", numFrames/3, 3.0f/(float)numFrames);
+			numFrames = 0;
+			lastTime += 3.0;
+		}
+		
+		application->update();
 
 		// Swap front and back buffers.
 		glfwSwapBuffers(windowManager->getHandle());
