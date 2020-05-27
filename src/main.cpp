@@ -2,10 +2,8 @@
  * CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
  *
  * This prototype showcases compute shader, specifically:
- *		uniforms in CS
- *		atomic counters
- *		atomic operations
- *		texture handling
+ *		UBO
+ *		SSBO
  *		workgroups
  *
  * Modified by Quan Bui
@@ -37,9 +35,9 @@ int main(int argc, char **argv)
 
 	// Must be called strictly in this order
 	application->initGeom();
-	application->initRenderProgram();
-	application->initComputeProgram();
 	application->initSSBO();
+	application->initComputeProgram();
+	application->initRenderProgram();
 
 	// application->compute();
 
@@ -51,10 +49,10 @@ int main(int argc, char **argv)
 	{
 		application->compute();
 		application->render();
-		
+
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
-		numFrames++;
+		++numFrames;
 		// If last prinf() was more than 3 sec ago
 		if (currentTime - lastTime >= 3.0) {
 			// printf and reset timer
@@ -62,7 +60,7 @@ int main(int argc, char **argv)
 			numFrames = 0;
 			lastTime += 3.0;
 		}
-		
+
 		application->update();
 
 		// Swap front and back buffers.

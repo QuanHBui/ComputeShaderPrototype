@@ -24,34 +24,36 @@
 
 void getComputeGroupInfo();
 
-struct SSBO
-{
-	glm::vec4 positionBuffer_A[2763];
-	glm::vec4 positionBuffer_B[2763];
-	glm::uvec4 colorBuffer_A[2763];
-	glm::uvec4 colorBuffer_B[2763];
-	glm::uvec4 elementBuffer_A[5522];
-	glm::uvec4 elementBuffer_B[5522];
-};
-
-struct UBO
-{
-	glm::mat4 projection;
-	glm::mat4 view;
-	glm::mat4 model_A;
-	glm::mat4 model_B;
-};
-
 class Application : public EventCallbacks
 {
 private:
 	WindowManager *windowManager = nullptr;
-	GLuint	VAO, ssboGPU_id, computeUBOGPU_id, renderUBOGPU_id,
+	GLuint	VAO, computeUBOGPU_id, ssboGPU_id[2], renderUBOGPU_id,
 			computeProgram_id;
-	SSBO ssboCPUMEM;
-	UBO uboCPUMEM;
 	std::unique_ptr<Program> renderProgramPtr = nullptr;
-	std::vector<std::unique_ptr<Shape>> meshContainer;
+	std::vector<std::shared_ptr<Shape>> meshContainer;
+
+	struct SSBO
+	{
+		glm::vec4 positionBuffer_A[2763];
+		glm::vec4 positionBuffer_B[2763];
+		glm::uvec4 elementBuffer_A[5522];
+		glm::uvec4 elementBuffer_B[5522];
+	} ssboCPUMEM;
+
+	struct UBO
+	{
+		glm::mat4 projection;
+		glm::mat4 view;
+		glm::mat4 model_A;
+		glm::mat4 model_B;
+	} uboCPUMEM;
+
+	struct ColorOutSSBO
+	{
+		glm::vec4 colorBuffer_A[2763];
+		glm::vec4 colorBuffer_B[2763];
+	} colorOutSSBO;
 
 	void printSSBO();
 	void interpretComputedSSBO();

@@ -10,21 +10,24 @@ layout(std140, binding = 0) uniform transform_matrices
 	mat4 model_B;
 };
 
-layout(std430, binding = 1) volatile buffer ssbo_data
+layout(std430, binding = 1) readonly buffer ssbo_data
 {
 	vec4 positionBuffer_A[2763];
 	vec4 positionBuffer_B[2763];
-	uvec4 colorBuffer_A[2763];
-	uvec4 colorBuffer_B[2763];
 	uvec4 elementBuffer_A[5522];
 	uvec4 elementBuffer_B[5522];
 };
 
-layout(std430, binding = 2) writeonly buffer ssbo_debug
+layout(std430, binding = 2) volatile buffer ssbo_color_out
+{
+	vec4 colorBuffer_A[2763];
+	vec4 colorBuffer_B[2763];
+};
+
+layout(std430, binding = 3) writeonly buffer ssbo_debug
 {
 	vec4 debugOutput[];
 };
-
 
 #define EPSILON 0.001f
 
@@ -198,10 +201,18 @@ void main()
 
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
-	if (collide == true) {
-		colorBuffer_A[index_A].r = 1u;
-		colorBuffer_B[index_B].r = 1u;
-		elementBuffer_A[index_A].w = 1u;
-		elementBuffer_B[index_B].w = 1u;
-	}
+	colorBuffer_A[index_A].r = 1.0f;
+	colorBuffer_A[index_A].g = 2.0f;
+
+	colorBuffer_B[index_B].r = 1.0f;
+	colorBuffer_B[index_B].b = 3.0f;
+
+
+	// if (collide == true) {
+	// 	colorBuffer_A[index_A].r = 1.0f;
+	// 	colorBuffer_B[index_B].r = 1.0f;
+	// } else {
+	// 	colorBuffer_A[index_A].r = 0.0f;
+	// 	colorBuffer_B[index_B].r = 0.0f;
+	// }
 }

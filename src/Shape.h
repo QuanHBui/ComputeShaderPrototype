@@ -3,6 +3,7 @@
 #ifndef LAB471_SHAPE_H_INCLUDED
 #define LAB471_SHAPE_H_INCLUDED
 
+#include <glad/glad.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -11,21 +12,20 @@
 
 class Program;
 
-
 class Shape
 {
 public:
-	void createShape(tinyobj::shape_t const &shape);
+	void createShape(tinyobj::shape_t const &);
 	void init();
 	void measure();
-	void draw(std::unique_ptr<Program> const &prog);
+	void resize();
+	void draw(std::unique_ptr<Program> const &prog, GLuint colorCollisionBufferID = 0u);
 
 	glm::vec3 min = glm::vec3(0);
 	glm::vec3 max = glm::vec3(0);
 
 	void setMat(tinyobj::material_t const &mat) { mat_ = mat;}
 	tinyobj::material_t getMat() const { return mat_; }
-
 
 	std::vector<unsigned int> eleBuf;
 	std::vector<float> posBuf;

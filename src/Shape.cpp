@@ -1,3 +1,5 @@
+#include "Shape.h"
+
 #ifndef NOMINMAX
 #define NOMINMAX		// Too many max macro the compiler got confused I guess -Quan Bui
 #endif
@@ -6,9 +8,10 @@
 #include <cassert>
 #include <limits>
 
-#include "Shape.h"
 #include "GLSL.h"
 #include "Program.h"
+
+#define EPSILON 0.001f
 
 using namespace std;
 
@@ -37,7 +40,7 @@ void Shape::measure()
 	maxX = maxY = maxZ = -std::numeric_limits<float>::max();
 
 	// Go through all vertices to determine min and max of each dimension
-	for (size_t v = 0; v < posBuf.size() / 3; v++)
+	for (size_t v = 0; v < posBuf.size() / 3; ++v)
 	{
 		if (posBuf[3*v + 0] < minX) minX = posBuf[3*v + 0];
 		if (posBuf[3*v + 0] > maxX) maxX = posBuf[3*v + 0];
@@ -57,6 +60,53 @@ void Shape::measure()
 	max.z = maxZ;
 }
 
+// Stole this from Zoe's defer shading base code
+void Shape::resize()
+{
+	float scaleX, scaleY, scaleZ;
+	float shiftX, shiftY, shiftZ;
+
+	// From min and max compute necessary scale and shift for each dimension
+	float maxExtent, xExtent, yExtent, zExtent;
+	xExtent = max.x - min.x;
+	yExtent = max.y - min.y;
+	zExtent = max.z - min.z;
+
+	if (xExtent >= yExtent && xExtent >= zExtent)
+	{
+		maxExtent = xExtent;
+	}
+	if (yExtent >= xExtent && yExtent >= zExtent)
+	{
+		maxExtent = yExtent;
+	}
+	if (zExtent >= xExtent && zExtent >= yExtent)
+	{
+		maxExtent = zExtent;
+	}
+
+	scaleX = 2.0f / maxExtent;
+	shiftX = min.x + (xExtent / 2.0f);
+	scaleY = 2.0f / maxExtent;
+	shiftY = min.y + (yExtent / 2.0f);
+	scaleZ = 2.0f / maxExtent;
+	shiftZ = min.z + (zExtent / 2.0f);
+
+	// Go through all verticies shift and scale them
+	for (size_t v = 0; v < posBuf.size() / 3; ++v)
+	{
+		posBuf[3*v+0] = (posBuf[3*v+0] - shiftX) * scaleX;
+		assert(posBuf[3*v+0] >= -1.0f - EPSILON);
+		assert(posBuf[3*v+0] <= 1.0f + EPSILON);
+		posBuf[3*v+1] = (posBuf[3*v+1] - shiftY) * scaleY;
+		assert(posBuf[3*v+1] >= -1.0f - EPSILON);
+		assert(posBuf[3*v+1] <= 1.0f + EPSILON);
+		posBuf[3*v+2] = (posBuf[3*v+2] - shiftZ) * scaleZ;
+		assert(posBuf[3*v+2] >= -1.0f - EPSILON);
+		assert(posBuf[3*v+2] <= 1.0f + EPSILON);
+	}
+}
+
 void Shape::normalGen()
 {
 	// Have to make sure that the normal buffer is empty. Maybe not
@@ -70,7 +120,7 @@ void Shape::normalGen()
 
 	int faceLoopCounter;
 	std::vector<unsigned int>::const_iterator faceIter;
-	for (faceIter = eleBuf.begin(), faceLoopCounter = 0; faceIter != eleBuf.end(); faceIter += 3u, faceLoopCounter++) {
+	for (faceIter = eleBuf.begin(), faceLoopCounter = 0; faceIter != eleBuf.end(); faceIter += 3u, ++faceLoopCounter) {
 		v0 = glm::vec3(	posBuf.at(*(faceIter) * 3u),
 						posBuf.at(*(faceIter) * 3u + 1u),
 						posBuf.at(*(faceIter) * 3u + 2u) );
@@ -155,7 +205,7 @@ void Shape::init()
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-void Shape::draw(unique_ptr<Program> const &prog)
+void Shape::draw(unique_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 {
 	int h_pos, h_nor, h_tex;
 	h_pos = h_nor = h_tex = -1;
@@ -165,6 +215,7 @@ void Shape::draw(unique_ptr<Program> const &prog)
 	// Bind position buffer
 	h_pos = prog->getAttribute("vertPos");
 	GLSL::enableVertexAttribArray(h_pos);
+
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, posBufID));
 	CHECKED_GL_CALL(glVertexAttribPointer(h_pos, 3, GL_FLOAT, GL_FALSE, 0, (const void *)0));
 
@@ -190,6 +241,12 @@ void Shape::draw(unique_ptr<Program> const &prog)
 		}
 	}
 
+	if (colorCollisionBufferID) {
+		GLSL::enableVertexAttribArray(2u);
+		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorCollisionBufferID));
+		CHECKED_GL_CALL(glVertexAttribPointer(2u, 3, GL_FLOAT, GL_FALSE, 0, (const void *)0));
+	}
+
 	// Bind element buffer
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eleBufID));
 
@@ -208,4 +265,6 @@ void Shape::draw(unique_ptr<Program> const &prog)
 	GLSL::disableVertexAttribArray(h_pos);
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
+	CHECKED_GL_CALL(glBindVertexArray(0));
 }
