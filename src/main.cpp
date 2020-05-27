@@ -18,7 +18,6 @@
 #include <time.h>
 #include <glm/glm.hpp>
 
-#include "Program.h"	// This shouldn't be here
 #include "Application.h"
 #include "GLSL.h"
 #include "P3NarrowPhaseCollisionDetection.h"

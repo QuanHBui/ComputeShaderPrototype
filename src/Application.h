@@ -18,10 +18,9 @@
 #include <memory>
 #include <vector>
 
+#include "Program.h"
 #include "Shape.h"
 #include "WindowManager.h"
-
-class Program;
 
 void getComputeGroupInfo();
 
@@ -35,6 +34,14 @@ struct SSBO
 	glm::uvec4 elementBuffer_B[5522];
 };
 
+struct UBO
+{
+	glm::mat4 projection;
+	glm::mat4 view;
+	glm::mat4 model_A;
+	glm::mat4 model_B;
+};
+
 class Application : public EventCallbacks
 {
 private:
@@ -42,7 +49,7 @@ private:
 	GLuint	VAO, ssboGPU_id, computeUBOGPU_id, renderUBOGPU_id,
 			computeProgram_id;
 	SSBO ssboCPUMEM;
-	glm::mat4 model_A, model_B;
+	UBO uboCPUMEM;
 	std::unique_ptr<Program> renderProgramPtr = nullptr;
 	std::vector<std::unique_ptr<Shape>> meshContainer;
 

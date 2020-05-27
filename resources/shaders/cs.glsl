@@ -20,6 +20,12 @@ layout(std430, binding = 1) volatile buffer ssbo_data
 	uvec4 elementBuffer_B[5522];
 };
 
+layout(std430, binding = 2) writeonly buffer ssbo_debug
+{
+	vec4 debugOutput[];
+};
+
+
 #define EPSILON 0.001f
 
 #define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\

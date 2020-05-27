@@ -9,7 +9,6 @@
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
 #include "GLSL.h"
-#include "Program.h"
 #include "Shape.h"
 #include "stb_image.h"
 
@@ -60,6 +59,9 @@ void Application::printSSBO()
 	const glm::vec4 *positionBuffer_B = &ssboCPUMEM.positionBuffer_B[0];
 	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
 	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
+
+	const glm::mat4 &model_A = uboCPUMEM.model_A;
+	const glm::mat4 &model_B = uboCPUMEM.model_B;
 
 	printf("model_A:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
 			model_A[0][0], model_A[0][1], model_A[0][2], model_A[0][3],
@@ -209,22 +211,14 @@ void Application::initSSBO()
 	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
 
 	// Prep and send data to GPU
-	// The two meshes move positive x direction:
-	//  Mesh A moves 1 unit
-	//  Mesh B moves 1.1 unit
-	// ssboCPUMEM.model_A =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	// ssboCPUMEM.model_B =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-	//						glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f)) *
-	//						glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-	// ssboCPUMEM.model_B =	glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f));
-	model_B =	glm::translate(glm::vec3(57.0f, 57.0f, 57.0f)) *
-				glm::rotate(glm::radians(90.0f), glm::vec3(1.0f)) *
-				glm::scale(glm::vec3(1.0f, 3.0f, 1.0f));
+	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
+	uboCPUMEM.model_B =	glm::translate(glm::vec3(57.0f, 57.0f, 57.0f)) *
+						glm::rotate(glm::radians(90.0f), glm::vec3(1.0f)) *
+						glm::scale(glm::vec3(1.0f, 3.0f, 1.0f));
 
 	// Fill the buffers with data
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model_A));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(model_B));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -240,7 +234,8 @@ void Application::initRenderProgram()
 
 	renderProgramPtr = std::make_unique<Program>();
 	renderProgramPtr->setVerbose(true);
-	renderProgramPtr->setShaderNames("../resources/shaders/vs.glsl", "../resources/shaders/fs.glsl");
+	renderProgramPtr->setShaderNames("../resources/shaders/vs.glsl", 
+									"../resources/shaders/fs.glsl");
 	renderProgramPtr->init();
 	renderProgramPtr->addAttribute("vertPos");
 	renderProgramPtr->addAttribute("vertNor");
@@ -248,7 +243,7 @@ void Application::initRenderProgram()
 	glGenBuffers(GL_UNIFORM_BUFFER, &renderUBOGPU_id);
 	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
 	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);							// Unbind UBO
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);	// Unbind UBO
 }
 
 // General OGL initialization - set OGL state here
@@ -364,8 +359,8 @@ void Application::render()
 
 	float aspect = width/(float)height;
 
-	glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 150.0f);
-	glm::mat4 view = glm::lookAt(	glm::vec3{ 0.0f, 0.0f, 0.0f },
+	uboCPUMEM.projection = glm::perspective(45.0f, aspect, 0.01f, 150.0f);
+	uboCPUMEM.view = glm::lookAt(	glm::vec3{ 0.0f, 0.0f, 0.0f },
 									glm::vec3{ 0.0f, 0.0f, -1.0f },
 									glm::vec3{ 0.0f, 1.0f, 0.0f });
 
@@ -373,14 +368,16 @@ void Application::render()
 	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, renderUBOGPU_id);
 	// Send data to UBO
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), 
+					glm::value_ptr(uboCPUMEM.projection));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+					glm::value_ptr(uboCPUMEM.view));
 
 	// Bind render program
 	renderProgramPtr->bind();
 	// Send model matrix
-	glm::mat4 model_A = glm::scale(glm::vec3(1.0f)) * glm::translate(glm::vec3(0.0f, -1.0f, -2.0));
-	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"), 1, GL_FALSE, glm::value_ptr(model_A));
+	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"), 
+						1, GL_FALSE, glm::value_ptr(uboCPUMEM.model_A));
 
 	meshContainer.at(0)->draw(renderProgramPtr);
 
