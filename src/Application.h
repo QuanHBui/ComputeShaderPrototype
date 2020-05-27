@@ -27,8 +27,10 @@ void getComputeGroupInfo();
 
 struct SSBO
 {
-	glm::vec4 vertexBuffer_A[2763];
-	glm::vec4 vertexBuffer_B[2763];
+	glm::vec4 positionBuffer_A[2763];
+	glm::vec4 positionBuffer_B[2763];
+	glm::uvec4 colorBuffer_A[2763];
+	glm::uvec4 colorBuffer_B[2763];
 	glm::uvec4 elementBuffer_A[5522];
 	glm::uvec4 elementBuffer_B[5522];
 };
@@ -37,7 +39,8 @@ class Application : public EventCallbacks
 {
 private:
 	WindowManager *windowManager = nullptr;
-	GLuint ssboGPU_id, uboGPU_id, computeProgram_id;
+	GLuint	VAO, ssboGPU_id, computeUBOGPU_id, renderUBOGPU_id,
+			computeProgram_id;
 	SSBO ssboCPUMEM;
 	glm::mat4 model_A, model_B;
 	std::unique_ptr<Program> renderProgramPtr = nullptr;

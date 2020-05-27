@@ -18,7 +18,7 @@ public:
 	void createShape(tinyobj::shape_t const &shape);
 	void init();
 	void measure();
-	void draw(std::shared_ptr<Program> const &prog);
+	void draw(std::unique_ptr<Program> const &prog);
 
 	glm::vec3 min = glm::vec3(0);
 	glm::vec3 max = glm::vec3(0);

@@ -13,6 +13,8 @@
 #include "Shape.h"
 #include "stb_image.h"
 
+#define COMPUTE_DEBUG true
+
 void getComputeGroupInfo()
 {
 	GLint work_grp_cnt[3];
@@ -54,8 +56,8 @@ Application::~Application()
 
 void Application::printSSBO()
 {
-	const glm::vec4 *vertexBuffer_A = &ssboCPUMEM.vertexBuffer_A[0];
-	const glm::vec4 *vertexBuffer_B = &ssboCPUMEM.vertexBuffer_B[0];
+	const glm::vec4 *positionBuffer_A = &ssboCPUMEM.positionBuffer_A[0];
+	const glm::vec4 *positionBuffer_B = &ssboCPUMEM.positionBuffer_B[0];
 	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
 	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
 
@@ -73,14 +75,14 @@ void Application::printSSBO()
 
 	// Print out nicely the first 5 elements of the ssbo
 	for (int i = 0; i < 5; ++i) {
-		std::cout << "vertexBuffer_A: "	<< vertexBuffer_A[i].x << ", "
-										<< vertexBuffer_A[i].y << ", "
-										<< vertexBuffer_A[i].z << ", "
-										<< vertexBuffer_A[i].w << '\n';
-		std::cout << "vertexBuffer_B: "	<< vertexBuffer_B[i].x << ", "
-										<< vertexBuffer_B[i].y << ", "
-										<< vertexBuffer_B[i].z << ", "
-										<< vertexBuffer_B[i].w << '\n';
+		std::cout << "positionBuffer_A: "	<< positionBuffer_A[i].x << ", "
+										<< positionBuffer_A[i].y << ", "
+										<< positionBuffer_A[i].z << ", "
+										<< positionBuffer_A[i].w << '\n';
+		std::cout << "positionBuffer_B: "	<< positionBuffer_B[i].x << ", "
+										<< positionBuffer_B[i].y << ", "
+										<< positionBuffer_B[i].z << ", "
+										<< positionBuffer_B[i].w << '\n';
 		std::cout << "elementBuffer_A: "	<< elementBuffer_A[i].x << ", "
 											<< elementBuffer_A[i].y << ", "
 											<< elementBuffer_A[i].z << ", "
@@ -145,36 +147,52 @@ void Application::initGeom()
 	printf("\nSize of bunny vertex buffer: %zd\nSize of bunny element buffer: %zd\n\n",
 			meshContainer.back()->posBuf.size(), meshContainer.back()->eleBuf.size());
 	fflush(stdout);
+
+	// Store VAO handle generated from Shape class
+	VAO = meshContainer.at(0)->vaoID;
 }
 
-// Initialize SSBO with the vertex and element buffers from loading mesh obj, pre-transformed
+// Initialize SSBO with the position and element buffers from loading mesh obj, pre-transformed
 void Application::initSSBO()
 {
-	// We prep ssbo with only one vertex and element buffers because we "clone" one mesh
-	const std::vector<float> &vertexBuffer = meshContainer.back()->posBuf;
+	// We prep ssbo with only one position and element buffers because we "clone" one mesh
+	const std::vector<float> &positionBuffer = meshContainer.back()->posBuf;
 	const std::vector<unsigned int> &elementBuffer = meshContainer.back()->eleBuf;
 
-	// We are going to test the first 1024 triangles of the bunny mesh
+	// Multiple loops for better cache locality. It's actually not as inefficient as you might think
 	for (int i = 0; i < 2763; ++i) {
-		// Last index is just for "padding." It might serve a purpose in the future
-		ssboCPUMEM.vertexBuffer_A[i] = glm::vec4{	vertexBuffer[3 * i],
-													vertexBuffer[(3 * i) + 1],
-													vertexBuffer[(3 * i) + 2],
-													0.0f };
-		ssboCPUMEM.vertexBuffer_B[i] = glm::vec4{	vertexBuffer[3 * i],
-													vertexBuffer[(3 * i) + 1],
-													vertexBuffer[(3 * i) + 2],
+		ssboCPUMEM.positionBuffer_A[i] = glm::vec4{	positionBuffer[3 * i],
+													positionBuffer[(3 * i) + 1],
+													positionBuffer[(3 * i) + 2],
 													0.0f };
 	}
 
-	for (int j = 0; j < 5522; ++j) {
-		ssboCPUMEM.elementBuffer_A[j] = glm::uvec4{ elementBuffer[3 * j],
-													elementBuffer[(3 * j) + 1],
-													elementBuffer[(3 * j) + 2],
+	for (int i = 0; i < 2763; ++i) {
+		ssboCPUMEM.positionBuffer_B[i] = glm::vec4{	positionBuffer[3 * i],
+													positionBuffer[(3 * i) + 1],
+													positionBuffer[(3 * i) + 2],
 													0.0f };
-		ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ elementBuffer[3 * j],
-													elementBuffer[(3 * j) + 1],
-													elementBuffer[(3 * j) + 2],
+	}
+
+	for (int j = 0; j < 2763; ++j) {
+		ssboCPUMEM.colorBuffer_A[j] = glm::vec4{ 0.0f };
+	}
+
+	for (int j = 0; j < 2763; ++j) {
+		ssboCPUMEM.colorBuffer_B[j] = glm::vec4{ 0.0f };
+	}
+
+	for (int k = 0; k < 5522; ++k) {
+		ssboCPUMEM.elementBuffer_A[k] = glm::uvec4{ elementBuffer[3 * k],
+													elementBuffer[(3 * k) + 1],
+													elementBuffer[(3 * k) + 2],
+													0.0f };
+	}
+
+	for (int k = 0; k < 5522; ++k) {
+		ssboCPUMEM.elementBuffer_B[k] = glm::uvec4{ elementBuffer[3 * k],
+													elementBuffer[(3 * k) + 1],
+													elementBuffer[(3 * k) + 2],
 													0.0f };
 	}
 
@@ -183,47 +201,19 @@ void Application::initSSBO()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_DYNAMIC_COPY);
 
-	// Get the block index of the ssbo
-	GLuint ssboBlockIndex = glGetProgramResourceIndex(computeProgram_id, GL_SHADER_STORAGE_BLOCK, "ssbo_data");
-
-	if (ssboBlockIndex != GL_INVALID_INDEX) {
-		GLuint ssboBindingPointIndex = 1u;
-
-		// Link the ssbo block on the GPU to the binding index
-		CHECKED_GL_CALL(glShaderStorageBlockBinding(computeProgram_id, ssboBlockIndex, ssboBindingPointIndex));
-		// Link the ssbo on the CPU to the same binding index
-		CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssboBindingPointIndex, ssboGPU_id));
-	} else {
-		std::cerr << "Warning: linking SSBO to a binding point failed because it was not found on GPU.\n";
-		exit(EXIT_FAILURE);
-	}
-
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind ssbo
 
 	// Allocate an UBO
-	glGenBuffers(1, &uboGPU_id);
-	glBindBuffer(GL_UNIFORM_BUFFER, uboGPU_id);
-	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
-
-	// Get the block index of the ubo
-	GLuint uboBlockIndex = glGetUniformBlockIndex(computeProgram_id, "transform_matrices");
-
-	if (uboBlockIndex != GL_INVALID_INDEX) {
-		GLuint uboBindingPointIndex = 0u;
-
-		glUniformBlockBinding(computeProgram_id, uboBlockIndex, uboBindingPointIndex);
-		glBindBufferBase(GL_UNIFORM_BUFFER, uboBindingPointIndex, uboGPU_id);
-	} else {
-		std::cerr << "Warning: linking UBO to a binding point failed because it was not found on GPU.\n";
-		exit(EXIT_FAILURE);
-	}
+	glGenBuffers(1, &computeUBOGPU_id);
+	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
 
 	// Prep and send data to GPU
 	// The two meshes move positive x direction:
 	//  Mesh A moves 1 unit
 	//  Mesh B moves 1.1 unit
 	// ssboCPUMEM.model_A =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model_A = glm::mat4(1.0f);
+	model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
 	// ssboCPUMEM.model_B =	glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
 	//						glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f)) *
 	//						glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
@@ -232,18 +222,33 @@ void Application::initSSBO()
 				glm::rotate(glm::radians(90.0f), glm::vec3(1.0f)) *
 				glm::scale(glm::vec3(1.0f, 3.0f, 1.0f));
 
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &model_A);
-	glBufferSubData(GL_UNIFORM_BUFFER, 16 * 4, sizeof(glm::mat4), &model_B);
+	// Fill the buffers with data
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model_A));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(model_B));
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Application::initRenderProgram()
 {
+	GLSL::checkVersion();
+
+	// Set background color
+	glClearColor(.12f, .34f, .56f, 1.0f);
+	// Enabel z-buffer test
+	glEnable(GL_DEPTH_TEST);
+
 	renderProgramPtr = std::make_unique<Program>();
 	renderProgramPtr->setVerbose(true);
 	renderProgramPtr->setShaderNames("../resources/shaders/vs.glsl", "../resources/shaders/fs.glsl");
 	renderProgramPtr->init();
+	renderProgramPtr->addAttribute("vertPos");
+	renderProgramPtr->addAttribute("vertNor");
+
+	glGenBuffers(GL_UNIFORM_BUFFER, &renderUBOGPU_id);
+	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);							// Unbind UBO
 }
 
 // General OGL initialization - set OGL state here
@@ -299,32 +304,47 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 // Bind SSBO to compute program and dispatch work group
 void Application::compute()
 {
-	std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
-				<< "-----------------------------------------------\n";
-	printSSBO();
+	if (COMPUTE_DEBUG) {
+		std::cout	<< "\nssbo BEFORE compute dispatch call:\n"
+					<< "-----------------------------------------------\n";
+		printSSBO();
+	}
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));
-	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0));
+	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id));
+	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id));
 
-	// Wait for compute shader to finish writing to ssbo
+	// Make sure this matches up with the binding point 1, which is set in the shader
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, ssboGPU_id));
+	// Bind UBO to binding point 0
+	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, computeUBOGPU_id));
+
+	CHECKED_GL_CALL(glDispatchCompute(5522, 5522, 1));
+
+	// Wait for compute shader to finish writing to ssbo before reading from ssbo
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// Copy data back to CPU MEM
-	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id));
 	GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	memcpy(&ssboCPUMEM, dataGPUPtr, sizeof(SSBO));
 	CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 
-	// Unbind storage buffer and program objects
+	// I guess this trying to unbind the CPU ssbo from the binding point 1
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, 0u));
+	// Do I want to unbind CPU UBO from binding point 0 here??
+	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, 0u));
+
+	// Unbind storage and uniform buffers and program objects
 	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
+	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 	CHECKED_GL_CALL(glUseProgram(0));
 
-	std::cout	<< "ssbo AFTER compute dispatch call:\n"
-				<< "-----------------------------------------------\n";
-	printSSBO();
-
-	interpretComputedSSBO();
+	if (COMPUTE_DEBUG) {
+		std::cout	<< "ssbo AFTER compute dispatch call:\n"
+					<< "-----------------------------------------------\n";
+		printSSBO();
+	// interpretComputedSSBO();
+	}
 }
 
 // Bind SSBO to render program and draw
@@ -344,6 +364,29 @@ void Application::render()
 
 	float aspect = width/(float)height;
 
-	glm::mat4 projection = glm::mat4(1.0f) * glm::perspective(45.0f, aspect, 0.01f, 1000.0f);
-	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 150.0f);
+	glm::mat4 view = glm::lookAt(	glm::vec3{ 0.0f, 0.0f, 0.0f },
+									glm::vec3{ 0.0f, 0.0f, -1.0f },
+									glm::vec3{ 0.0f, 1.0f, 0.0f });
+
+	// Bind rendering UBO
+	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, renderUBOGPU_id);
+	// Send data to UBO
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+
+	// Bind render program
+	renderProgramPtr->bind();
+	// Send model matrix
+	glm::mat4 model_A = glm::scale(glm::vec3(1.0f)) * glm::translate(glm::vec3(0.0f, -1.0f, -2.0));
+	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"), 1, GL_FALSE, glm::value_ptr(model_A));
+
+	meshContainer.at(0)->draw(renderProgramPtr);
+
+	// When done, unbind UBO
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	renderProgramPtr->unbind();
 }

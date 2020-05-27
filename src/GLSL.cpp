@@ -44,6 +44,7 @@ void printOpenGLErrors(const char *const Function, const char * const File, int 
 		const char *const ErrorString = errorString(Error);
 		printf("OpenGL error in file '%s' at line %d calling function '%s': '%s' '%d 0x%X'\n",
 			File, Line, Function, ErrorString, Error, Error);
+		fflush(stdout);
 
 		// Activate break point. Only works for visual studio
 		//  so we need to check for what compiler
@@ -119,7 +120,7 @@ void checkVersion()
 	major = minor = 0;
 	const char *verstr = (const char *) glGetString(GL_VERSION);
 
-	if ((verstr == NULL) || (sscanf(verstr, "%d.%d", &major, &minor) != 2))
+	if ((verstr == NULL) || (sscanf_s(verstr, "%d.%d", &major, &minor) != 2))
 	{
 		printf("Invalid GL_VERSION format %d.%d\n", major, minor);
 	}

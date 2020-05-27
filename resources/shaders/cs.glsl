@@ -12,8 +12,10 @@ layout(std140, binding = 0) uniform transform_matrices
 
 layout(std430, binding = 1) volatile buffer ssbo_data
 {
-	vec4 vertexBuffer_A[2763];
-	vec4 vertexBuffer_B[2763];
+	vec4 positionBuffer_A[2763];
+	vec4 positionBuffer_B[2763];
+	uvec4 colorBuffer_A[2763];
+	uvec4 colorBuffer_B[2763];
 	uvec4 elementBuffer_A[5522];
 	uvec4 elementBuffer_B[5522];
 };
@@ -171,13 +173,13 @@ void main()
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
 
-	vec3 v0 = (model_A * vertexBuffer_A[tri_A.x]).xyz;
-	vec3 v1 = (model_A * vertexBuffer_A[tri_A.y]).xyz;
-	vec3 v2 = (model_A * vertexBuffer_A[tri_A.z]).xyz;
+	vec3 v0 = (model_A * positionBuffer_A[tri_A.x]).xyz;
+	vec3 v1 = (model_A * positionBuffer_A[tri_A.y]).xyz;
+	vec3 v2 = (model_A * positionBuffer_A[tri_A.z]).xyz;
 
-	vec3 u0 = (model_B * vertexBuffer_B[tri_B.x]).xyz;
-	vec3 u1 = (model_B * vertexBuffer_B[tri_B.y]).xyz;
-	vec3 u2 = (model_B * vertexBuffer_B[tri_B.z]).xyz;
+	vec3 u0 = (model_B * positionBuffer_B[tri_B.x]).xyz;
+	vec3 u1 = (model_B * positionBuffer_B[tri_B.y]).xyz;
+	vec3 u2 = (model_B * positionBuffer_B[tri_B.z]).xyz;
 
 	// Definitely collide. This is for debugging
 	// vec3 v0 = vec3(-0.5f, 0.0f, 0.0f);
@@ -191,6 +193,8 @@ void main()
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
 	if (collide == true) {
+		colorBuffer_A[index_A].r = 1u;
+		colorBuffer_B[index_B].r = 1u;
 		elementBuffer_A[index_A].w = 1u;
 		elementBuffer_B[index_B].w = 1u;
 	}
