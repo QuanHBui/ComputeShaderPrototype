@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include <iomanip>
 #include <iostream>
 #include <glm/gtx/transform.hpp>
 #include <string>
@@ -11,7 +12,7 @@
 #include "Shape.h"
 #include "stb_image.h"
 
-#define EPSILON 0.0001f
+#define EPSILON 0.001f
 #define COMPUTE_DEBUG true
 
 static bool firstRun = true;
@@ -73,27 +74,29 @@ void Application::printSSBO()
 	const glm::mat4 &model_B = uboCPUMEM.model_B;
 
 	printf("model_A:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
-			model_A[0][0], model_A[0][1], model_A[0][2], model_A[0][3],
-			model_A[1][0], model_A[1][1], model_A[1][2], model_A[1][3],
-			model_A[2][0], model_A[2][1], model_A[2][2], model_A[2][3],
-			model_A[3][0], model_A[3][1], model_A[3][2], model_A[3][3]);
+			model_A[0][1], model_A[1][1], model_A[2][1], model_A[3][1],
+			model_A[0][0], model_A[1][0], model_A[2][0], model_A[3][0],
+			model_A[0][2], model_A[1][2], model_A[2][2], model_A[3][2],
+			model_A[0][3], model_A[1][3], model_A[2][3], model_A[3][3]);
 
 	printf("model_B:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
-			model_B[0][0], model_B[0][1], model_B[0][2], model_B[0][3],
-			model_B[1][0], model_B[1][1], model_B[1][2], model_B[1][3],
-			model_B[2][0], model_B[2][1], model_B[2][2], model_B[2][3],
-			model_B[3][0], model_B[3][1], model_B[3][2], model_B[3][3]);
+			model_B[0][0], model_B[1][0], model_B[2][0], model_B[3][0],
+			model_B[0][1], model_B[1][1], model_B[2][1], model_B[3][1],
+			model_B[0][2], model_B[1][2], model_B[2][2], model_B[3][2],
+			model_B[0][3], model_B[1][3], model_B[2][3], model_B[3][3]);
 
 	// Print out nicely the first 5 elements of the ssbo
 	for (int i = 0; i < 5; ++i) {
-		std::cout << "positionBuffer_A: "	<< positionBuffer_A[i].x << ", "
-										<< positionBuffer_A[i].y << ", "
-										<< positionBuffer_A[i].z << ", "
-										<< positionBuffer_A[i].w << '\n';
-		std::cout << "positionBuffer_B: "	<< positionBuffer_B[i].x << ", "
-										<< positionBuffer_B[i].y << ", "
-										<< positionBuffer_B[i].z << ", "
-										<< positionBuffer_B[i].w << '\n';
+		std::cout << "positionBuffer_A: "	<< std::setprecision(5)
+											<< positionBuffer_A[i].x << ", "
+											<< positionBuffer_A[i].y << ", "
+											<< positionBuffer_A[i].z << ", "
+											<< positionBuffer_A[i].w << '\n';
+		std::cout << "positionBuffer_B: "	<< std::setprecision(5)
+											<< positionBuffer_B[i].x << ", "
+											<< positionBuffer_B[i].y << ", "
+											<< positionBuffer_B[i].z << ", "
+											<< positionBuffer_B[i].w << '\n';
 		std::cout << "elementBuffer_A: "	<< elementBuffer_A[i].x << ", "
 											<< elementBuffer_A[i].y << ", "
 											<< elementBuffer_A[i].z << ", "
@@ -111,13 +114,14 @@ void Application::printColorSSBO()
 	const glm::vec4 *localColorBuffer_A = &colorOutSSBO.colorBuffer_A[0];
 	const glm::vec4 *localColorBuffer_B = &colorOutSSBO.colorBuffer_B[0];
 
-	// Print out nicely the first 5 elements of the ssbo
-	for (int i = 0; i < 5; ++i) {
-		std::cout << "localColorBuffer_A: "	<< localColorBuffer_A[i].r << ", "
+	for (int i = 0; i < 1; ++i) {
+		std::cout << "localColorBuffer_A: "	<< std::setprecision(5)
+											<< localColorBuffer_A[i].r << ", "
 											<< localColorBuffer_A[i].g << ", "
 											<< localColorBuffer_A[i].b << ", "
 											<< localColorBuffer_A[i].q << '\n';
-		std::cout << "localColorBuffer_B: "	<< localColorBuffer_B[i].r << ", "
+		std::cout << "localColorBuffer_B: "	<< std::setprecision(5)
+											<< localColorBuffer_B[i].r << ", "
 											<< localColorBuffer_B[i].g << ", "
 											<< localColorBuffer_B[i].b << ", "
 											<< localColorBuffer_B[i].q << "\n\n";
@@ -211,7 +215,7 @@ void Application::initSSBO()
 		ssboCPUMEM.positionBuffer_A[i] = glm::vec4{	localPositionBuffer_A[3 * i],
 													localPositionBuffer_A[(3 * i) + 1],
 													localPositionBuffer_A[(3 * i) + 2],
-													0.0f };
+													1.0f };
 	}
 
 	for (int i = 0; i < 2763; ++i) {
@@ -219,7 +223,7 @@ void Application::initSSBO()
 			ssboCPUMEM.positionBuffer_B[i] = glm::vec4{	localPositionBuffer_B[3 * i],
 														localPositionBuffer_B[(3 * i) + 1],
 														localPositionBuffer_B[(3 * i) + 2],
-														0.0f };
+														1.0f };
 		} else {
 			ssboCPUMEM.positionBuffer_B[i] = glm::vec4{ 0.0f };
 		}
@@ -246,7 +250,7 @@ void Application::initSSBO()
 	// Allocate 2 SSBOs on GPU: 1 for input, and 1 for output
 	glGenBuffers(2, ssboGPU_id);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[0]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_STATIC_COPY);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(colorOutSSBO), nullptr, GL_STREAM_COPY);
@@ -260,7 +264,7 @@ void Application::initSSBO()
 
 	// Prep and send data to GPU
 	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	uboCPUMEM.model_B =	glm::translate(glm::vec3(-2.0f, 0.75f, -1.0f)) *
+	uboCPUMEM.model_B =	glm::translate(glm::vec3(-3.0f, 0.75f, -1.0f)) *
 						glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 
 	// Fill the buffers with data
@@ -346,7 +350,9 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 // Bind SSBO to compute program and dispatch work group
 void Application::compute()
 {
-	if (COMPUTE_DEBUG && firstRun) {
+	static unsigned int frameCount = 5u;
+
+	if (COMPUTE_DEBUG && frameCount) {
 		std::cout	<< "\nColor SSBO BEFORE compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
 		printColorSSBO();
@@ -366,20 +372,23 @@ void Application::compute()
 	//===================================================================================
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	CHECKED_GL_CALL(glDispatchCompute(5522, 2, 1));
+	CHECKED_GL_CALL(glDispatchCompute(5522, 1, 1));
 
 	// Wait for compute shader to finish writing to ssbo before reading from ssbo
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	if (COMPUTE_DEBUG && firstRun) {
+	if (COMPUTE_DEBUG && frameCount) {
 		// Copy data back to CPU MEM
 		GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 		memcpy(&colorOutSSBO, dataGPUPtr, sizeof(colorOutSSBO));
 		CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
+
+		--frameCount;
 	}
 
 	// I guess this trying to unbind the CPU ssbo from the binding point 1
 	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, 0u));
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, 0u));
 	// Do I want to unbind CPU UBO from binding point 0 here??
 	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, 0u));
 
@@ -392,7 +401,8 @@ void Application::compute()
 		std::cout	<< "Color SSBO AFTER compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
 		printColorSSBO();
-	// interpretComputedSSBO();
+
+		// interpretComputedSSBO();
 
 		firstRun = false;
 	}
@@ -423,7 +433,7 @@ void Application::render()
 	// Bind rendering UBO
 	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, renderUBOGPU_id);
-	// Send data to UBO
+	// Send data to UBO. Set once per render call, use many times
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
 					glm::value_ptr(uboCPUMEM.projection));
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
@@ -451,12 +461,19 @@ void Application::update()
 {
 	static bool stop = false;
 	// Update translation of bunny 2
-	if (!stop && abs(-2.0 + 3.0f * sinf(0.3f * (float)glfwGetTime()) - 0.9f) > EPSILON) {
-		uboCPUMEM.model_B =	glm::translate(glm::vec3( -2.0f + 3.0f * sinf(0.3f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+	if (!stop && abs(-2.0 + 3.0f * sinf(0.3f * (float)glfwGetTime()) - 5.0f) > 0.1f) {
+		uboCPUMEM.model_B =	glm::translate(glm::vec3(-3.0f + 4.0f * sinf(0.3f * (float)glfwGetTime()), 0.75f, -1.0f)) *
 							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 	} else {
-		stop = true;
+		// stop = true;
 	}
+
+	// glm::mat4 const &localModel_B = uboCPUMEM.model_B;
+	// printf("model_B:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
+	// 	localModel_B[0][0], localModel_B[1][0], localModel_B[2][0], localModel_B[3][0],
+	// 	localModel_B[0][1], localModel_B[1][1], localModel_B[2][1], localModel_B[3][1],
+	// 	localModel_B[0][2], localModel_B[1][2], localModel_B[2][2], localModel_B[3][2],
+	// 	localModel_B[0][3], localModel_B[1][3], localModel_B[2][3], localModel_B[3][3]);
 
 	// Update UBO data
 	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);

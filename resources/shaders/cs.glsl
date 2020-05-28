@@ -2,7 +2,7 @@
 #extension GL_ARB_compute_shader : require
 #extension GL_ARB_shader_storage_buffer_object : require
 
-layout(local_size_x = 1, local_size_y = 1) in;
+layout(local_size_x = 1, local_size_y = 2) in;
 
 layout(std140, binding = 0) uniform transform_matrices
 {
@@ -40,7 +40,7 @@ bool coplanarTriTriTest(const vec3 v0, const vec3 v1, const vec3 v2,
 						const vec3 u0, const vec3 u1, const vec3 u2,
 						const vec3 N1)
 {
-	return false;
+	return true;
 }
 
 // Apparent there's no pointer or reference in GLSL
@@ -177,7 +177,7 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 void main()
 {
 	uint index_A = gl_GlobalInvocationID.x;
-	uint index_B = gl_GlobalInvocationID.y;
+	uint index_B = gl_LocalInvocationID.y;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
@@ -192,11 +192,28 @@ void main()
 
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
-	if (collide == true) {
-		colorBuffer_A[index_A].r = 1.0f;
-		colorBuffer_B[index_B].r = 1.0f;
-	} else {
-		colorBuffer_A[index_A].r = 0.0f;
-		colorBuffer_B[index_B].r = 0.0f;
+	if (index_A < 2763) {
+		if (collide == true) {
+			colorBuffer_A[index_A].r = 1.0f;
+			colorBuffer_B[index_B].r = 1.0f;
+		} else {
+			colorBuffer_A[index_A].r = 0.0f;
+			colorBuffer_B[index_B].r = 0.0f;
+		}
+
+		//=======================DEBUG=========================================
+		// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
+		// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
+		// colorBuffer_A[index_A].b = sin(100.0f * u1.x);
+		// colorBuffer_A[index_A].a = sin(100.0f * u2.x);
+
+		// colorBuffer_B[index_A].r = sin(100.0f * u1.x);
+		// colorBuffer_B[index_A].g = sin(100.0f * u1.y);
+		// colorBuffer_B[index_A].b = sin(100.0f * u1.z);
+
+		// colorBuffer_B[index_A].r = positionBuffer_B[tri_B.x].x;
+		// colorBuffer_B[index_A].g = positionBuffer_B[tri_B.y].x;
+		// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
+		//=======================DEBUG=========================================
 	}
 }

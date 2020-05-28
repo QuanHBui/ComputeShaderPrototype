@@ -244,7 +244,7 @@ void Shape::draw(unique_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 	if (colorCollisionBufferID) {
 		GLSL::enableVertexAttribArray(2u);
 		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorCollisionBufferID));
-		CHECKED_GL_CALL(glVertexAttribPointer(2u, 3, GL_FLOAT, GL_FALSE, 0, (const void *)0));
+		CHECKED_GL_CALL(glVertexAttribPointer(2u, 4, GL_FLOAT, GL_FALSE, 0, (const void *)0));
 	}
 
 	// Bind element buffer
