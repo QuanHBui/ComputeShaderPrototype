@@ -29,11 +29,19 @@ layout(std430, binding = 3) writeonly buffer ssbo_debug
 	vec4 debugOutput[];
 };
 
-#define EPSILON 0.001f
+#define EPSILON 0.0001f
 
 #define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\
 			isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
 			isectEnd = projVert0 + (projVert2 - projVert0) * distVert0/(distVert0 - distVert2);
+
+#define SORT(a, b)			\
+			if (a > b) {	\
+				float c;	\
+				c = a;		\
+				a = b;		\
+				b = c;		\
+			}
 
 // Test for intersection between coplanar triangles
 bool coplanarTriTriTest(const vec3 v0, const vec3 v1, const vec3 v2,
@@ -99,10 +107,11 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distU1 = dot(N1, u1) + d1;
 	float distU2 = dot(N1, u2) + d1;
 
-	// Check for coplanarity. Using epsilon check because float precision
+	// For coplanarity check later on. Using epsilon check because float precision
 	if (abs(distU0) < EPSILON) distU0 = 0.0f;
 	if (abs(distU1) < EPSILON) distU1 = 0.0f;
 	if (abs(distU2) < EPSILON) distU2 = 0.0f;
+
 	// If same sign and non-zero, no intersection. Early rejection
 	float prodDistU0DistU1 = distU0 * distU1;
 	float prodDistU0DistU2 = distU0 * distU2;
@@ -122,10 +131,20 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distV1 = dot(N2, v1) + d2;
 	float distV2 = dot(N2, v2) + d2;
 
-	// Check for coplanarity. Using epsilon check because float precision
+
+	//====================Debug========================
+	// colorBuffer_A[gl_GlobalInvocationID.x].r = distV0;
+	// colorBuffer_A[gl_GlobalInvocationID.x].g = distV1;
+	// colorBuffer_A[gl_GlobalInvocationID.x].b = distV2;
+	// colorBuffer_A[gl_GlobalInvocationID.x].a = 0.0f;
+	//====================Debug========================
+
+
+	// For coplanarity check later on. Using epsilon check because float precision
 	if (abs(distV0) < EPSILON) distV0 = 0.0f;
 	if (abs(distV1) < EPSILON) distV1 = 0.0f;
 	if (abs(distV2) < EPSILON) distV2 = 0.0f;
+
 	// If same sign and non-zero, no intersection. Early rejection
 	float prodDistV0DistV1 = distV0 * distV1;
 	float prodDistV0DistV2 = distV0 * distV2;
@@ -156,6 +175,15 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float isect1[2];
 	bool isCoplanar = false;
 
+
+	//=========================Debug============================
+	// colorBuffer_B[gl_GlobalInvocationID.x].r = prodDistV0DistV1;
+	// colorBuffer_B[gl_GlobalInvocationID.x].g = prodDistV0DistV2;
+	// colorBuffer_B[gl_GlobalInvocationID.x].b = prodDistU0DistU1;
+	// colorBuffer_B[gl_GlobalInvocationID.x].a = prodDistU0DistU2;
+	//=========================Debug============================
+
+
 	// Compute intersection interval for triangle 1
 	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
 							prodDistV0DistV1, prodDistV0DistV2,
@@ -168,8 +196,14 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
-	if (isCoplanar == true)
+	if (isCoplanar)
 		return coplanarTriTriTest(v0, v1, v2, u0, u1, u2, N1);
+
+	SORT(isect0[0], isect0[1]);
+	SORT(isect1[0], isect1[1]);
+
+	if (isect0[1] < isect1[0] || isect1[1] < isect0[0])
+		return false;
 
 	return true;
 }
@@ -192,28 +226,29 @@ void main()
 
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
-	if (index_A < 2763) {
-		if (collide == true) {
-			colorBuffer_A[index_A].r = 1.0f;
-			colorBuffer_B[index_B].r = 1.0f;
-		} else {
-			colorBuffer_A[index_A].r = 0.0f;
-			colorBuffer_B[index_B].r = 0.0f;
-		}
-
-		//=======================DEBUG=========================================
-		// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
-		// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
-		// colorBuffer_A[index_A].b = sin(100.0f * u1.x);
-		// colorBuffer_A[index_A].a = sin(100.0f * u2.x);
-
-		// colorBuffer_B[index_A].r = sin(100.0f * u1.x);
-		// colorBuffer_B[index_A].g = sin(100.0f * u1.y);
-		// colorBuffer_B[index_A].b = sin(100.0f * u1.z);
-
-		// colorBuffer_B[index_A].r = positionBuffer_B[tri_B.x].x;
-		// colorBuffer_B[index_A].g = positionBuffer_B[tri_B.y].x;
-		// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
-		//=======================DEBUG=========================================
+	if (collide) {
+		colorBuffer_A[tri_A.x] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_A[tri_A.y] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_A[tri_A.z] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	} else {
+		colorBuffer_A[tri_A.x] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_A[tri_A.y] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_A[tri_A.z] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
+
+	// 	//========================DEBUG============================
+	// 	// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
+	// 	// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
+	// 	// colorBuffer_A[index_A].b = sin(100.0f * u1.x);
+	// 	// colorBuffer_A[index_A].a = sin(100.0f * u2.x);
+
+	// 	// colorBuffer_B[index_A].r = sin(100.0f * u1.x);
+	// 	// colorBuffer_B[index_A].g = sin(100.0f * u1.y);
+	// 	// colorBuffer_B[index_A].b = sin(100.0f * u1.z);
+
+	// 	// colorBuffer_B[index_A].r = positionBuffer_B[tri_B.x].x;
+	// 	// colorBuffer_B[index_A].g = positionBuffer_B[tri_B.y].x;
+	// 	// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
+	// 	//========================DEBUG============================
+	// }
 }

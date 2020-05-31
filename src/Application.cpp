@@ -12,10 +12,11 @@
 #include "Shape.h"
 #include "stb_image.h"
 
-#define EPSILON 0.001f
+#define EPSILON 0.0001f
 #define COMPUTE_DEBUG true
 
 static bool firstRun = true;
+static bool verticalMove = false;
 
 void getComputeGroupInfo()
 {
@@ -345,6 +346,8 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_C && action == GLFW_PRESS)
+		verticalMove = !verticalMove;
 }
 
 // Bind SSBO to compute program and dispatch work group
@@ -459,13 +462,13 @@ void Application::render()
 
 void Application::update()
 {
-	static bool stop = false;
-	// Update translation of bunny 2
-	if (!stop && abs(-2.0 + 3.0f * sinf(0.3f * (float)glfwGetTime()) - 5.0f) > 0.1f) {
-		uboCPUMEM.model_B =	glm::translate(glm::vec3(-3.0f + 4.0f * sinf(0.3f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+	// Update translation of mesh B
+	if (verticalMove) {
+		uboCPUMEM.model_B =	glm::translate(glm::vec3(0.9f, 2.0f * sinf(0.5f * (float)glfwGetTime()), -1.0f)) *
 							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 	} else {
-		// stop = true;
+		uboCPUMEM.model_B =	glm::translate(glm::vec3(-1.5f + 2.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 	}
 
 	// glm::mat4 const &localModel_B = uboCPUMEM.model_B;

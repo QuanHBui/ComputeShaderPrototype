@@ -8,7 +8,7 @@
  *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
  */
 
-#define pragma once
+#pragma once
 
 #ifndef P3_NARROW_PHASE_COLLISION_DETECTION_H
 #define P3_NARROW_PHASE_COLLISION_DETECTION_H
