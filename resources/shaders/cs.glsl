@@ -2,7 +2,9 @@
 #extension GL_ARB_compute_shader : require
 #extension GL_ARB_shader_storage_buffer_object : require
 
-layout(local_size_x = 1, local_size_y = 2) in;
+precision highp float;
+
+layout(local_size_x = 512, local_size_y = 2) in;
 
 layout(std140, binding = 0) uniform transform_matrices
 {
@@ -60,6 +62,16 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 	// Check for which 2 edges are intersecting the plane by looking at the
 	//  product of their vertices' signed distances.
 
+	//=================Debug=====================
+	// uint index_A = gl_GlobalInvocationID.x;
+	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	// colorBuffer_A[tri_A.x].r = prodDistVert0DistVert1 - 1.0f;
+	// colorBuffer_A[tri_A.x].g = prodDistVert0DistVert2 - 1.0f;
+	// colorBuffer_A[tri_A.x].b = distVert1 - 1.0f;
+	// colorBuffer_A[tri_A.x].a = projVert2 - 1.0f;
+	//=================Debug=====================
+
+
 	// Vert0 and Vert1 on the same side, look at edge Vert0...Vert2 and
 	//  edge Vert1...Vert2
 	if (prodDistVert0DistVert1 > 0.0f) {
@@ -107,6 +119,17 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distU1 = dot(N1, u1) + d1;
 	float distU2 = dot(N1, u2) + d1;
 
+
+	//=========================DEBUG============================
+	// uint index_A = gl_GlobalInvocationID.x;
+	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	// colorBuffer_A[tri_A.y].r = distU0;
+	// colorBuffer_A[tri_A.y].g = distU1;
+	// colorBuffer_A[tri_A.y].b = distU2;
+	// colorBuffer_A[tri_A.y].a = 1.0f;
+	//=========================DEBUG============================
+
+
 	// For coplanarity check later on. Using epsilon check because float precision
 	if (abs(distU0) < EPSILON) distU0 = 0.0f;
 	if (abs(distU1) < EPSILON) distU1 = 0.0f;
@@ -132,12 +155,14 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distV2 = dot(N2, v2) + d2;
 
 
-	//====================Debug========================
-	// colorBuffer_A[gl_GlobalInvocationID.x].r = distV0;
-	// colorBuffer_A[gl_GlobalInvocationID.x].g = distV1;
-	// colorBuffer_A[gl_GlobalInvocationID.x].b = distV2;
-	// colorBuffer_A[gl_GlobalInvocationID.x].a = 0.0f;
-	//====================Debug========================
+	//=========================DEBUG============================
+	// uint index_A = gl_GlobalInvocationID.x;
+	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	// colorBuffer_B[tri_A.x].r = distV0;
+	// colorBuffer_B[tri_A.x].g = distV1;
+	// colorBuffer_B[tri_A.x].b = distV2;
+	// colorBuffer_B[tri_A.x].a = 1.0f;
+	//=========================DEBUG============================
 
 
 	// For coplanarity check later on. Using epsilon check because float precision
@@ -176,12 +201,14 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	bool isCoplanar = false;
 
 
-	//=========================Debug============================
-	// colorBuffer_B[gl_GlobalInvocationID.x].r = prodDistV0DistV1;
-	// colorBuffer_B[gl_GlobalInvocationID.x].g = prodDistV0DistV2;
-	// colorBuffer_B[gl_GlobalInvocationID.x].b = prodDistU0DistU1;
-	// colorBuffer_B[gl_GlobalInvocationID.x].a = prodDistU0DistU2;
-	//=========================Debug============================
+	//=========================DEBUG============================
+	// uint index_A = gl_GlobalInvocationID.x;
+	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
+	// colorBuffer_B[tri_A.x].r = prodDistV0DistV1;
+	// colorBuffer_B[tri_A.x].g = prodDistV0DistV2;
+	// colorBuffer_B[tri_A.x].b = prodDistU0DistU1;
+	// colorBuffer_B[tri_A.x].a = prodDistU0DistU2;
+	//=========================DEBUG============================
 
 
 	// Compute intersection interval for triangle 1
@@ -212,6 +239,7 @@ void main()
 {
 	uint index_A = gl_GlobalInvocationID.x;
 	uint index_B = gl_LocalInvocationID.y;
+	index_B = 1;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
@@ -230,10 +258,19 @@ void main()
 		colorBuffer_A[tri_A.x] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.z] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+		colorBuffer_B[tri_B.x] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
+
 	} else {
 		colorBuffer_A[tri_A.x] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.z] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+		colorBuffer_B[tri_B.x] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_B[tri_B.y] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
+		colorBuffer_B[tri_B.z] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
 	}
 
 	// 	//========================DEBUG============================

@@ -115,7 +115,7 @@ void Application::printColorSSBO()
 	const glm::vec4 *localColorBuffer_A = &colorOutSSBO.colorBuffer_A[0];
 	const glm::vec4 *localColorBuffer_B = &colorOutSSBO.colorBuffer_B[0];
 
-	for (int i = 0; i < 1; ++i) {
+	for (int i = 0; i < 7; ++i) {
 		std::cout << "localColorBuffer_A: "	<< std::setprecision(5)
 											<< localColorBuffer_A[i].r << ", "
 											<< localColorBuffer_A[i].g << ", "
@@ -192,9 +192,9 @@ void Application::initGeom()
 	}
 
 	// Check for the size of the bunny mesh vertex buffer
-	printf("\nSize of bunny vertex buffer: %zd\nSize of bunny element buffer: %zd\n",
+	printf("\nSize of bunny position buffer: %zd\nSize of bunny element buffer: %zd\n",
 			meshContainer.at(0)->posBuf.size(), meshContainer.at(0)->eleBuf.size());
-	printf("\nSize of quad vertex buffer: %zd\nSize of quad element buffer: %zd\n\n",
+	printf("\nSize of quad position buffer: %zd\nSize of quad element buffer: %zd\n\n",
 			meshContainer.at(1)->posBuf.size(), meshContainer.at(1)->eleBuf.size());
 	fflush(stdout);
 
@@ -265,10 +265,10 @@ void Application::initSSBO()
 
 	// Prep and send data to GPU
 	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	uboCPUMEM.model_B =	glm::translate(glm::vec3(-3.0f, 0.75f, -1.0f)) *
+	uboCPUMEM.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
 						glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 
-	// Fill the buffers with data
+	// Fill the buffer with data
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
 
@@ -348,6 +348,10 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 		verticalMove = !verticalMove;
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (key == GLFW_KEY_Z && action == GLFW_RELEASE)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // Bind SSBO to compute program and dispatch work group
@@ -375,12 +379,13 @@ void Application::compute()
 	//===================================================================================
 
 	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
-	CHECKED_GL_CALL(glDispatchCompute(5522, 1, 1));
+	CHECKED_GL_CALL(glDispatchCompute(5522, 2, 1));
 
 	// Wait for compute shader to finish writing to ssbo before reading from ssbo
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	if (COMPUTE_DEBUG && frameCount) {
+	// if (true) {
 		// Copy data back to CPU MEM
 		GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 		memcpy(&colorOutSSBO, dataGPUPtr, sizeof(colorOutSSBO));
@@ -401,6 +406,7 @@ void Application::compute()
 	CHECKED_GL_CALL(glUseProgram(0));
 
 	if (COMPUTE_DEBUG && firstRun) {
+	// if (true) {
 		std::cout	<< "Color SSBO AFTER compute dispatch call:\n"
 					<< "-----------------------------------------------\n";
 		printColorSSBO();
@@ -470,13 +476,6 @@ void Application::update()
 		uboCPUMEM.model_B =	glm::translate(glm::vec3(-1.5f + 2.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
 							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
 	}
-
-	// glm::mat4 const &localModel_B = uboCPUMEM.model_B;
-	// printf("model_B:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
-	// 	localModel_B[0][0], localModel_B[1][0], localModel_B[2][0], localModel_B[3][0],
-	// 	localModel_B[0][1], localModel_B[1][1], localModel_B[2][1], localModel_B[3][1],
-	// 	localModel_B[0][2], localModel_B[1][2], localModel_B[2][2], localModel_B[3][2],
-	// 	localModel_B[0][3], localModel_B[1][3], localModel_B[2][3], localModel_B[3][3]);
 
 	// Update UBO data
 	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
