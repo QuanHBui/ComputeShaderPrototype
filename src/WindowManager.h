@@ -68,7 +68,9 @@ private:
 	// This is a common trick or `idiom` that makes it possible
 	static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 	static void mouse_callback(GLFWwindow *window, int button, int action, int mods);
+	static void cursor_callback(GLFWwindow *window, double x_pos, double y_pos);
 	static void resize_callback(GLFWwindow *window, int in_width, int in_height);
+	static void scroll_callback(GLFWwindow *window, double in_deltaX, double in_deltaY);
 };
 
 #endif

@@ -35,13 +35,15 @@ int main(int argc, char **argv)
 
 	// Must be called strictly in this order
 	application->initGeom();
-	application->initSSBO();
+	application->initBuffers();
 	application->initComputeProgram();
 	application->initRenderProgram();
 
 	// application->compute();
 
 	double lastTime = glfwGetTime();
+	double lastFrameTime = lastTime;
+	double dt = 0.0;
  	int numFrames = 0;
 
 	// Render and computeloop
@@ -52,6 +54,8 @@ int main(int argc, char **argv)
 
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
+		dt = currentTime - lastFrameTime;
+		lastFrameTime = currentTime;
 		++numFrames;
 		// If last prinf() was more than 3 sec ago
 		if (currentTime - lastTime >= 3.0) {
@@ -61,7 +65,7 @@ int main(int argc, char **argv)
 			lastTime += 3.0;
 		}
 
-		application->update();
+		application->update((float)dt);
 
 		// Swap front and back buffers.
 		glfwSwapBuffers(windowManager->getHandle());

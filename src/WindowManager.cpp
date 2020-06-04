@@ -68,9 +68,14 @@ bool WindowManager::init(int const width, int const height)
 	// Set vsync
 	glfwSwapInterval(1);
 
+	// Hide the cursor and capture it
+	glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(windowHandle, cursor_callback);		// For cursor position change
+
 	glfwSetKeyCallback(windowHandle, key_callback);
-	glfwSetMouseButtonCallback(windowHandle, mouse_callback);
+	glfwSetMouseButtonCallback(windowHandle, mouse_callback);		// For mouse buttons
 	glfwSetFramebufferSizeCallback(windowHandle, resize_callback);
+	glfwSetScrollCallback(windowHandle, scroll_callback);
 
 	return true;
 }
@@ -107,10 +112,26 @@ void WindowManager::mouse_callback(GLFWwindow * window, int button, int action, 
 	}
 }
 
+void WindowManager::cursor_callback(GLFWwindow * window, double x_pos, double y_pos)
+{
+	if (instance && instance->callbacks)
+	{
+		instance->callbacks->cursorCallback(window, x_pos, y_pos);
+	}
+}
+
 void WindowManager::resize_callback(GLFWwindow * window, int in_width, int in_height)
 {
 	if (instance && instance->callbacks)
 	{
 		instance->callbacks->resizeCallback(window, in_width, in_height);
+	}
+}
+
+void WindowManager::scroll_callback(GLFWwindow * window, double in_deltaX, double in_deltaY)
+{
+	if (instance && instance->callbacks)
+	{
+		instance->callbacks->scrollCallback(window, in_deltaX, in_deltaY);
 	}
 }

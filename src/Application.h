@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "Camera.h"
 #include "Program.h"
 #include "Shape.h"
 #include "WindowManager.h"
@@ -30,6 +31,15 @@ private:
 	WindowManager *windowManager = nullptr;
 	GLuint	VAO, computeUBOGPU_id, ssboGPU_id[2], renderUBOGPU_id,
 			computeProgram_id;
+
+	Camera flyCamera{	glm::vec3{0.f, 0.f, 0.f},
+						glm::vec3{0.f, 0.f, -5.f},
+						glm::vec3{0.f, 1.f, 0.f},
+						(float)(640 / 480)};
+	double lastCursorPosX = 0.0, lastCursorPosY = 0.0;
+	float cursorPosDeltaX = 0.0f, cursorPosDeltaY = 0.0f;
+	bool firstCursorFocus = true;
+
 	std::unique_ptr<Program> renderProgramPtr = nullptr;
 	std::vector<std::shared_ptr<Shape>> meshContainer;
 
@@ -63,7 +73,7 @@ public:
 	~Application();
 
 	void initGeom();
-	void initSSBO();
+	void initBuffers();
 	void initRenderProgram();
 	void initComputeProgram();
 
@@ -73,11 +83,11 @@ public:
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
 	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
 	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
-	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override {};
+	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
 
 	void compute();
 	void render();
-	void update();
+	void update(float);
 };
 
-#endif // APPLICATION_H
+#endif // APPLICATION_H6

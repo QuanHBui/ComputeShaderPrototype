@@ -4,10 +4,11 @@
 
 precision highp float;
 
-layout(local_size_x = 512, local_size_y = 2) in;
+layout(local_size_x = 1, local_size_y = 2) in;
 
 layout(std140, binding = 0) uniform transform_matrices
 {
+	mat4 view;
 	mat4 model_A;
 	mat4 model_B;
 };
@@ -98,7 +99,7 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 	}
 	// Triangle is coplanar to the plane.
 	else {
-		isCoplanar = true;
+		isCoplanar = false;
 	}
 }
 
@@ -239,7 +240,6 @@ void main()
 {
 	uint index_A = gl_GlobalInvocationID.x;
 	uint index_B = gl_LocalInvocationID.y;
-	index_B = 1;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
@@ -272,6 +272,14 @@ void main()
 		colorBuffer_B[tri_B.y] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_B[tri_B.z] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
 	}
+
+	// colorBuffer_A[tri_A.x] = vec4(view[0][0], view[1][0], view[2][0], view[3][0]);
+	// colorBuffer_A[tri_A.y] = vec4(view[0][1], view[1][1], view[2][1], view[3][1]);
+	// colorBuffer_A[tri_A.z] = vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
+
+	// colorBuffer_B[tri_B.x] = vec4(view[0][3], view[1][3], view[2][3], view[3][3]);
+	// colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
+	// colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 
 	// 	//========================DEBUG============================
 	// 	// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
