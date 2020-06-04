@@ -265,20 +265,21 @@ void Application::initBuffers()
 	// Allocate an UBO
 	glGenBuffers(1, &computeUBOGPU_id);
 	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
-	glBufferData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), nullptr, GL_STREAM_READ);
+	glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::mat4), nullptr, GL_STREAM_READ);
 
 	// Prep and send data to GPU
 	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
 	uboCPUMEM.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
-						glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
+						glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	uboCPUMEM.view = flyCamera.getViewMatrix();
 	uboCPUMEM.projection = flyCamera.getProjectionMatrix();
 
 	// Fill the buffer with data
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
-	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.projection));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
+	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
+	glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -537,11 +538,14 @@ void Application::update(float dt)
 	// Update translation of mesh B
 	if (verticalMove) {
 		uboCPUMEM.model_B =	glm::translate(glm::vec3(0.9f, 2.0f * sinf(0.5f * (float)glfwGetTime()), -1.0f)) *
-							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
+							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	} else {
-		uboCPUMEM.model_B =	glm::translate(glm::vec3(-1.5f + 2.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
-							glm::rotate(glm::radians(0.0f), glm::vec3(1.0f));
+		uboCPUMEM.model_B =	glm::translate(glm::vec3(-1.5f + 3.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	}
+
+	// uboCPUMEM.model_A = glm::mat4(1.0f);
+	// uboCPUMEM.model_B = glm::mat4(1.0f);
 
 	// Check for camera movement flag to update view matrix
 	if (moveForward) {
@@ -557,14 +561,15 @@ void Application::update(float dt)
 		flyCamera.movePosition(flyCamera.RIGHT, dt);
 	}
 
-	// Both view matrix and project matrix are controlled by the camera.
-	uboCPUMEM.view = flyCamera.getViewMatrix();
+	// Both view and project matrices are controlled by the camera.
 	uboCPUMEM.projection = flyCamera.getProjectionMatrix();
+	uboCPUMEM.view = flyCamera.getViewMatrix();
 
 	// Update UBO data
 	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
-	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.projection));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
+	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
+	glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

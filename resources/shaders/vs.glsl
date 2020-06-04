@@ -12,8 +12,7 @@ layout(std140, binding = 0) uniform transform_matrices
 
 uniform mat4 model;
 
-out VS_OUT
-{
+out VS_OUT {
 	vec3 fragNor;
 	vec4 fragColor;
 } vs_out;

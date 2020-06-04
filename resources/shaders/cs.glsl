@@ -8,6 +8,7 @@ layout(local_size_x = 1, local_size_y = 2) in;
 
 layout(std140, binding = 0) uniform transform_matrices
 {
+	mat4 projection;
 	mat4 view;
 	mat4 model_A;
 	mat4 model_B;
@@ -21,7 +22,7 @@ layout(std430, binding = 1) readonly buffer ssbo_data
 	uvec4 elementBuffer_B[5522];
 };
 
-layout(std430, binding = 2) writeonly buffer ssbo_color_out
+layout(std430, binding = 2) volatile buffer ssbo_color_out
 {
 	vec4 colorBuffer_A[2763];
 	vec4 colorBuffer_B[2763];
@@ -62,6 +63,7 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 {
 	// Check for which 2 edges are intersecting the plane by looking at the
 	//  product of their vertices' signed distances.
+
 
 	//=================Debug=====================
 	// uint index_A = gl_GlobalInvocationID.x;
@@ -108,12 +110,12 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 								const vec3 u0, const vec3 u1, const vec3 u2)
 {
 	// 2 edges originating from v0 of the first triangle
-	vec3 p1 = v1 - v0;
-	vec3 p2 = v2 - v0;
+	vec3 p1 = v0 - v1;
+	vec3 p2 = v2 - v1;
 
 	// Compute plane equation of first triangle
 	vec3 N1 = cross(p1, p2);
-	float d1 = -dot(N1, v0);
+	float d1 = -dot(N1, v1);
 
 	// Signed distances of u0, u1, and u2 to plane of first triangle
 	float distU0 = dot(N1, u0) + d1;
@@ -143,12 +145,12 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 		return false;
 
 	// 2 edges originating from u0 of the second triangle
-	vec3 q1 = u1 - u0;
-	vec3 q2 = u2 - u0;
+	vec3 q1 = u0 - u1;
+	vec3 q2 = u2 - u1;
 
 	// Compute plane equation of second triangle
 	vec3 N2 = cross(q1, q2);
-	float d2 = -dot(N2, u0);
+	float d2 = -dot(N2, u1);
 
 	// Signed distances of v0, v1, and v2 to plane of second triangle
 	float distV0 = dot(N2, v0) + d2;
@@ -238,19 +240,19 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 void main()
 {
-	uint index_A = gl_GlobalInvocationID.x;
+	uint index_A = gl_WorkGroupID.x;
 	uint index_B = gl_LocalInvocationID.y;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
 
-	vec3 v0 = (model_A * positionBuffer_A[tri_A.x]).xyz;
-	vec3 v1 = (model_A * positionBuffer_A[tri_A.y]).xyz;
-	vec3 v2 = (model_A * positionBuffer_A[tri_A.z]).xyz;
+	vec3 v0 = (projection * view * model_A * positionBuffer_A[tri_A.x]).xyz;
+	vec3 v1 = (projection * view * model_A * positionBuffer_A[tri_A.y]).xyz;
+	vec3 v2 = (projection * view * model_A * positionBuffer_A[tri_A.z]).xyz;
 
-	vec3 u0 = (model_B * positionBuffer_B[tri_B.x]).xyz;
-	vec3 u1 = (model_B * positionBuffer_B[tri_B.y]).xyz;
-	vec3 u2 = (model_B * positionBuffer_B[tri_B.z]).xyz;
+	vec3 u0 = (projection * view * model_B * positionBuffer_B[tri_B.x]).xyz;
+	vec3 u1 = (projection * view * model_B * positionBuffer_B[tri_B.y]).xyz;
+	vec3 u2 = (projection * view * model_B * positionBuffer_B[tri_B.z]).xyz;
 
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
@@ -262,7 +264,6 @@ void main()
 		colorBuffer_B[tri_B.x] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
-
 	} else {
 		colorBuffer_A[tri_A.x] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -281,6 +282,7 @@ void main()
 	// colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 	// colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 
+
 	// 	//========================DEBUG============================
 	// 	// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
 	// 	// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
@@ -296,4 +298,5 @@ void main()
 	// 	// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
 	// 	//========================DEBUG============================
 	// }
+
 }
