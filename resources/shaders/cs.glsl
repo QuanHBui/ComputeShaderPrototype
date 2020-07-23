@@ -6,6 +6,11 @@ precision highp float;
 
 layout(local_size_x = 1, local_size_y = 2) in;
 
+/**
+ * @reference: 	Tomas Moller, "A Fast Triangle-Triangle Intersection Test"
+ *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
+ */
+
 layout(std140, binding = 0) uniform transform_matrices
 {
 	mat4 projection;
@@ -240,22 +245,25 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 void main()
 {
-	uint index_A = gl_WorkGroupID.x;
+	uint index_A = gl_WorkGroupID.x;		// The way I set this up gl_GlobalInvocationID.x = gl_WorkGroupID.x
 	uint index_B = gl_LocalInvocationID.y;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	uvec3 tri_B = elementBuffer_B[index_B].xyz;
 
-	vec3 v0 = (projection * view * model_A * positionBuffer_A[tri_A.x]).xyz;
-	vec3 v1 = (projection * view * model_A * positionBuffer_A[tri_A.y]).xyz;
-	vec3 v2 = (projection * view * model_A * positionBuffer_A[tri_A.z]).xyz;
+	// Prep the vertices, mapping them to world space
+	vec3 v0 = (model_A * positionBuffer_A[tri_A.x]).xyz;
+	vec3 v1 = (model_A * positionBuffer_A[tri_A.y]).xyz;
+	vec3 v2 = (model_A * positionBuffer_A[tri_A.z]).xyz;
 
-	vec3 u0 = (projection * view * model_B * positionBuffer_B[tri_B.x]).xyz;
-	vec3 u1 = (projection * view * model_B * positionBuffer_B[tri_B.y]).xyz;
-	vec3 u2 = (projection * view * model_B * positionBuffer_B[tri_B.z]).xyz;
+	vec3 u0 = (model_B * positionBuffer_B[tri_B.x]).xyz;
+	vec3 u1 = (model_B * positionBuffer_B[tri_B.y]).xyz;
+	vec3 u2 = (model_B * positionBuffer_B[tri_B.z]).xyz;
 
 	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
+	// If collide load the color buffer A, the stanford bunny, with red color
+	// Ignore colorBuffer B values, just for debugging
 	if (collide) {
 		colorBuffer_A[tri_A.x] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
