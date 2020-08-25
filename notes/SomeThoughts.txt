@@ -1,0 +1,57 @@
+// Some thoughts after reading the code from OpenGL-Compute git repos
+
+/**
+(1) Do we actually need 2 ubos, 1 for vertex shader and 1 for compute shader?
+(2) Beware of the memory layout, there's a hunch that the padding might be inconsistent?
+(3) If a color of a triangle already set, meaning 3 vertices have the color red, there is a chance that one
+	of the vertex will have its color overwritten because it also a part of other triangles, might be 6 in
+	total?
+(4) Ok, but why is their a y offset though?
+*/
+
+//============================== Psuedocode of Grid Generation ===================================
+
+//=== 1 PASS
+colorMask(GBA);
+depthTest(less);
+renderVertices();
+
+//===2 PASS
+colorMask(RBA);
+depthTest(greater);
+stencilTest(greater, 1);
+stencilFunction(increment);
+clear(stencilBuffer);
+renderVertices();
+
+//=== 3 PASS
+colorMask(RGA);
+clear(stencilBuffer);
+renderVertices();
+
+//=== 4 PASS
+colorMask(RGB);
+clear(stencilBuffer);
+renderVertices();
+
+//======================== Psuedocode of Collision Detection and Reaction =========================
+
+gridCoordinate = calculateGridCoordinate(iParticlePosition);
+
+FOREACH of the 27 voxels
+	jIndex = tex2D(gridTexture, gridCoordinate);
+
+		FOREACH RGBA channel C of jIndex
+			jParticlePosition = tex2D(positionTexture, index2TexCrd(C));
+			force += collision(iParticlePosition, jParticlePosition);
+		END FOR
+END FOR
+
+//======================= Psuedocode for the Computation of Momenta ===============================
+
+FOR all particles belonging to a rigid body
+	particleIndex = particleStartIndex + i;
+	particleTexCoord = particleIndex2TexCoord(particleIndex);
+	linearMomentum += tex2D(forceOnParticle, particleTexCrd);
+	angularMomentum += cross(tex2D(relativePosition, particleTexCrd), tex2D(forceOnParticle, particleTexCrd));
+END FOR

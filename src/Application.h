@@ -14,7 +14,9 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+
 #include <memory>
 #include <vector>
 
@@ -28,56 +30,59 @@ void getComputeGroupInfo();
 class Application : public EventCallbacks
 {
 private:
-	WindowManager *windowManager = nullptr;
-	GLuint	VAO, computeUBOGPU_id, ssboGPU_id[2], renderUBOGPU_id,
-			computeProgram_id;
+	WindowManager *mpWindowManager = nullptr;
+	GLuint mVao, mUboGpuID, mSsboGpuID[2], mComputeProgramID;
 
-	Camera flyCamera{	glm::vec3{0.f, 0.f, 0.f},
+	Camera mFlyCamera{
+						glm::vec3{0.f, 0.f, 0.f},
 						glm::vec3{0.f, 0.f, -5.f},
 						glm::vec3{0.f, 1.f, 0.f},
-						(float)(640 / 480)};
-	double lastCursorPosX = 0.0, lastCursorPosY = 0.0;
-	float cursorPosDeltaX = 0.0f, cursorPosDeltaY = 0.0f;
-	bool firstCursorFocus = true;
+						(float)(640 / 480)
+					};
+	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;
+	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
+	bool mIsFirstCursorFocus = true;
 
-	std::unique_ptr<Program> renderProgramPtr = nullptr;
-	std::vector<std::shared_ptr<Shape>> meshContainer;
+	std::unique_ptr<Program> mpRenderProgram = nullptr;
+	std::vector<std::shared_ptr<Shape>> mMeshContainer;
 
-	struct SSBO
+	struct Ssbo
 	{
 		glm::vec4 positionBuffer_A[2763];
 		glm::vec4 positionBuffer_B[2763];
 		glm::uvec4 elementBuffer_A[5522];
 		glm::uvec4 elementBuffer_B[5522];
-	} ssboCPUMEM;
+	} mSsboCpuMem;
 
-	struct UBO
+	struct Ubo
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
 		glm::mat4 model_A;
 		glm::mat4 model_B;
-	} uboCPUMEM;
+	} mUboCpuMem;
 
-	struct ColorOutSSBO
+	struct ColorOutSsbo
 	{
 		glm::vec4 colorBuffer_A[2763];
 		glm::vec4 colorBuffer_B[2763];
-	} colorOutSSBO;
+	} mColorOutSsbo;
 
-	void printSSBO();
-	void printColorSSBO();
-	void interpretComputedSSBO();
+	void printSsbo();
+	void printColorSsbo();
+	void interpretComputedSsbo();
 
 public:
 	~Application();
 
+	void init();
 	void initGeom();
-	void initBuffers();
+	void initCpuBuffers();
+	void initGpuBuffers();
 	void initRenderProgram();
 	void initComputeProgram();
 
-	void setWindowManager(WindowManager *i_windowManager) { windowManager = i_windowManager; }
+	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
@@ -85,9 +90,14 @@ public:
 	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
 	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
 
-	void compute();
+	void computeOnGpu();
+	void computeOnCpu();
+
 	void render();
+
 	void update(float);
+	void updateCpuBuffers(float);
+	void updateGpuBuffers();
 };
 
-#endif // APPLICATION_H6
+#endif // APPLICATION_H

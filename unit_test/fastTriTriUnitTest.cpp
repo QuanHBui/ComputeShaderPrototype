@@ -5,6 +5,7 @@
  * @version: 05/4/2020
  */
 
+#include <cstdio>
 #include <glm/vec3.hpp>
 
 #include "P3NarrowPhaseCollisionDetection.h"

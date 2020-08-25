@@ -1,6 +1,5 @@
 /**
- * The goal is to implement this on the gpu, specifically the compute shader
- *
+ * The goal is to implement this on the compute shader
  */
 
 #include "P3NarrowPhaseCollisionDetection.h"
@@ -9,8 +8,8 @@
 
 // We are going old school
 #define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\
-			isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
-			isectEnd = projVert0 + (projVert2 - projVert0) * distVert0/(distVert0 - distVert2);
+			  isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
+			  isectEnd = projVert0 + (projVert2 - projVert0) * distVert0/(distVert0 - distVert2);
 
 // Test for intersection between coplanar triangles
 bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
@@ -21,8 +20,8 @@ bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 cons
 }
 
 // Fast test for general 3D tri tri intersection. Does not return intersection segment
-bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
-								glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+bool fastTriTriIntersect3DTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
+							   glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	// 2 edges originating from v0 of the first triangle
 	glm::vec3 p1 = v1 - v0;
@@ -41,6 +40,7 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	if (glm::abs(distU0) < EPSILON) distU0 = 0.0f;
 	if (glm::abs(distU1) < EPSILON) distU1 = 0.0f;
 	if (glm::abs(distU2) < EPSILON) distU2 = 0.0f;
+
 	// If same sign and non-zero, no intersection. Early rejection
 	float prodDistU0DistU1 = distU0 * distU1;
 	float prodDistU0DistU2 = distU0 * distU2;
@@ -64,6 +64,7 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	if (glm::abs(distV0) < EPSILON) distV0 = 0.0f;
 	if (glm::abs(distV1) < EPSILON) distV1 = 0.0f;
 	if (glm::abs(distV2) < EPSILON) distV2 = 0.0f;
+
 	// If same sign and non-zero, no intersection. Early rejection
 	float prodDistV0DistV1 = distV0 * distV1;
 	float prodDistV0DistV2 = distV0 * distV2;
@@ -96,13 +97,13 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 
 	// Compute intersection interval for triangle 1
 	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
-							prodDistV0DistV1, prodDistV0DistV2,
-							isect0[0], isect0[1], isCoplanar);
+							 prodDistV0DistV1, prodDistV0DistV2,
+							 isect0[0], isect0[1], isCoplanar);
 
 	// Compute intersection interval for triangle 2
 	computeIntersectInterval(projU0, projU1, projU2, distU0, distU1, distU2,
-							prodDistU0DistU1, prodDistU0DistU2,
-							isect1[0], isect1[1], isCoplanar);
+							 prodDistU0DistU1, prodDistU0DistU2,
+							 isect1[0], isect1[1], isCoplanar);
 
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
@@ -112,10 +113,10 @@ bool fastTriTriIntersect3DTest(	glm::vec3 const &v0, glm::vec3 const &v1, glm::v
 	return true;
 }
 
-void computeIntersectInterval(	float projVert0, float projVert1, float projVert2,
-								float distVert0, float distVert1, float distVert2,
-								float prodDistVert0DistVert1, float prodDistVert0DistVert2,
-								float &isectStart, float &isectEnd, bool &isCoplanar)
+void computeIntersectInterval(float projVert0, float projVert1, float projVert2,
+							  float distVert0, float distVert1, float distVert2,
+							  float prodDistVert0DistVert1, float prodDistVert0DistVert2,
+							  float &isectStart, float &isectEnd, bool &isCoplanar)
 {
 	// Check for which 2 edges are intersecting the plane by looking at the
 	//  product of their vertices' signed distances.
@@ -158,8 +159,8 @@ bool edgeEdgeTest(glm::vec3 const &v0, glm::vec3 const &u0, glm::vec3 const &u1)
 	return false;
 }
 
-bool edgeTriTest(	glm::vec3 const &v0, glm::vec3 const &v1,
-					glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+bool edgeTriTest(glm::vec3 const &v0, glm::vec3 const &v1,
+				 glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	return false;
 }

@@ -21,6 +21,8 @@
 
 #define UNUSED(x) static_cast<void>(x)
 
+#define GPU_COMPUTE false
+
 int main(int argc, char **argv)
 {
 	UNUSED(argv);	// Disable command line argument
@@ -33,23 +35,25 @@ int main(int argc, char **argv)
 
 	application->setWindowManager(windowManager);
 
-	// Must be called strictly in this order
-	application->initGeom();
-	application->initBuffers();
-	application->initComputeProgram();
-	application->initRenderProgram();
-
-	// application->compute();
+	application->init();
 
 	double lastTime = glfwGetTime();
 	double lastFrameTime = lastTime;
 	double dt = 0.0;
- 	int numFrames = 0;
+	int numFrames = 0;
 
 	// Render and computeloop
 	while (!glfwWindowShouldClose(windowManager->getHandle()))
 	{
-		application->compute();
+		if (GPU_COMPUTE)
+		{
+			application->computeOnGpu();
+		}
+		else
+		{
+			application->computeOnCpu();
+		}
+
 		application->render();
 
 		// Measure fps and frame time
@@ -58,19 +62,20 @@ int main(int argc, char **argv)
 		lastFrameTime = currentTime;
 		++numFrames;
 		// If last prinf() was more than 3 sec ago
-		if (currentTime - lastTime >= 3.0) {
+		if (currentTime - lastTime >= 3.0)
+		{
 			// printf and reset timer
 			printf("FPS: %d | Frame time: %f\n", numFrames/3, 3.0f/(float)numFrames);
 			numFrames = 0;
 			lastTime += 3.0;
 		}
 
-		application->update((float)dt);
-
 		// Swap front and back buffers.
 		glfwSwapBuffers(windowManager->getHandle());
 		// Poll for and process events.
 		glfwPollEvents();
+
+		application->update((float)dt);
 	}
 
 	// Destroy application before deleting the current OpenGL context

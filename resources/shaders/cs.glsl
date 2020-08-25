@@ -70,14 +70,14 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 	//  product of their vertices' signed distances.
 
 
-	//=================Debug=====================
+	//================= DEBUG =====================
 	// uint index_A = gl_GlobalInvocationID.x;
 	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	// colorBuffer_A[tri_A.x].r = prodDistVert0DistVert1 - 1.0f;
 	// colorBuffer_A[tri_A.x].g = prodDistVert0DistVert2 - 1.0f;
 	// colorBuffer_A[tri_A.x].b = distVert1 - 1.0f;
 	// colorBuffer_A[tri_A.x].a = projVert2 - 1.0f;
-	//=================Debug=====================
+	//================= DEBUG =====================
 
 
 	// Vert0 and Vert1 on the same side, look at edge Vert0...Vert2 and
@@ -111,10 +111,10 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 }
 
 // Fast test for general 3D tri tri intersection. Does not return intersection segment
-bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
-								const vec3 u0, const vec3 u1, const vec3 u2)
+bool fastTriTriIntersect3DTest(const vec3 v0, const vec3 v1, const vec3 v2,
+							   const vec3 u0, const vec3 u1, const vec3 u2)
 {
-	// 2 edges originating from v0 of the first triangle
+	// 2 edges originating from v1 of the first triangle
 	vec3 p1 = v0 - v1;
 	vec3 p2 = v2 - v1;
 
@@ -128,14 +128,14 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distU2 = dot(N1, u2) + d1;
 
 
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 	// uint index_A = gl_GlobalInvocationID.x;
 	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	// colorBuffer_A[tri_A.y].r = distU0;
 	// colorBuffer_A[tri_A.y].g = distU1;
 	// colorBuffer_A[tri_A.y].b = distU2;
 	// colorBuffer_A[tri_A.y].a = 1.0f;
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 
 
 	// For coplanarity check later on. Using epsilon check because float precision
@@ -149,7 +149,7 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	if (prodDistU0DistU1 > 0.0f && prodDistU0DistU2 > 0.0f)
 		return false;
 
-	// 2 edges originating from u0 of the second triangle
+	// 2 edges originating from u1 of the second triangle
 	vec3 q1 = u0 - u1;
 	vec3 q2 = u2 - u1;
 
@@ -163,14 +163,14 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	float distV2 = dot(N2, v2) + d2;
 
 
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 	// uint index_A = gl_GlobalInvocationID.x;
 	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	// colorBuffer_B[tri_A.x].r = distV0;
 	// colorBuffer_B[tri_A.x].g = distV1;
 	// colorBuffer_B[tri_A.x].b = distV2;
 	// colorBuffer_B[tri_A.x].a = 1.0f;
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 
 
 	// For coplanarity check later on. Using epsilon check because float precision
@@ -209,25 +209,25 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 	bool isCoplanar = false;
 
 
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 	// uint index_A = gl_GlobalInvocationID.x;
 	// uvec3 tri_A = elementBuffer_A[index_A].xyz;
 	// colorBuffer_B[tri_A.x].r = prodDistV0DistV1;
 	// colorBuffer_B[tri_A.x].g = prodDistV0DistV2;
 	// colorBuffer_B[tri_A.x].b = prodDistU0DistU1;
 	// colorBuffer_B[tri_A.x].a = prodDistU0DistU2;
-	//=========================DEBUG============================
+	//========================= DEBUG ============================
 
 
 	// Compute intersection interval for triangle 1
 	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
-							prodDistV0DistV1, prodDistV0DistV2,
-							isect0[0], isect0[1], isCoplanar);
+							 prodDistV0DistV1, prodDistV0DistV2,
+							 isect0[0], isect0[1], isCoplanar);
 
 	// Compute intersection interval for triangle 2
 	computeIntersectInterval(projU0, projU1, projU2, distU0, distU1, distU2,
-							prodDistU0DistU1, prodDistU0DistU2,
-							isect1[0], isect1[1], isCoplanar);
+							 prodDistU0DistU1, prodDistU0DistU2,
+							 isect1[0], isect1[1], isCoplanar);
 
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
@@ -245,7 +245,7 @@ bool fastTriTriIntersect3DTest(	const vec3 v0, const vec3 v1, const vec3 v2,
 
 void main()
 {
-	uint index_A = gl_WorkGroupID.x;		// The way I set this up gl_GlobalInvocationID.x = gl_WorkGroupID.x
+	uint index_A = gl_GlobalInvocationID.x;		// The way I set this up gl_GlobalInvocationID.x = gl_WorkGroupID.x
 	uint index_B = gl_LocalInvocationID.y;
 
 	uvec3 tri_A = elementBuffer_A[index_A].xyz;
@@ -260,11 +260,12 @@ void main()
 	vec3 u1 = (model_B * positionBuffer_B[tri_B.y]).xyz;
 	vec3 u2 = (model_B * positionBuffer_B[tri_B.z]).xyz;
 
-	bool collide = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
+	bool isColliding = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
 
 	// If collide load the color buffer A, the stanford bunny, with red color
 	// Ignore colorBuffer B values, just for debugging
-	if (collide) {
+	if (isColliding)
+	{
 		colorBuffer_A[tri_A.x] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.z] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -272,7 +273,9 @@ void main()
 		colorBuffer_B[tri_B.x] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
-	} else {
+	}
+	else
+	{
 		colorBuffer_A[tri_A.x] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.y] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		colorBuffer_A[tri_A.z] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -282,29 +285,19 @@ void main()
 		colorBuffer_B[tri_B.z] = vec4(2.0f, 0.0f, 0.0f, 1.0f);
 	}
 
-	// colorBuffer_A[tri_A.x] = vec4(view[0][0], view[1][0], view[2][0], view[3][0]);
-	// colorBuffer_A[tri_A.y] = vec4(view[0][1], view[1][1], view[2][1], view[3][1]);
-	// colorBuffer_A[tri_A.z] = vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
+	//======================== DEBUG ============================
+	// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
+	// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
+	// colorBuffer_A[index_A].b = sin(100.0f * u1.x);
+	// colorBuffer_A[index_A].a = sin(100.0f * u2.x);
 
-	// colorBuffer_B[tri_B.x] = vec4(view[0][3], view[1][3], view[2][3], view[3][3]);
-	// colorBuffer_B[tri_B.y] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
-	// colorBuffer_B[tri_B.z] = vec4(3.0f, 0.0f, 0.0f, 1.0f);
+	// colorBuffer_B[index_A].r = sin(100.0f * u1.x);
+	// colorBuffer_B[index_A].g = sin(100.0f * u1.y);
+	// colorBuffer_B[index_A].b = sin(100.0f * u1.z);
 
-
-	// 	//========================DEBUG============================
-	// 	// colorBuffer_A[index_A].r = sin(100.0f * u0.x);
-	// 	// colorBuffer_A[index_A].g = sin(100.0f * u0.x);
-	// 	// colorBuffer_A[index_A].b = sin(100.0f * u1.x);
-	// 	// colorBuffer_A[index_A].a = sin(100.0f * u2.x);
-
-	// 	// colorBuffer_B[index_A].r = sin(100.0f * u1.x);
-	// 	// colorBuffer_B[index_A].g = sin(100.0f * u1.y);
-	// 	// colorBuffer_B[index_A].b = sin(100.0f * u1.z);
-
-	// 	// colorBuffer_B[index_A].r = positionBuffer_B[tri_B.x].x;
-	// 	// colorBuffer_B[index_A].g = positionBuffer_B[tri_B.y].x;
-	// 	// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
-	// 	//========================DEBUG============================
+	// colorBuffer_B[index_A].r = positionBuffer_B[tri_B.x].x;
+	// colorBuffer_B[index_A].g = positionBuffer_B[tri_B.y].x;
+	// colorBuffer_B[index_A].b = positionBuffer_B[tri_B.z].x;
+	//======================== DEBUG ============================
 	// }
-
 }

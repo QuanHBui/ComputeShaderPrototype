@@ -9,11 +9,12 @@
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
 #include "GLSL.h"
+#include "P3NarrowPhaseCollisionDetection.h"
 #include "Shape.h"
 #include "stb_image.h"
 
 #define EPSILON 0.0001f
-#define COMPUTE_DEBUG true
+#define COMPUTE_DEBUG false
 
 static bool firstRun = true;
 static bool verticalMove = false;
@@ -30,7 +31,7 @@ void getComputeGroupInfo()
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
 
-	printf("max global (total) work group counts x:%i y:%i z:%i\n",
+	printf("Max global (total) work group counts x:%i y:%i z:%i\n",
 		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
 
 	GLint work_grp_size[3];
@@ -39,44 +40,29 @@ void getComputeGroupInfo()
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
 
-	printf("max local (in one shader) work group size x:%i y:%i z:%i \n",
+	printf("Max local (in one shader) work group size x:%i y:%i z:%i \n",
 		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
 
 	GLint work_grp_inv;
 
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	printf("max local work group invocations %i\n", work_grp_inv);
+	printf("Max local work group invocations %i\n", work_grp_inv);
 
 	GLint max_shader_storage_buffer_bindings;
 
 	glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &max_shader_storage_buffer_bindings);
-	printf("max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
+	printf("Max shader storage buffer bindings %i\n", max_shader_storage_buffer_bindings);
 }
 
-Application::~Application()
+void Application::printSsbo()
 {
-	std::cout << "\nApplication is safely destroyed.\n";
-	windowManager = nullptr;
+	const glm::vec4 *positionBuffer_A = &mSsboCpuMem.positionBuffer_A[0];
+	const glm::vec4 *positionBuffer_B = &mSsboCpuMem.positionBuffer_B[0];
+	const glm::uvec4 *elementBuffer_A = &mSsboCpuMem.elementBuffer_A[0];
+	const glm::uvec4 *elementBuffer_B = &mSsboCpuMem.elementBuffer_B[0];
 
-	if (ssboGPU_id)
-		CHECKED_GL_CALL(glDeleteBuffers(2, ssboGPU_id));
-	if (computeUBOGPU_id)
-		CHECKED_GL_CALL(glDeleteBuffers(1, &computeUBOGPU_id));
-	if (renderUBOGPU_id)
-		CHECKED_GL_CALL(glDeleteBuffers(1, &renderUBOGPU_id));
-	if (computeProgram_id)
-		CHECKED_GL_CALL(glDeleteProgram(computeProgram_id));
-}
-
-void Application::printSSBO()
-{
-	const glm::vec4 *positionBuffer_A = &ssboCPUMEM.positionBuffer_A[0];
-	const glm::vec4 *positionBuffer_B = &ssboCPUMEM.positionBuffer_B[0];
-	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
-	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
-
-	const glm::mat4 &model_A = uboCPUMEM.model_A;
-	const glm::mat4 &model_B = uboCPUMEM.model_B;
+	const glm::mat4 &model_A = mUboCpuMem.model_A;
+	const glm::mat4 &model_B = mUboCpuMem.model_B;
 
 	printf("model_A:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",
 			model_A[0][1], model_A[1][1], model_A[2][1], model_A[3][1],
@@ -114,10 +100,10 @@ void Application::printSSBO()
 	std::cout << std::endl;
 }
 
-void Application::printColorSSBO()
+void Application::printColorSsbo()
 {
-	const glm::vec4 *localColorBuffer_A = &colorOutSSBO.colorBuffer_A[0];
-	const glm::vec4 *localColorBuffer_B = &colorOutSSBO.colorBuffer_B[0];
+	const glm::vec4 *localColorBuffer_A = &mColorOutSsbo.colorBuffer_A[0];
+	const glm::vec4 *localColorBuffer_B = &mColorOutSsbo.colorBuffer_B[0];
 
 	for (int i = 0; i < 7; ++i) {
 		std::cout << "localColorBuffer_A: "	<< std::setprecision(5)
@@ -134,10 +120,10 @@ void Application::printColorSSBO()
 	std::cout << std::endl;
 }
 
-void Application::interpretComputedSSBO()
+void Application::interpretComputedSsbo()
 {
-	const glm::uvec4 *elementBuffer_A = &ssboCPUMEM.elementBuffer_A[0];
-	const glm::uvec4 *elementBuffer_B = &ssboCPUMEM.elementBuffer_B[0];
+	const glm::uvec4 *elementBuffer_A = &mSsboCpuMem.elementBuffer_A[0];
+	const glm::uvec4 *elementBuffer_B = &mSsboCpuMem.elementBuffer_B[0];
 
 	// 5522 is the number of triangles in the bunny mesh
 	// Loop through the element buffer and if w component is 1, that
@@ -166,6 +152,28 @@ void Application::interpretComputedSSBO()
 	std::cout << '\n' << std::endl;
 }
 
+Application::~Application()
+{
+	std::cout << "\nApplication is safely destroyed.\n";
+	mpWindowManager = nullptr;
+
+	if (mSsboGpuID)
+		CHECKED_GL_CALL(glDeleteBuffers(2, mSsboGpuID));
+	if (mUboGpuID)
+		CHECKED_GL_CALL(glDeleteBuffers(1, &mUboGpuID));
+	if (mComputeProgramID)
+		CHECKED_GL_CALL(glDeleteProgram(mComputeProgramID));
+}
+
+void Application::init()
+{
+	initGeom();
+	initCpuBuffers();
+	initGpuBuffers();
+	initComputeProgram();
+	initRenderProgram();
+}
+
 void Application::initGeom()
 {
 	std::vector<tinyobj::shape_t> bunnyShapes, quadShapes;
@@ -173,113 +181,115 @@ void Application::initGeom()
 	std::string errStrBunny, errStrQuad;
 	bool bunnyLoadCheck, quadLoadCheck;
 
-	bunnyLoadCheck = tinyobj::LoadObj(	bunnyShapes, bunnyMaterials,
-										errStrBunny, "../resources/models/bunny.obj");
-	quadLoadCheck = tinyobj::LoadObj(	quadShapes, quadMaterials, errStrQuad,
-										"../resources/models/quad.obj");
+	bunnyLoadCheck = tinyobj::LoadObj(bunnyShapes, bunnyMaterials, errStrBunny,
+									  "../resources/models/bunny.obj");
+	quadLoadCheck = tinyobj::LoadObj(quadShapes, quadMaterials, errStrQuad,
+									 "../resources/models/quad.obj");
 	if (!bunnyLoadCheck)
 		std::cerr << errStrBunny << std::endl;
 	else if (!quadLoadCheck)
 		std::cerr << errStrQuad << std::endl;
 	else {
-		meshContainer.emplace_back(std::make_unique<Shape>());
-		meshContainer.back()->createShape(bunnyShapes.at(0));
-		meshContainer.back()->init();
-		meshContainer.back()->measure();
-		meshContainer.back()->resize();
+		mMeshContainer.emplace_back(std::make_unique<Shape>());
+		mMeshContainer.back()->createShape(bunnyShapes.at(0));
+		mMeshContainer.back()->init();
+		mMeshContainer.back()->measure();
+		mMeshContainer.back()->resize();
 
-		meshContainer.emplace_back(std::make_unique<Shape>());
-		meshContainer.back()->createShape(quadShapes.at(0));
-		meshContainer.back()->init();
-		meshContainer.back()->measure();
-		meshContainer.back()->resize();
+		mMeshContainer.emplace_back(std::make_unique<Shape>());
+		mMeshContainer.back()->createShape(quadShapes.at(0));
+		mMeshContainer.back()->init();
+		mMeshContainer.back()->measure();
+		mMeshContainer.back()->resize();
 	}
 
 	// Check for the size of the bunny mesh vertex buffer
 	printf("\nSize of bunny position buffer: %zd\nSize of bunny element buffer: %zd\n",
-			meshContainer.at(0)->posBuf.size(), meshContainer.at(0)->eleBuf.size());
+			mMeshContainer.at(0)->posBuf.size(), mMeshContainer.at(0)->eleBuf.size());
 	printf("\nSize of quad position buffer: %zd\nSize of quad element buffer: %zd\n\n",
-			meshContainer.at(1)->posBuf.size(), meshContainer.at(1)->eleBuf.size());
+			mMeshContainer.at(1)->posBuf.size(), mMeshContainer.at(1)->eleBuf.size());
 	fflush(stdout);
 
 	// Store VAO handle generated from Shape class
-	VAO = meshContainer.at(0)->vaoID;
+	mVao = mMeshContainer.at(0)->vaoID;
 }
 
 // Initialize SSBO with the position and element buffers from loading mesh obj, pre-transformed
-void Application::initBuffers()
+void Application::initCpuBuffers()
 {
-	const std::vector<float> &localPositionBuffer_A = meshContainer.at(0)->posBuf;
-	const std::vector<unsigned int> &localElementBuffer_A = meshContainer.at(0)->eleBuf;
+	{
+		const std::vector<float> &positionBuffer_A = mMeshContainer.at(0)->posBuf;
+		const std::vector<unsigned int> &elementBuffer_A = mMeshContainer.at(0)->eleBuf;
 
-	const std::vector<float> &localPositionBuffer_B = meshContainer.at(1)->posBuf;
-	const std::vector<unsigned int> &localElementBuffer_B = meshContainer.at(1)->eleBuf;
+		const std::vector<float> &positionBuffer_B = mMeshContainer.at(1)->posBuf;
+		const std::vector<unsigned int> &elementBuffer_B = mMeshContainer.at(1)->eleBuf;
 
-	// Multiple loops for better cache locality. It's actually not as inefficient as you might think
-	for (int i = 0; i < 2763; ++i) {
-		ssboCPUMEM.positionBuffer_A[i] = glm::vec4{	localPositionBuffer_A[3 * i],
-													localPositionBuffer_A[(3 * i) + 1],
-													localPositionBuffer_A[(3 * i) + 2],
-													1.0f };
-	}
+		// Multiple loops for better cache locality. It's actually not as inefficient as you might think
+		for (int i = 0; i < 2763; ++i) {
+			mSsboCpuMem.positionBuffer_A[i] = glm::vec4(positionBuffer_A[3 * i],
+														positionBuffer_A[(3 * i) + 1],
+														positionBuffer_A[(3 * i) + 2],
+														1.0f);
+		}
 
-	for (int i = 0; i < 2763; ++i) {
-		if (i < 4) {
-			ssboCPUMEM.positionBuffer_B[i] = glm::vec4{	localPositionBuffer_B[3 * i],
-														localPositionBuffer_B[(3 * i) + 1],
-														localPositionBuffer_B[(3 * i) + 2],
-														1.0f };
-		} else {
-			ssboCPUMEM.positionBuffer_B[i] = glm::vec4{ 0.0f };
+		for (int i = 0; i < 2763; ++i) {
+			if (i < 4) {
+				mSsboCpuMem.positionBuffer_B[i] = glm::vec4(positionBuffer_B[3 * i],
+															positionBuffer_B[(3 * i) + 1],
+															positionBuffer_B[(3 * i) + 2],
+															1.0f);
+			} else {
+				mSsboCpuMem.positionBuffer_B[i] = glm::vec4(0.0f);
+			}
+		}
+
+		for (int j = 0; j < 5522; ++j) {
+			mSsboCpuMem.elementBuffer_A[j] = glm::uvec4(elementBuffer_A[3 * j],
+														elementBuffer_A[(3 * j) + 1],
+														elementBuffer_A[(3 * j) + 2],
+														0u);
+		}
+
+		for (int j = 0; j < 5522; ++j) {
+			if (j < 2) {
+				mSsboCpuMem.elementBuffer_B[j] = glm::uvec4(elementBuffer_B[3 * j],
+															elementBuffer_B[(3 * j) + 1],
+															elementBuffer_B[(3 * j) + 2],
+															0u);
+			} else {
+				mSsboCpuMem.elementBuffer_B[j] = glm::uvec4(0u);
+			}
 		}
 	}
+}
 
-	for (int j = 0; j < 5522; ++j) {
-		ssboCPUMEM.elementBuffer_A[j] = glm::uvec4{ localElementBuffer_A[3 * j],
-													localElementBuffer_A[(3 * j) + 1],
-													localElementBuffer_A[(3 * j) + 2],
-													0u };
-	}
-
-	for (int j = 0; j < 5522; ++j) {
-		if (j < 2) {
-			ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ localElementBuffer_B[3 * j],
-														localElementBuffer_B[(3 * j) + 1],
-														localElementBuffer_B[(3 * j) + 2],
-														0u };
-		} else {
-			ssboCPUMEM.elementBuffer_B[j] = glm::uvec4{ 0u };
-		}
-	}
-
+void Application::initGpuBuffers()
+{
 	// Allocate 2 SSBOs on GPU: 1 for input, and 1 for output
-	glGenBuffers(2, ssboGPU_id);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[0]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ssboCPUMEM), &ssboCPUMEM, GL_STATIC_COPY);
+	glGenBuffers(2, mSsboGpuID);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[0]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(mSsboCpuMem), &mSsboCpuMem, GL_STATIC_COPY);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[1]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(colorOutSSBO), nullptr, GL_STREAM_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[1]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(mColorOutSsbo), nullptr, GL_STREAM_COPY);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind ssbo
 
 	// Allocate an UBO
-	glGenBuffers(1, &computeUBOGPU_id);
-	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
+	glGenBuffers(1, &mUboGpuID);
+	glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID);
 	glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::mat4), nullptr, GL_STREAM_READ);
 
-	// Prep and send data to GPU
-	uboCPUMEM.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	uboCPUMEM.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
+	// Prep and send uniform data to GPU
+	mUboCpuMem.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
+	mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
 						glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-	uboCPUMEM.view = flyCamera.getViewMatrix();
-	uboCPUMEM.projection = flyCamera.getProjectionMatrix();
+	mUboCpuMem.view = mFlyCamera.getViewMatrix();
+	mUboCpuMem.projection = mFlyCamera.getProjectionMatrix();
 
 	// Fill the buffer with data
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.projection));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
-	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
-	glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Ubo), &mUboCpuMem);
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -293,24 +303,13 @@ void Application::initRenderProgram()
 	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
 
-	renderProgramPtr = std::make_unique<Program>();
-	renderProgramPtr->setVerbose(true);
-	renderProgramPtr->setShaderNames("../resources/shaders/vs.glsl",
+	mpRenderProgram = std::make_unique<Program>();
+	mpRenderProgram->setVerbose(true);
+	mpRenderProgram->setShaderNames("../resources/shaders/vs.glsl",
 									"../resources/shaders/fs.glsl");
-	renderProgramPtr->init();
-	renderProgramPtr->addAttribute("vertPos");
-	renderProgramPtr->addAttribute("vertNor");
-
-	glGenBuffers(1, &renderUBOGPU_id);
-	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
-	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), nullptr, GL_DYNAMIC_DRAW);
-
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
-					glm::value_ptr(uboCPUMEM.projection));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
-					glm::value_ptr(uboCPUMEM.view));
-
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);	// Unbind UBO
+	mpRenderProgram->init();
+	mpRenderProgram->addAttribute("vertPos");
+	mpRenderProgram->addAttribute("vertNor");
 }
 
 // General OGL initialization - set OGL state here
@@ -331,75 +330,93 @@ void Application::initComputeProgram()
 
 	// Check for compile status
 	CHECKED_GL_CALL(glGetShaderiv(computeShader, GL_COMPILE_STATUS, &success));
-	if (!success) {
+	if (!success)
+	{
 		GLSL::printShaderInfoLog(computeShader);
 		std::cerr << "Error compiling compute shader. Shader object will be deleted.\n";
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
 		exit(EXIT_FAILURE);
 	}
 
-	computeProgram_id = glCreateProgram();
-	CHECKED_GL_CALL(glAttachShader(computeProgram_id, computeShader));
-	CHECKED_GL_CALL(glLinkProgram(computeProgram_id));
+	mComputeProgramID = glCreateProgram();
+	CHECKED_GL_CALL(glAttachShader(mComputeProgramID, computeShader));
+	CHECKED_GL_CALL(glLinkProgram(mComputeProgramID));
 
 	// Check for linking status
-	CHECKED_GL_CALL(glGetProgramiv(computeProgram_id, GL_LINK_STATUS, &success));
-	if (!success) {
+	CHECKED_GL_CALL(glGetProgramiv(mComputeProgramID, GL_LINK_STATUS, &success));
+	if (!success)
+	{
 		GLSL::printShaderInfoLog(computeShader);
 		std::cerr << "Error linking compute shader. Compute program and shader will be deleted.\n";
-		CHECKED_GL_CALL(glDetachShader(computeProgram_id, computeShader));
+		CHECKED_GL_CALL(glDetachShader(mComputeProgramID, computeShader));
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
 		exit(EXIT_FAILURE);
 	}
 
 	// Detach and delete compute shader after linking
-	CHECKED_GL_CALL(glDetachShader(computeProgram_id, computeShader));
+	CHECKED_GL_CALL(glDetachShader(mComputeProgramID, computeShader));
 	CHECKED_GL_CALL(glDeleteShader(computeShader));
 }
 
 void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		if (glfwGetInputMode(windowManager->getHandle(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-			glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		} else {
-			glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		if (glfwGetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+		{
+			glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+		else
+		{
+			glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 	}
-	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
-	if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_C && action == GLFW_PRESS)
+	{
 		verticalMove = !verticalMove;
 	}
-	if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_Z && action == GLFW_RELEASE)
+	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_A && action == GLFW_PRESS)
+	{
 		moveLeft = true;
 	}
-	if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+	{
 		moveLeft = false;
 	}
-	if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_D && action == GLFW_PRESS)
+	{
 		moveRight = true;
 	}
-	if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+	{
 		moveRight = false;
 	}
-	if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_W && action == GLFW_PRESS)
+	{
 		moveForward = true;
 	}
-	if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+	{
 		moveForward = false;
 	}
-	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_S && action == GLFW_PRESS)
+	{
 		moveBackward = true;
 	}
-	if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+	{
 		moveBackward = false;
 	}
 }
@@ -407,60 +424,62 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 /**
  *	cursorCallback
  *	Every time the cursor move, this callback got invoked.
- *
  */
 void Application::cursorCallback(GLFWwindow *window, double xPos, double yPos)
 {
 	// Calculate deltaX and deltaY, then send to moveCameraView function
 	//  camera should ONLY move after the initial cursor focus.
-	if (firstCursorFocus) {
-		lastCursorPosX = xPos;
-		lastCursorPosY = yPos;
-		firstCursorFocus = false;
+	if (mIsFirstCursorFocus)
+	{
+		mLastCursorPosX = xPos;
+		mLastCursorPosY = yPos;
+		mIsFirstCursorFocus = false;
 	}
-	cursorPosDeltaX = static_cast<float>(xPos - lastCursorPosX);
-	cursorPosDeltaY = static_cast<float>(lastCursorPosY - yPos);	// Has to be reversed cuz math
-	flyCamera.moveView(cursorPosDeltaX, cursorPosDeltaY);
+	mCursorPosDeltaX = static_cast<float>(xPos - mLastCursorPosX);
+	mCursorPosDeltaY = static_cast<float>(mLastCursorPosY - yPos);	// Has to be reversed cuz math
+	mFlyCamera.moveView(mCursorPosDeltaX, mCursorPosDeltaY);
 
-	lastCursorPosX = xPos;
-	lastCursorPosY = yPos;
+	mLastCursorPosX = xPos;
+	mLastCursorPosY = yPos;
 }
 
 // Bind SSBO to compute program and dispatch work group
-void Application::compute()
+void Application::computeOnGpu()
 {
 	static unsigned int frameCount = 5u;
 
-	if (COMPUTE_DEBUG && frameCount) {
-		std::cout	<< "\nColor SSBO BEFORE compute dispatch call:\n"
-					<< "-----------------------------------------------\n";
-		printColorSSBO();
+	if (COMPUTE_DEBUG && frameCount)
+	{
+		std::cout << "\nColor SSBO BEFORE compute dispatch call:\n"
+				  << "-----------------------------------------------\n";
+		printColorSsbo();
 	}
 
 	// Prob don't have to set binding points every time. Should check ===================
 	// Make sure this matches up with the binding point 1, which is set in the shader
-	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[0]));
-	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, ssboGPU_id[0]));
+	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[0]));
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mSsboGpuID[0]));
 
-	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboGPU_id[1]));
-	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, ssboGPU_id[1]));
+	CHECKED_GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[1]));
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboGpuID[1]));
 
 	// Bind UBO to binding point 0
-	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id));
-	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, computeUBOGPU_id));
+	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID));
+	CHECKED_GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, 0u, mUboGpuID));
 	//===================================================================================
 
-	CHECKED_GL_CALL(glUseProgram(computeProgram_id));
+	CHECKED_GL_CALL(glUseProgram(mComputeProgramID));
 	CHECKED_GL_CALL(glDispatchCompute(5522, 1, 1));
 
-	// Wait for compute shader to finish writing to ssbo before reading from ssbo
+	// Wait for compute shader to finish writing to SSBO before reading from SSBO
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	if (COMPUTE_DEBUG && frameCount) {
+	if (COMPUTE_DEBUG && frameCount)
+	{
 	// if (true) {
-		// Copy data back to CPU MEM
+		// Copy data back to CPU Memory
 		GLvoid *dataGPUPtr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-		memcpy(&colorOutSSBO, dataGPUPtr, sizeof(colorOutSSBO));
+		memcpy(&mColorOutSsbo, dataGPUPtr, sizeof(mColorOutSsbo));
 		CHECKED_GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 
 		--frameCount;
@@ -477,16 +496,92 @@ void Application::compute()
 	CHECKED_GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 	CHECKED_GL_CALL(glUseProgram(0));
 
-	if (COMPUTE_DEBUG && firstRun) {
+	if (COMPUTE_DEBUG && firstRun)
+	{
 	// if (true) {
-		std::cout	<< "Color SSBO AFTER compute dispatch call:\n"
-					<< "-----------------------------------------------\n";
-		printColorSSBO();
+		std::cout << "Color SSBO AFTER compute dispatch call:\n"
+				  << "-----------------------------------------------\n";
+		printColorSsbo();
 
-		// interpretComputedSSBO();
+		// interpretComputedSsbo();
 
 		firstRun = false;
 	}
+}
+
+// TODO: Multithread?
+void Application::computeOnCpu()
+{
+	static unsigned int frameCount = 5u;
+
+	if (COMPUTE_DEBUG && frameCount)
+	{
+		std::cout << "\nColor SSBO BEFORE compute dispatch call:\n"
+				  << "-----------------------------------------------\n";
+		printColorSsbo();
+	}
+
+	glm::mat4 const &model_A = mUboCpuMem.model_A;
+	glm::mat4 const &model_B = mUboCpuMem.model_B;
+	glm::vec4 const (&rPositionBuffer_A)[2763] = mSsboCpuMem.positionBuffer_A;
+	glm::vec4 const (&rPositionBuffer_B)[2763] = mSsboCpuMem.positionBuffer_B;
+	glm::uvec4 const (&rElementBuffer_A)[5522] = mSsboCpuMem.elementBuffer_A;
+	glm::uvec4 const (&rElementBuffer_B)[5522] = mSsboCpuMem.elementBuffer_B;
+	glm::vec4 (&colorBuffer_A)[2763] = mColorOutSsbo.colorBuffer_A;
+	glm::vec4 (&colorBuffer_B)[2763] = mColorOutSsbo.colorBuffer_B;
+	glm::vec3 v0(0.0f), v1(0.0f), v2(0.0f), u0(0.0f), u1(0.0f), u2(0.0f);
+	glm::uvec3 tri_A(0.0f), tri_B(0.0f);
+	bool isColliding = false;
+
+	for (unsigned int elementBufferIdx_B = 0; elementBufferIdx_B < 2; ++elementBufferIdx_B)
+	{
+		tri_B = rElementBuffer_B[elementBufferIdx_B].xyz();
+
+		// Prep the vertices: mapping them to world space
+		u0 = (model_B * rPositionBuffer_B[tri_B.x]).xyz();
+		u1 = (model_B * rPositionBuffer_B[tri_B.y]).xyz();
+		u2 = (model_B * rPositionBuffer_B[tri_B.z]).xyz();
+
+		for (unsigned int elementBufferIdx_A = 0; elementBufferIdx_A < 5522; ++elementBufferIdx_A)
+		{
+			tri_A = rElementBuffer_A[elementBufferIdx_A].xyz();
+
+			// Prep the vertices: mapping them to world space
+			v0 = (model_A * rPositionBuffer_A[tri_A.x]).xyz();
+			v1 = (model_A * rPositionBuffer_A[tri_A.y]).xyz();
+			v2 = (model_A * rPositionBuffer_A[tri_A.z]).xyz();
+
+			// Query the test
+			isColliding = fastTriTriIntersect3DTest(v0, v1, v2, u0, u1, u2);
+
+			// Output the results to CPU memory
+			if (isColliding)
+			{
+				colorBuffer_A[tri_A.x] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_A[tri_A.y] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_A[tri_A.z] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+				colorBuffer_B[tri_B.x] = glm::vec4(3.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_B[tri_B.y] = glm::vec4(3.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_B[tri_B.z] = glm::vec4(3.0f, 0.0f, 0.0f, 1.0f);
+			}
+			else
+			{
+				colorBuffer_A[tri_A.x] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_A[tri_A.y] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_A[tri_A.z] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+				colorBuffer_B[tri_B.x] = glm::vec4(2.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_B[tri_B.y] = glm::vec4(2.0f, 0.0f, 0.0f, 1.0f);
+				colorBuffer_B[tri_B.z] = glm::vec4(2.0f, 0.0f, 0.0f, 1.0f);
+			}
+		}
+	}
+
+	// Transfer results data to GPU buffers
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[1]);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ColorOutSsbo), &mColorOutSsbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 // Bind SSBO to render program and draw
@@ -494,7 +589,7 @@ void Application::render()
 {
 	// Get current frame buffer size.
 	int width, height;
-	glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
 
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
@@ -506,70 +601,74 @@ void Application::render()
 
 	float aspect = width/(float)height;
 
-	// Bind rendering UBO
-	glBindBuffer(GL_UNIFORM_BUFFER, renderUBOGPU_id);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, renderUBOGPU_id);
-	// Send data to UBO. Set once per render call, use many times
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
-					glm::value_ptr(uboCPUMEM.projection));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
-					glm::value_ptr(uboCPUMEM.view));
+	// Bind UBO
+	glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, mUboGpuID);
 
 	// Bind render program
-	renderProgramPtr->bind();
+	mpRenderProgram->bind();
 	// Send model matrix
-	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"),
-						1, GL_FALSE, glm::value_ptr(uboCPUMEM.model_A));
-	meshContainer.at(0)->draw(renderProgramPtr, ssboGPU_id[1]);		// Draw bunny
+	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+						1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_A));
+	mMeshContainer.at(0)->draw(mpRenderProgram, mSsboGpuID[1]);		// Draw bunny
 
-	glUniformMatrix4fv(glGetUniformLocation(renderProgramPtr->getPID(), "model"),
-						1, GL_FALSE, glm::value_ptr(uboCPUMEM.model_B));
-	meshContainer.at(1)->draw(renderProgramPtr, 0u);				// Draw quad
+	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+						1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_B));
+	mMeshContainer.at(1)->draw(mpRenderProgram, 0u);				// Draw quad
 
 	// When done, unbind UBO
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	renderProgramPtr->unbind();
+	mpRenderProgram->unbind();
 }
 
 void Application::update(float dt)
 {
-	// Update translation of mesh B
-	if (verticalMove) {
-		uboCPUMEM.model_B =	glm::translate(glm::vec3(0.9f, 2.0f * sinf(0.5f * (float)glfwGetTime()), -1.0f)) *
-							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	} else {
-		uboCPUMEM.model_B =	glm::translate(glm::vec3(-1.5f + 3.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+	updateCpuBuffers(dt);
+	updateGpuBuffers();
+}
+
+void Application::updateCpuBuffers(float dt)
+{
+	// Update translation of mesh B. TODO: Might want to use dt here.
+	if (verticalMove)
+	{
+		mUboCpuMem.model_B = glm::translate(glm::vec3(0.9f, 2.0f * sinf(0.5f * (float)glfwGetTime()), -1.0f)) *
 							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-
-	// uboCPUMEM.model_A = glm::mat4(1.0f);
-	// uboCPUMEM.model_B = glm::mat4(1.0f);
+	else
+	{
+		mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f + 3.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
+							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	}
 
 	// Check for camera movement flag to update view matrix
-	if (moveForward) {
-		flyCamera.movePosition(flyCamera.FORWARD, dt);
+	if (moveForward)
+	{
+		mFlyCamera.movePosition(mFlyCamera.FORWARD, dt);
 	}
-	if (moveBackward) {
-		flyCamera.movePosition(flyCamera.BACKWARD, dt);
+	if (moveBackward)
+	{
+		mFlyCamera.movePosition(mFlyCamera.BACKWARD, dt);
 	}
-	if (moveLeft) {
-		flyCamera.movePosition(flyCamera.LEFT, dt);
+	if (moveLeft)
+	{
+		mFlyCamera.movePosition(mFlyCamera.LEFT, dt);
 	}
-	if (moveRight) {
-		flyCamera.movePosition(flyCamera.RIGHT, dt);
+	if (moveRight)
+	{
+		mFlyCamera.movePosition(mFlyCamera.RIGHT, dt);
 	}
 
 	// Both view and project matrices are controlled by the camera.
-	uboCPUMEM.projection = flyCamera.getProjectionMatrix();
-	uboCPUMEM.view = flyCamera.getViewMatrix();
+	mUboCpuMem.projection = mFlyCamera.getProjectionMatrix();
+	mUboCpuMem.view = mFlyCamera.getViewMatrix();
+}
 
-	// Update UBO data
-	glBindBuffer(GL_UNIFORM_BUFFER, computeUBOGPU_id);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.projection));
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.view));
-	glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_A));
-	glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboCPUMEM.model_B));
+void Application::updateGpuBuffers()
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Ubo), &mUboCpuMem);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
