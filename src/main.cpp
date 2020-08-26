@@ -21,7 +21,7 @@
 
 #define UNUSED(x) static_cast<void>(x)
 
-#define GPU_COMPUTE false
+#define GPU_COMPUTE true
 
 int main(int argc, char **argv)
 {
@@ -45,14 +45,8 @@ int main(int argc, char **argv)
 	// Render and computeloop
 	while (!glfwWindowShouldClose(windowManager->getHandle()))
 	{
-		if (GPU_COMPUTE)
-		{
-			application->computeOnGpu();
-		}
-		else
-		{
-			application->computeOnCpu();
-		}
+		if (GPU_COMPUTE) application->computeOnGpu();
+		else application->computeOnCpu();
 
 		application->render();
 

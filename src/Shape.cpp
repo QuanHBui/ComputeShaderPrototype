@@ -15,6 +15,17 @@
 
 using namespace std;
 
+Shape::~Shape()
+{
+	glDeleteVertexArrays(1, &vaoID);
+
+	glDeleteBuffers(1, &eleBufID);
+	glDeleteBuffers(1, &posBufID);
+
+	if (norBufID) glDeleteBuffers(1, &norBufID);
+	if (texBufID) glDeleteBuffers(1, &texBufID);
+}
+
 // copy the data from the shape to this object
 void Shape::createShape(tinyobj::shape_t const &shape)
 {

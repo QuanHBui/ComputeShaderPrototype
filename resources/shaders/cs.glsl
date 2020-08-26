@@ -82,30 +82,36 @@ void computeIntersectInterval(	float projVert0, float projVert1, float projVert2
 
 	// Vert0 and Vert1 on the same side, look at edge Vert0...Vert2 and
 	//  edge Vert1...Vert2
-	if (prodDistVert0DistVert1 > 0.0f) {
+	if (prodDistVert0DistVert1 > 0.0f)
+	{
 		ISECT(projVert2, projVert0, projVert1, distVert2, distVert0, distVert1, isectStart, isectEnd);
 	}
 	// Vert0 and Vert2 on the same side, look at edge Vert0...Vert1 and
 	//  edge Vert2...Vert1
-	else if (prodDistVert0DistVert2 > 0.0f) {
+	else if (prodDistVert0DistVert2 > 0.0f)
+	{
 		ISECT(projVert1, projVert0, projVert2, distVert1, distVert0, distVert2, isectStart, isectEnd);
 	}
 	// Vert1 and Vert2 on the same side, look at edge Vert1...Vert0 and
 	//  edge Vert2...Vert0. Note that there's an extra check if Vert0 is
 	//  in the plane.
-	else if (distVert1*distVert2 > 0.0f || distVert0 != 0.0f) {
+	else if (distVert1*distVert2 > 0.0f || distVert0 != 0.0f)
+	{
 		ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd);
 	}
 	// At this point, Vert0 is in the plane.
-	else if (distVert1 != 0.0f) {
+	else if (distVert1 != 0.0f)
+	{
 		ISECT(projVert1, projVert0, projVert2, distVert1, distVert0, distVert2, isectStart, isectEnd);
 	}
 	// Both Vert0 and Vert1 are in the plane.
-	else if (distVert2 != 0.0f) {
+	else if (distVert2 != 0.0f)
+	{
 		ISECT(projVert2, projVert0, projVert1, distVert2, distVert0, distVert1, isectStart, isectEnd);
 	}
 	// Triangle is coplanar to the plane.
-	else {
+	else
+	{
 		isCoplanar = false;
 	}
 }
@@ -232,13 +238,17 @@ bool fastTriTriIntersect3DTest(const vec3 v0, const vec3 v1, const vec3 v2,
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
 	if (isCoplanar)
+	{
 		return coplanarTriTriTest(v0, v1, v2, u0, u1, u2, N1);
+	}
 
 	SORT(isect0[0], isect0[1]);
 	SORT(isect1[0], isect1[1]);
 
 	if (isect0[1] < isect1[0] || isect1[1] < isect0[0])
+	{
 		return false;
+	}
 
 	return true;
 }

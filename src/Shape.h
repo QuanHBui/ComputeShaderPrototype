@@ -14,7 +14,21 @@ class Program;
 
 class Shape
 {
+private:
+	GLuint vaoID = 0;
+
+	GLuint eleBufID = 0;
+	GLuint posBufID = 0;
+	GLuint norBufID = 0;
+	GLuint texBufID = 0;
+
+	tinyobj::material_t mat_;
+
+	void normalGen();
+
 public:
+	~Shape();
+
 	void createShape(tinyobj::shape_t const &);
 	void init();
 	void measure();
@@ -24,23 +38,15 @@ public:
 	glm::vec3 min = glm::vec3(0);
 	glm::vec3 max = glm::vec3(0);
 
-	void setMat(tinyobj::material_t const &mat) { mat_ = mat;}
-	tinyobj::material_t getMat() const { return mat_; }
-
 	std::vector<unsigned int> eleBuf;
 	std::vector<float> posBuf;
 	std::vector<float> norBuf;
 	std::vector<float> texBuf;
 
-	unsigned int eleBufID = 0;
-	unsigned int posBufID = 0;
-	unsigned int norBufID = 0;
-	unsigned int texBufID = 0;
-	unsigned int vaoID = 0;
+	void setMat(tinyobj::material_t const &mat) { mat_ = mat;}
 
-	tinyobj::material_t mat_;
-
-	void normalGen();
+	GLuint getVaoID() const { return vaoID; }
+	tinyobj::material_t getMat() const { return mat_; }
 };
 
 #endif // LAB471_SHAPE_H_INCLUDED

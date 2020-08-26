@@ -102,20 +102,21 @@ void Application::printSsbo()
 
 void Application::printColorSsbo()
 {
-	const glm::vec4 *localColorBuffer_A = &mColorOutSsbo.colorBuffer_A[0];
-	const glm::vec4 *localColorBuffer_B = &mColorOutSsbo.colorBuffer_B[0];
+	const glm::vec4 *colorBuffer_A = &mColorOutSsbo.colorBuffer_A[0];
+	const glm::vec4 *colorBuffer_B = &mColorOutSsbo.colorBuffer_B[0];
 
-	for (int i = 0; i < 7; ++i) {
+	for (int i = 0; i < 7; ++i)
+	{
 		std::cout << "localColorBuffer_A: "	<< std::setprecision(5)
-											<< localColorBuffer_A[i].r << ", "
-											<< localColorBuffer_A[i].g << ", "
-											<< localColorBuffer_A[i].b << ", "
-											<< localColorBuffer_A[i].q << '\n';
+											<< colorBuffer_A[i].r << ", "
+											<< colorBuffer_A[i].g << ", "
+											<< colorBuffer_A[i].b << ", "
+											<< colorBuffer_A[i].q << '\n';
 		std::cout << "localColorBuffer_B: "	<< std::setprecision(5)
-											<< localColorBuffer_B[i].r << ", "
-											<< localColorBuffer_B[i].g << ", "
-											<< localColorBuffer_B[i].b << ", "
-											<< localColorBuffer_B[i].q << "\n\n";
+											<< colorBuffer_B[i].r << ", "
+											<< colorBuffer_B[i].g << ", "
+											<< colorBuffer_B[i].b << ", "
+											<< colorBuffer_B[i].q << "\n\n";
 	}
 	std::cout << std::endl;
 }
@@ -186,10 +187,15 @@ void Application::initGeom()
 	quadLoadCheck = tinyobj::LoadObj(quadShapes, quadMaterials, errStrQuad,
 									 "../resources/models/quad.obj");
 	if (!bunnyLoadCheck)
+	{
 		std::cerr << errStrBunny << std::endl;
+	}
 	else if (!quadLoadCheck)
+	{
 		std::cerr << errStrQuad << std::endl;
-	else {
+	}
+	else
+	{
 		mMeshContainer.emplace_back(std::make_unique<Shape>());
 		mMeshContainer.back()->createShape(bunnyShapes.at(0));
 		mMeshContainer.back()->init();
@@ -211,7 +217,7 @@ void Application::initGeom()
 	fflush(stdout);
 
 	// Store VAO handle generated from Shape class
-	mVao = mMeshContainer.at(0)->vaoID;
+	mVao = mMeshContainer.at(0)->getVaoID();
 }
 
 // Initialize SSBO with the position and element buffers from loading mesh obj, pre-transformed
@@ -261,6 +267,14 @@ void Application::initCpuBuffers()
 			}
 		}
 	}
+
+	// Prep uniform data on the CPU
+	mUboCpuMem.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0f));
+	mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
+						 glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	mUboCpuMem.view = mFlyCamera.getViewMatrix();
+	mUboCpuMem.projection = mFlyCamera.getProjectionMatrix();
 }
 
 void Application::initGpuBuffers()
@@ -280,17 +294,8 @@ void Application::initGpuBuffers()
 	glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID);
 	glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::mat4), nullptr, GL_STREAM_READ);
 
-	// Prep and send uniform data to GPU
-	mUboCpuMem.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0));
-	mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
-						glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-	mUboCpuMem.view = mFlyCamera.getViewMatrix();
-	mUboCpuMem.projection = mFlyCamera.getProjectionMatrix();
-
-	// Fill the buffer with data
+	// Send uniform data to GPU
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Ubo), &mUboCpuMem);
-
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -578,7 +583,7 @@ void Application::computeOnCpu()
 		}
 	}
 
-	// Transfer results data to GPU buffers
+	// Transfer results to GPU buffers
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[1]);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ColorOutSsbo), &mColorOutSsbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
