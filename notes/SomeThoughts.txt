@@ -1,15 +1,19 @@
-// Some thoughts after reading the code from OpenGL-Compute git repos
-
-/**
-(1) Do we actually need 2 ubos, 1 for vertex shader and 1 for compute shader?
+Some thoughts after reading the code from OpenGL-Compute git repos:
 (2) Beware of the memory layout, there's a hunch that the padding might be inconsistent?
 (3) If a color of a triangle already set, meaning 3 vertices have the color red, there is a chance that one
 	of the vertex will have its color overwritten because it also a part of other triangles, might be 6 in
 	total?
-(4) Ok, but why is their a y offset though?
-*/
+(4) Ok, but why is there a y offset though?
 
-//============================== Psuedocode of Grid Generation ===================================
+Some thoughts from reading the Nvidia rigid body simulation paper:
+(1) A voxel is defined by 1 coordinate (x, y, z) and its side length. More specifically, the smallest coordinates + side length.
+(2) Use however many SSBO's needed to store physical values of a rigid body: position, linear momentum, angular momentum, orientation quaternion, etc
+(3) An index is assigned to each rigid body. Basically, an entity's ID number.
+(4) Since each rigid body is made out of multiple particles, each particle also need to have its physical values stores in multiple SSBO's.
+(5) Indices of the particles that belong to a rigid body are calculated from the rigid body index.
+(6) How is a particle defined? A position (vec3) and a radius?
+
+//============================== Pseudocode of Grid Generation ===================================
 
 //=== 1 PASS
 colorMask(GBA);
@@ -34,7 +38,7 @@ colorMask(RGB);
 clear(stencilBuffer);
 renderVertices();
 
-//======================== Psuedocode of Collision Detection and Reaction =========================
+//======================== Pseudocode of Collision Detection and Reaction =========================
 
 gridCoordinate = calculateGridCoordinate(iParticlePosition);
 
@@ -47,7 +51,7 @@ FOREACH of the 27 voxels
 		END FOR
 END FOR
 
-//======================= Psuedocode for the Computation of Momenta ===============================
+//======================= Pseudocode for the Computation of Momenta ===============================
 
 FOR all particles belonging to a rigid body
 	particleIndex = particleStartIndex + i;
@@ -55,3 +59,18 @@ FOR all particles belonging to a rigid body
 	linearMomentum += tex2D(forceOnParticle, particleTexCrd);
 	angularMomentum += cross(tex2D(relativePosition, particleTexCrd), tex2D(forceOnParticle, particleTexCrd));
 END FOR
+
+//======================= Rigid Body Physics Pipeline ===============================
+(1) Parallel Neighbor search using dynamic BVH trees
+(2) Neighboring Pair Management
+(3) Convex Collision Detection
+(4) Concave Collision Detection using BVHs
+(5) Parallel Constraint Solving using PGS
+
+//======================= Find potential collision pairs ===============================
+Source: Thinking Parallel, Part III: Tree Construction on the GPU - by Tero Karras
+(1) One thread per object: Calculate bounding box and assign Morton code
+(2) Parallel radix sort: Sort the objects according to their Morton codes
+(3) One thread per internal node: Generate BVH node hierarchy
+(4) One thread per object: Calculate node bounding boxes by walking the hierarchy toward the root
+(5) One thread per object: Find potential collisions by traversing the BVH

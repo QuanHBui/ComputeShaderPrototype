@@ -31,7 +31,7 @@ class Application : public EventCallbacks
 {
 private:
 	WindowManager *mpWindowManager = nullptr;
-	GLuint mVao, mUboGpuID, mSsboGpuID[2], mComputeProgramID;
+	GLuint mVao, mUboGpuID, mSsboGpuID[2];
 
 	Camera mFlyCamera{
 						glm::vec3{0.f, 0.f, 0.f},
@@ -44,6 +44,8 @@ private:
 	bool mIsFirstCursorFocus = true;
 
 	std::unique_ptr<Program> mpRenderProgram = nullptr;
+	std::vector<GLuint> mComputeProgramIDContainer;
+
 	std::vector<std::shared_ptr<Shape>> mMeshContainer;
 
 	struct Ssbo
@@ -80,7 +82,7 @@ public:
 	void initCpuBuffers();
 	void initGpuBuffers();
 	void initRenderProgram();
-	void initComputeProgram();
+	void initComputePrograms();
 
 	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
 
