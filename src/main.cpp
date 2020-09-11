@@ -17,6 +17,7 @@
 #include <time.h>
 
 #include "Application.h"
+#include "P3BroadPhaseCollisionDetection.h"
 #include "GLSL.h"
 
 #define UNUSED(x) static_cast<void>(x)

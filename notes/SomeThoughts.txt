@@ -74,3 +74,17 @@ Source: Thinking Parallel, Part III: Tree Construction on the GPU - by Tero Karr
 (3) One thread per internal node: Generate BVH node hierarchy
 (4) One thread per object: Calculate node bounding boxes by walking the hierarchy toward the root
 (5) One thread per object: Find potential collisions by traversing the BVH
+
+Broad-phase: a bunch of Shapes -> dispatch compute to calculate a bunch of AABBs -> construct a BVH tree (CPU/GPU)
+
+What is a BVH tree? A collection of Node structs; each Node contains 1 left child, 1 right child, and its AABB
+	if it is a internal node; if it is a leaf node, it has no children but it has AABB of the object in the physics world.
+What does this mean on the GPU, i.e. in terms of SSBOs? We can have multiple SSBOs, i.e. left children SSBO, right children
+	SSBO (Struct of arrays, SoA), to identify which node the attributes belong to, we use index. E.g, each node has an index
+	in the tree, we can use that index to reference which SSBO index.
+
+Some concerns:
+	There are limited number of work groups, think about them as threads. Some GPU has small amount of work groups,
+	so if the number of objects in the world is way more than the number of work groups allow, how should we solve this
+	issue? How to make it more robust? GTX 965M can have like up to ~2 mil (not sure - x:2147483647 y:65535 z:65535)
+	work groups, so shouldn't be that bad.

@@ -15,12 +15,6 @@
 
 class RigidBody
 {
-protected:
-	char *name_{nullptr};
-	glm::vec3 position_{0.f};
-	BoundingVolume *boundPtr_{nullptr};
-	float bounce_{0.f};
-
 public:
 	RigidBody() {}
 
@@ -30,23 +24,24 @@ public:
 	RigidBody(glm::vec3 const &position, BoundingSphere *boundSpherePtr, float bounce = 0.f)
 		: position_{position}, boundPtr_{boundSpherePtr}, bounce_{bounce} {}
 
-	virtual ~RigidBody() {};      // virtual for better clean up and no instance of this class
-
 	glm::vec3 getPosition() const { return position_; }
 	BoundingVolume *getBoundPtr() const { return boundPtr_; }
 
 	void setPosition(glm::vec3 const &position) { position_ = position; }
 	void setBounce(float bounce) { bounce_ = bounce; }
+
+	virtual ~RigidBody() {};	// virtual for better clean up and no instance of this class
+
+protected:
+	char *name_{nullptr};
+	glm::vec3 position_{0.f};
+	BoundingVolume *boundPtr_{nullptr};
+	float bounce_{0.f};
 };
 
 // Bodies that affected by gravity and can move
 class DynamicBody : public RigidBody
 {
-protected:
-	glm::vec3 linearVelocity_{0.f}, angularVelocity_{0.f};
-	glm::vec3 linearAcceleration_{0.f}, angularAcceleration_{0.f};
-	float mass_{0.f};
-
 public:
 	DynamicBody() {}
 
@@ -70,8 +65,6 @@ public:
 		: RigidBody{ position, boundSpherePtr, bounce }, linearVelocity_{linearVelocity},
 		angularVelocity_{angularVelocity}, mass_{mass} {}
 
-	~DynamicBody() {}
-
 	float getMass() const { return mass_; }
 	glm::vec3 getLinearVelocity() const { return linearVelocity_; }
 	glm::vec3 getAngularVelocity() const { return angularVelocity_; }
@@ -85,6 +78,13 @@ public:
 	//  This function should be called every rendered frame.
 	virtual void move();
 	void rotate();
+
+	~DynamicBody() {}
+
+protected:
+	glm::vec3 linearVelocity_{0.f}, angularVelocity_{0.f};
+	glm::vec3 linearAcceleration_{0.f}, angularAcceleration_{0.f};
+	float mass_{0.f};
 };
 
 // Physics engine will handle the collision detection but the resolution or how the object moves is
@@ -103,10 +103,11 @@ public:
 	float bounce = 0.f, float mass = 0.f)
 		: DynamicBody{ position, boundSpherePtr, bounce, mass } {}
 
+	// Overriding move function. Controlled by player/user
+	void move() override;
+
 	~KinematicBody() {}
 
-	// Overriding move function. Controlled by player/user
-	void move();
 };
 
 // Bodies that unaffected by gravity and cannot move.

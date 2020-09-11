@@ -19,10 +19,7 @@ file(GLOB_RECURSE SOURCES	"${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/e
 file(GLOB_RECURSE HEADERS "src/*.h" "ext/*/*.h" "ext/glad/*/*.h" "src/PrototypePhysicsEngine/*.h")
 file(GLOB_RECURSE GLSL "resources/*.glsl")
 
-include_directories("ext")
-include_directories("ext/glad/include")
-include_directories("src/PrototypePhysicsEngine")
-include_directories("unit_test")
+include_directories("ext" "ext/glad/include" "src" "src/PrototypePhysicsEngine" "unit_test")
 
 # Set the executable.
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS} ${GLSL})
@@ -39,8 +36,8 @@ if(NOT WIN32)
 	add_compile_options("-pedantic")
 	add_compile_options("-Werror=return-type")
 
-  # TODO: The following links may be uneeded.
-  	if(APPLE)
+	# TODO: The following links may be unneeded.
+	if(APPLE)
 		# Add required frameworks for GLFW.
 		target_link_libraries(${CMAKE_PROJECT_NAME} "-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo")
 	else()

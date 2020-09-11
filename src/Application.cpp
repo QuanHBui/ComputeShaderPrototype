@@ -10,6 +10,7 @@
 
 #include "ComputeProgram.h"
 #include "GLSL.h"
+#include "OpenGLUtils.h"
 #include "P3NarrowPhaseCollisionDetection.h"
 #include "Shape.h"
 #include "stb_image.h"
@@ -253,6 +254,9 @@ void Application::initCpuBuffers()
 
 void Application::initGpuBuffers()
 {
+	getComputeGroupInfo();
+	getUboInfo();
+
 	// Allocate 2 SSBOs on GPU: 1 for input, and 1 for output
 	glGenBuffers(2, mSsboGpuID);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboGpuID[0]);
@@ -284,8 +288,8 @@ void Application::initRenderProgram()
 
 	mpRenderProgram = std::make_unique<Program>();
 	mpRenderProgram->setVerbose(true);
-	mpRenderProgram->setShaderNames("../resources/shaders/vs.glsl",
-									"../resources/shaders/fs.glsl");
+	mpRenderProgram->setShaderNames("../resources/shaders/vs.vert",
+									"../resources/shaders/fs.frag");
 	mpRenderProgram->init();
 	mpRenderProgram->addAttribute("vertPos");
 	mpRenderProgram->addAttribute("vertNor");
@@ -295,9 +299,8 @@ void Application::initRenderProgram()
 void Application::initComputePrograms()
 {
 	GLSL::checkVersion();
-	getComputeGroupInfo();
 
-	GLuint computeProgramID = createComputeProgram("../resources/shaders/cs.glsl");
+	GLuint computeProgramID = createComputeProgram("../resources/shaders/triTriTest.comp");
 	mComputeProgramIDContainer.push_back(computeProgramID);
 }
 
@@ -464,6 +467,7 @@ void Application::computeOnCpu()
 		printColorSsbo();
 	}
 
+	// TODO: This is just wasting memory. Please fix!
 	glm::mat4 const &model_A = mUboCpuMem.model_A;
 	glm::mat4 const &model_B = mUboCpuMem.model_B;
 	glm::vec4 const (&rPositionBuffer_A)[2763] = mSsboCpuMem.positionBuffer_A;
@@ -552,11 +556,11 @@ void Application::render()
 	mpRenderProgram->bind();
 	// Send model matrix
 	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
-						1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_A));
+					   1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_A));
 	mMeshContainer.at(0)->draw(mpRenderProgram, mSsboGpuID[1]);		// Draw bunny
 
 	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
-						1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_B));
+					   1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_B));
 	mMeshContainer.at(1)->draw(mpRenderProgram, 0u);				// Draw quad
 
 	// When done, unbind UBO
@@ -578,12 +582,12 @@ void Application::updateCpuBuffers(float dt)
 	if (verticalMove)
 	{
 		mUboCpuMem.model_B = glm::translate(glm::vec3(0.9f, 2.0f * sinf(0.5f * (float)glfwGetTime()), -1.0f)) *
-							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+							 glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 	else
 	{
 		mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f + 3.5f * sinf(0.4f * (float)glfwGetTime()), 0.75f, -1.0f)) *
-							glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+							 glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
 	// Check for camera movement flag to update view matrix

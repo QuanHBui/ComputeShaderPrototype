@@ -4,6 +4,8 @@
 
 #include "P3NarrowPhaseCollisionDetection.h"
 
+#include "ComputeProgram.h"
+
 #define EPSILON 0.000001f
 
 // We are going old school
@@ -191,4 +193,10 @@ bool pointInTriTest(glm::vec3 const &v0,
 					glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	return false;
+}
+
+
+P3OpenGLComputeNarrowPhase::P3OpenGLComputeNarrowPhase()
+{
+	computeProgramContainer[TRI_TRI_TEST] = createComputeProgram("../resources/shaders/triTriTest.glsl");
 }

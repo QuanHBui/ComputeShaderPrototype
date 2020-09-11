@@ -19,16 +19,18 @@ bool P3DynamicsWorld::addDynamicBody(glm::vec3 const &position, BoundingVolume *
 
 	// Some use of polymorphism here
 	BoundingBox *boundBoxPtr = dynamic_cast<BoundingBox *>(boundPtr);
-	if (boundBoxPtr) {
+	if (boundBoxPtr)
+	{
 		newDynamicBodyPtr= new DynamicBody(position, boundBoxPtr, bounce, mass);
 	}
 
 	BoundingSphere *boundSpherePtr = dynamic_cast<BoundingSphere *>(boundPtr);
-	if (boundSpherePtr) {
+	if (boundSpherePtr)
+	{
 		newDynamicBodyPtr = new DynamicBody(position, boundSpherePtr, bounce, mass);
 	}
 
-	rigidBodyPtrContainer.emplace_back(newDynamicBodyPtr);
+	mRigidBodyPtrContainer.emplace_back(newDynamicBodyPtr);
 
 	return true;
 }
@@ -40,16 +42,18 @@ bool P3DynamicsWorld::addStaticBody(glm::vec3 const &position, BoundingVolume *b
 	RigidBody *newStaticBodyPtr{nullptr};
 
 	BoundingBox *boundBoxPtr = dynamic_cast<BoundingBox *>(boundPtr);
-	if (boundBoxPtr) {
+	if (boundBoxPtr)
+	{
 		newStaticBodyPtr = new StaticBody(position, boundBoxPtr, bounce);
 	}
 
 	BoundingSphere *boundSpherePtr = dynamic_cast<BoundingSphere *>(boundPtr);
-	if (boundSpherePtr) {
+	if (boundSpherePtr)
+	{
 		newStaticBodyPtr = new StaticBody(position, boundSpherePtr, bounce);
 	}
 
-	rigidBodyPtrContainer.emplace_back(newStaticBodyPtr);
+	mRigidBodyPtrContainer.emplace_back(newStaticBodyPtr);
 
 	return true;
 }
@@ -61,16 +65,18 @@ bool P3DynamicsWorld::addKinematicBody(glm::vec3 const &position, BoundingVolume
 	RigidBody *newKinematicBodyPtr{nullptr};
 
 	BoundingBox *boundBoxPtr = dynamic_cast<BoundingBox *>(boundPtr);
-	if (boundBoxPtr) {
+	if (boundBoxPtr)
+	{
 		newKinematicBodyPtr = new KinematicBody(position, boundBoxPtr, bounce);
 	}
 
 	BoundingSphere *boundSpherePtr = dynamic_cast<BoundingSphere *>(boundPtr);
-	if (boundSpherePtr) {
+	if (boundSpherePtr)
+	{
 		newKinematicBodyPtr = new KinematicBody(position, boundSpherePtr, bounce);
 	}
 
-	rigidBodyPtrContainer.emplace_back(newKinematicBodyPtr);
+	mRigidBodyPtrContainer.emplace_back(newKinematicBodyPtr);
 
 	return true;
 }
@@ -85,7 +91,8 @@ bool P3DynamicsWorld::checkCollision(DynamicBody const &firstBody, DynamicBody c
 	BoundingBox *firstBodyBoundBoxPtr = dynamic_cast<BoundingBox *>(firstBody.getBoundPtr());
 	BoundingBox *secondBodyBoundBoxPtr = dynamic_cast<BoundingBox *>(secondBody.getBoundPtr());
 
-	if (firstBodyBoundBoxPtr || secondBodyBoundBoxPtr) {
+	if (firstBodyBoundBoxPtr || secondBodyBoundBoxPtr)
+	{
 		// Compare right side of first body vs left side of second body
 		//  then compare right side of second body vs left side of first body
 		bool collisionX = firstBodyPosition.x + firstBodyBoundBoxPtr->getMaxBound().x >= secondBodyPosition.x + secondBodyBoundBoxPtr->getMinBound().x &&
@@ -106,9 +113,10 @@ bool P3DynamicsWorld::checkCollision(DynamicBody const &firstBody, DynamicBody c
 	BoundingSphere *firstBodyBoundSpherePtr = dynamic_cast<BoundingSphere *>(firstBody.getBoundPtr());
 	BoundingSphere *secondBodyBoundSpherePtr = dynamic_cast<BoundingSphere *>(secondBody.getBoundPtr());
 
-	if (firstBodyBoundSpherePtr || secondBodyBoundSpherePtr) {
-		return glm::distance(firstBodyPosition, secondBodyPosition) <= firstBodyBoundSpherePtr->getRadius() ||
-			glm::distance(firstBodyPosition, secondBodyPosition) <= secondBodyBoundSpherePtr->getRadius();
+	if (firstBodyBoundSpherePtr || secondBodyBoundSpherePtr)
+	{
+		return glm::distance(firstBodyPosition, secondBodyPosition) <= firstBodyBoundSpherePtr->getRadius()
+			|| glm::distance(firstBodyPosition, secondBodyPosition) <= secondBodyBoundSpherePtr->getRadius();
 	}
 
 	return false;
@@ -122,7 +130,8 @@ bool P3DynamicsWorld::checkCollision(DynamicBody const &firstBody, StaticBody co
 	BoundingBox *firstBodyBoundBoxPtr = dynamic_cast<BoundingBox *>(firstBody.getBoundPtr());
 	BoundingBox *secondBodyBoundBoxPtr = dynamic_cast<BoundingBox *>(secondBody.getBoundPtr());
 
-	if (firstBodyBoundBoxPtr || secondBodyBoundBoxPtr) {
+	if (firstBodyBoundBoxPtr || secondBodyBoundBoxPtr)
+	  {
 		// Compare right side of first body vs left side of second body
 		//  then compare right side of second body vs left side of first body
 		bool collisionX = firstBodyPosition.x + firstBodyBoundBoxPtr->getMaxBound().x >= secondBodyPosition.x + secondBodyBoundBoxPtr->getMinBound().x &&
@@ -137,7 +146,8 @@ bool P3DynamicsWorld::checkCollision(DynamicBody const &firstBody, StaticBody co
 		bool collisionZ = firstBodyPosition.z + firstBodyBoundBoxPtr->getMaxBound().z >= secondBodyPosition.z + secondBodyBoundBoxPtr->getMinBound().z &&
 			secondBodyPosition.z + secondBodyBoundBoxPtr->getMaxBound().z >= firstBodyPosition.z + firstBodyBoundBoxPtr->getMinBound().z;
 
-		if (collisionX && collisionY && collisionZ) {
+		if (collisionX && collisionY && collisionZ)
+		{
 			std::cout << "COLLIDED!!\n";
 		}
 
@@ -147,9 +157,10 @@ bool P3DynamicsWorld::checkCollision(DynamicBody const &firstBody, StaticBody co
 	BoundingSphere *firstBodyBoundSpherePtr = dynamic_cast<BoundingSphere *>(firstBody.getBoundPtr());
 	BoundingSphere *secondBodyBoundSpherePtr = dynamic_cast<BoundingSphere *>(secondBody.getBoundPtr());
 
-	if (firstBodyBoundSpherePtr || secondBodyBoundSpherePtr) {
-		return glm::distance(firstBodyPosition, secondBodyPosition) <= firstBodyBoundSpherePtr->getRadius() ||
-			glm::distance(firstBodyPosition, secondBodyPosition) <= secondBodyBoundSpherePtr->getRadius();
+	if (firstBodyBoundSpherePtr || secondBodyBoundSpherePtr)
+	{
+		return glm::distance(firstBodyPosition, secondBodyPosition) <= firstBodyBoundSpherePtr->getRadius()
+			|| glm::distance(firstBodyPosition, secondBodyPosition) <= secondBodyBoundSpherePtr->getRadius();
 	}
 
 	return false;

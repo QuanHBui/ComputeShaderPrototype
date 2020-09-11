@@ -25,28 +25,40 @@
 #include "Shape.h"
 #include "WindowManager.h"
 
-void getComputeGroupInfo();
-
 class Application : public EventCallbacks
 {
+public:
+	void init();
+
+	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
+
+	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
+	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
+	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
+	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
+	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
+
+	void computeOnGpu();
+	void computeOnCpu();
+
+	void render();
+	void update(float);
+
+	~Application();
+
 private:
-	WindowManager *mpWindowManager = nullptr;
-	GLuint mVao, mUboGpuID, mSsboGpuID[2];
+	void initGeom();
+	void initCpuBuffers();
+	void initGpuBuffers();
+	void initRenderProgram();
+	void initComputePrograms();
 
-	Camera mFlyCamera{
-						glm::vec3{0.f, 0.f, 0.f},
-						glm::vec3{0.f, 0.f, -5.f},
-						glm::vec3{0.f, 1.f, 0.f},
-						(float)(640 / 480)
-					};
-	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;
-	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
-	bool mIsFirstCursorFocus = true;
+	void updateCpuBuffers(float);
+	void updateGpuBuffers();
 
-	std::unique_ptr<Program> mpRenderProgram = nullptr;
-	std::vector<GLuint> mComputeProgramIDContainer;
-
-	std::vector<std::shared_ptr<Shape>> mMeshContainer;
+	void printSsbo();
+	void printColorSsbo();
+	void interpretComputedSsbo();
 
 	struct Ssbo
 	{
@@ -70,36 +82,25 @@ private:
 		glm::vec4 colorBuffer_B[2763];
 	} mColorOutSsbo;
 
-	void printSsbo();
-	void printColorSsbo();
-	void interpretComputedSsbo();
 
-public:
-	~Application();
+	WindowManager *mpWindowManager = nullptr;
+	GLuint mVao, mUboGpuID, mSsboGpuID[2];
 
-	void init();
-	void initGeom();
-	void initCpuBuffers();
-	void initGpuBuffers();
-	void initRenderProgram();
-	void initComputePrograms();
+	Camera mFlyCamera
+	{
+		glm::vec3{0.f, 0.f, 0.f},
+		glm::vec3{0.f, 0.f, -5.f},
+		glm::vec3{0.f, 1.f, 0.f},
+		(float)(640 / 480)
+	};
+	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;
+	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
+	bool mIsFirstCursorFocus = true;
 
-	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
+	std::unique_ptr<Program> mpRenderProgram = nullptr;
+	std::vector<GLuint> mComputeProgramIDContainer;
 
-	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
-	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
-	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
-	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
-	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
-
-	void computeOnGpu();
-	void computeOnCpu();
-
-	void render();
-
-	void update(float);
-	void updateCpuBuffers(float);
-	void updateGpuBuffers();
+	std::vector<std::shared_ptr<Shape>> mMeshContainer;
 };
 
 #endif // APPLICATION_H

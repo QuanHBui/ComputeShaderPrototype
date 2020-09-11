@@ -17,9 +17,6 @@ enum BoundingPrimitives { BOX = 0, SPHERE };
 
 class BoundingVolume
 {
-protected:
-	glm::vec3 position_{0.f};
-
 public:
 	BoundingVolume() {}
 	BoundingVolume(glm::vec3 position) : position_{position} {}
@@ -28,15 +25,13 @@ public:
 	glm::vec3 getPosition() const { return position_; }
 
 	void setPosition(glm::vec3 position) { position_ = position; }
+
+protected:
+	glm::vec3 position_{0.f};
 };
 
 class BoundingBox : public BoundingVolume
 {
-private:
-	// minBound should describe lower left -z direction corner,
-	//  while maxBound should describe upper right + direction corner. This coordinate system is relative to the object
-	glm::vec3 minBound_{0.f}, maxBound_{0.f};
-
 public:
 	BoundingBox() {}
 	BoundingBox(glm::vec3 const &minBound, glm::vec3 const &maxBound)
@@ -47,13 +42,15 @@ public:
 
 	void setMinBound(glm::vec3 minBound) { minBound_ = minBound; }
 	void setMaxBound(glm::vec3 maxBound) { maxBound_ = maxBound; }
+
+private:
+	// minBound should describe lower left -z direction corner,
+	//  while maxBound should describe upper right + direction corner. This coordinate system is relative to the object
+	glm::vec3 minBound_{0.f}, maxBound_{0.f};
 };
 
 class BoundingSphere : public BoundingVolume
 {
-private:
-	float radius_{0.f};
-
 public:
 	BoundingSphere() {}
 	BoundingSphere(float radius) : radius_{radius} {}
@@ -61,6 +58,9 @@ public:
 	float getRadius() const { return radius_; }
 
 	void setRadius(float radius) { radius_ = radius; }
+
+private:
+	float radius_{0.f};
 };
 
 #endif // BOUNDING_VOLUME_H
