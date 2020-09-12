@@ -11,6 +11,7 @@
 #include "ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
+#include "P3BroadPhaseCollisionDetection.h"
 #include "P3NarrowPhaseCollisionDetection.h"
 #include "Shape.h"
 #include "stb_image.h"
@@ -302,6 +303,10 @@ void Application::initComputePrograms()
 
 	GLuint computeProgramID = createComputeProgram("../resources/shaders/triTriTest.comp");
 	mComputeProgramIDContainer.push_back(computeProgramID);
+
+	// Set up the broad phase collision detection
+	P3OpenGLComputeBroadPhaseCreateInfo createInfo;
+	P3OpenGLComputeBroadPhase broadPhase(&createInfo);
 }
 
 void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)

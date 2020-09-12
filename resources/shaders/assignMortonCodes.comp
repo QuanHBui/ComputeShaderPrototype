@@ -4,20 +4,55 @@
 
 precision highp float;
 
-layout(local_size_x = 1, local_size_y = 2) in;
+layout(local_size_x = 1024, local_size_y = 1) in;
 
-layout(std430, binding = 0) volatile buffer position_ssbo
+layout(std430, binding = 0) volatile buffer in_ssbo
 {
-	vec4 position[];
+	vec4 positions[];
 };
 
-void calculateMorton()
+layout(std430, binding = 1) writeonly buffer out_ssbo
 {
+	uint mortonCodes3D[];
+};
 
+/**
+ * @source: https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
+ * @description: Expands 10-bit integer into 30 bits by inserting 2 zeros after each bit.
+ *
+ * Some conversions:
+ *  0x0001 0001u = 4,097 = 0001 0000 0000 0000 0001
+ *  0xFF00 00FFu = 4278,190,335 = 1111 1111 0000 0000 0000 0000 1111 1111
+ *  0x0000 0101u = 257 = 0001 0000 0001
+ *  0x0F00 F00Fu = 251,719,695 = 0010 0101 0001 0111 0001 1001 0110 1001 0101
+ *  0x0000 0011u = 17 = 0001 0001
+ *  0xC30C 30C3u = 3,272,356,035 = 1100 0011 0000 1100 0011 0000 1100 0011
+ *  0x0000 0005u = 5 = 0101
+ *  0x4924 9249u = 1,227,133,513 = 0100 1001 0010 0100 1001 0010 0100 1001
+ */
+uint expandBits(uint v)
+{
+	v = (v * 0x00010001u) & 0xFF0000FFu;
+	v = (v * 0x00000101u) & 0x0F00F00Fu;
+	v = (v * 0x00000011u) & 0xC30C30C3u;
+	v = (v * 0x00000005u) & 0x49249249u;
+	return v;
 }
 
-// Execute one work group per object. One local invocation per position
+uint calculateMortonCode3D(float x, float y, float z)
+{
+	x = min(max(x * 1024.0f, 0.0f), 1023.0f);
+	y = min(max(y * 1024.0f, 0.0f), 1023.0f);
+	z = min(max(z * 1024.0f, 0.0f), 1023.0f);
+	unsigned int xx = expandBits(uint(x));
+	unsigned int yy = expandBits(uint(y));
+	unsigned int zz = expandBits(uint(z));
+	return xx * 4 + yy * 2 + zz;
+}
+
 void main()
 {
-	calculateMorton();
+	vec4 currentPos = positions[gl_LocalInvocationID.x];
+
+	mortonCodes3D[gl_LocalInvocationID.x] = calculateMortonCode3D(currentPos.x, currentPos.y, currentPos.z);
 }

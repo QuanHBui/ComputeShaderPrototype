@@ -8,8 +8,8 @@ layout(local_size_x = 1, local_size_y = 2) in;
 
 struct Node
 {
-	int left child;
-	int right child;
+	int left;
+	int right;
 };
 
 // Already filled in linear bvh
