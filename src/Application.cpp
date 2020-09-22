@@ -5,14 +5,13 @@
 #include <glm/gtx/transform.hpp>
 #include <string>
 
-#define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
 #include "ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
-#include "P3BroadPhaseCollisionDetection.h"
-#include "P3NarrowPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
 #include "Shape.h"
 #include "stb_image.h"
 

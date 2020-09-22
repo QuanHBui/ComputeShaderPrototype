@@ -4,7 +4,7 @@
 
 #include "P3NarrowPhaseCollisionDetection.h"
 
-#include "ComputeProgram.h"
+#include "../ComputeProgram.h"
 
 #define EPSILON 0.000001f
 

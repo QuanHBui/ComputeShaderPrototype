@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="resources\shaders">
+      <UniqueIdentifier>{ac8ae862-8067-40a3-929b-5bd2104ddf84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{ecbc910d-0da0-4222-ac29-75d382bb8aa5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\PrototypePhysicsEngine">
+      <UniqueIdentifier>{c33f56da-5df8-476a-9cd6-31e7c29f4ac1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ext">
+      <UniqueIdentifier>{7eea8886-8f90-4d4d-b60b-9aac60df0266}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\shaders\assignMortonCodes.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\buildParallelLinearBvh.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\detectPairs.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\fs.frag">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\sortLeafNodes.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\triTriTest.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\updateAabbs.comp">
+      <Filter>resources\shaders</Filter>
+    </None>
+    <None Include="resources\shaders\vs.vert">
+      <Filter>resources\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Application.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ComputeProgram.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GLSL.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGLUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Program.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ProgramPipeline.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shape.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stb_image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WindowManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PrototypePhysicsEngine\P3DynamicsWorld.cpp">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PrototypePhysicsEngine\RigidBody.cpp">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\glad\src\glad.c">
+      <Filter>ext</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\tiny_obj_loader\tiny_obj_loader.cpp">
+      <Filter>ext</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Application.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ComputeProgram.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GLSL.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\OpenGLUtils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Program.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ProgramPipeline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shape.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stb_image.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stb_image_write.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WindowManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\BoundingVolume.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsCommon.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsWorld.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\ParallelLinearBVH.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\RigidBody.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

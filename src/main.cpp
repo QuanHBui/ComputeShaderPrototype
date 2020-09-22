@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
  *
  * This prototype showcases compute shader, specifically:
@@ -17,7 +17,7 @@
 #include <time.h>
 
 #include "Application.h"
-#include "P3BroadPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
 #include "GLSL.h"
 
 #define UNUSED(x) static_cast<void>(x)

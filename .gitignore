@@ -2,6 +2,7 @@
 *build/
 out/
 x64/
+Debug/
 
 # IDE/Text editor settings
 .vs/

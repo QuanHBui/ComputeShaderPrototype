@@ -6,7 +6,7 @@
 #include <array>
 
 #include "RigidBody.h"
-#include "ComputeProgram.h"
+#include "../ComputeProgram.h"
 
 #define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
 #define NUM_BROAD_PHASE_SSBO 1

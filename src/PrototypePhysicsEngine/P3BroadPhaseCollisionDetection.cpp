@@ -1,6 +1,6 @@
 #include "P3BroadPhaseCollisionDetection.h"
 
-#include "ComputeProgram.h"
+#include "../ComputeProgram.h"
 
 P3OpenGLComputeBroadPhase::P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *createInfo)
 	: mCreateInfo(createInfo)
