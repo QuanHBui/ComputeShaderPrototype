@@ -88,3 +88,25 @@ Some concerns:
 	so if the number of objects in the world is way more than the number of work groups allow, how should we solve this
 	issue? How to make it more robust? GTX 965M can have like up to ~2 mil (not sure - x:2147483647 y:65535 z:65535)
 	work groups, so shouldn't be that bad.
+
+//======================= Concept of scan and uses ===============================
+Concept of (exclusive) scan: to be added later
+	Algorithm:
+		Sequential:
+			out[0] := 0;
+
+			for k := 1 to n do:
+				out[k] := in[k-1] + out[k-1]
+
+Uses of scan:
+	(1) Turn a sequential computation to its parallel equivalent
+	Sequential: f() here is just a certain sequential computations
+		out[0] = 0;
+
+		for j from 1 to n do:
+			out[j] = out[j-1] + f(in[j-1]);
+
+	Parallel:
+		forall j in parallel do:
+			temp[j] = f(in[j]);
+			all_prefix_sums(out, temp);

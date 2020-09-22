@@ -4,21 +4,24 @@
 
 precision highp float;
 
-layout(local_size_x = 1024, local_size_y = 1) in;
+layout(local_size_x = 2) in;
 
-layout(std430, binding = 0) volatile buffer in_ssbo
+// This uniform probably won't be used multiple times so we won't need UBO for it.
+// Also, assume that the world is a cube, a.k.a all sides have the same range of [-WORLD_EXTENT, WORLD_EXTENT]
+uniform float WORLD_EXTENT;
+
+layout(std430, binding = 1) readonly buffer ssbo_in
 {
 	vec4 positions[];
 };
 
-layout(std430, binding = 1) writeonly buffer out_ssbo
+layout(std430, binding = 2) writeonly buffer ssbo_out
 {
 	uint mortonCodes3D[];
 };
 
 /**
- * @source: https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
- * @description: Expands 10-bit integer into 30 bits by inserting 2 zeros after each bit.
+ * Expands 10-bit integer into 30 bits by inserting 2 zeros after each bit.
  *
  * Some conversions:
  *  0x0001 0001u = 4,097 = 0001 0000 0000 0000 0001
@@ -29,6 +32,8 @@ layout(std430, binding = 1) writeonly buffer out_ssbo
  *  0xC30C 30C3u = 3,272,356,035 = 1100 0011 0000 1100 0011 0000 1100 0011
  *  0x0000 0005u = 5 = 0101
  *  0x4924 9249u = 1,227,133,513 = 0100 1001 0010 0100 1001 0010 0100 1001
+ *
+ * @source: https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
  */
 uint expandBits(uint v)
 {
@@ -36,23 +41,49 @@ uint expandBits(uint v)
 	v = (v * 0x00000101u) & 0x0F00F00Fu;
 	v = (v * 0x00000011u) & 0xC30C30C3u;
 	v = (v * 0x00000005u) & 0x49249249u;
+
 	return v;
 }
 
+/**
+ * Convert a 3D position into a unsigned value Morton code. Morton code should scale proportionally
+ *  to the size of the coordinates (x, y, z) that it is computed from.
+ *
+ * @source: https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
+ * @source: https://github.com/amdreallyfast/2D_GPU_PCollisionWithZOrderCurveRadixSorting/blob/master/Shaders/PositionToMortonCode.comp
+ */
 uint calculateMortonCode3D(float x, float y, float z)
 {
+	// We need to convert the x, y, z components into the barycentric coordinates relative to the physics world
+	// A.k.a ultimately, convert x, y, and z into the range of [0.0f, 1.0f]
+
+	// First, we need to reduce each of them into the range of [-1.0f, 1.0f].
+	float inversePositionRange = 1.0f / (2.0f * WORLD_EXTENT);
+	x *= inversePositionRange;
+	y *= inversePositionRange;
+	z *= inversePositionRange;
+
+	// Then, we reduce the range from [-1.0f, 1.0f] to [0.0f, 1.0f] by adding 1.0f then divide it by 2.0f
+	x = (x + 1.0f) / 2.0f;
+	y = (y + 1.0f) / 2.0f;
+	z = (z + 1.0f) / 2.0f;
+
+	// Clamp values
 	x = min(max(x * 1024.0f, 0.0f), 1023.0f);
 	y = min(max(y * 1024.0f, 0.0f), 1023.0f);
 	z = min(max(z * 1024.0f, 0.0f), 1023.0f);
-	unsigned int xx = expandBits(uint(x));
-	unsigned int yy = expandBits(uint(y));
-	unsigned int zz = expandBits(uint(z));
+
+	// Expand each component to 30 bit value number
+	uint xx = expandBits(uint(x));
+	uint yy = expandBits(uint(y));
+	uint zz = expandBits(uint(z));
+
 	return xx * 4 + yy * 2 + zz;
 }
 
 void main()
 {
-	vec4 currentPos = positions[gl_LocalInvocationID.x];
+	vec4 currentPos = positions[gl_GlobalInvocationID.x];
 
-	mortonCodes3D[gl_LocalInvocationID.x] = calculateMortonCode3D(currentPos.x, currentPos.y, currentPos.z);
+	mortonCodes3D[gl_GlobalInvocationID.x] = calculateMortonCode3D(currentPos.x, currentPos.y, currentPos.z);
 }

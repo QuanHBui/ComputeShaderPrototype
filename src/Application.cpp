@@ -48,7 +48,8 @@ void Application::printSsbo()
 			model_B[0][3], model_B[1][3], model_B[2][3], model_B[3][3]);
 
 	// Print out nicely the first 5 elements of the ssbo
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 5; ++i)
+	{
 		std::cout << "positionBuffer_A: "	<< std::setprecision(5)
 											<< positionBuffer_A[i].x << ", "
 											<< positionBuffer_A[i].y << ", "
@@ -104,8 +105,10 @@ void Application::interpretComputedSsbo()
 	// Two loops but this is for better cache locality. Computers love
 	//  tightly packed arrays
 	std::cout << "In mesh A, collided triangles are:\n";
-	for (int i = 0; i < 5522; ++i) {
-		if (elementBuffer_A[i].w == 1u) {
+	for (int i = 0; i < 5522; ++i)
+	{
+		if (elementBuffer_A[i].w == 1u)
+		{
 			std::cout << i;
 
 			if (i != 5521) std::cout << ", ";
@@ -114,8 +117,10 @@ void Application::interpretComputedSsbo()
 	std::cout << "\n\n";
 
 	std::cout << "In mesh B, collided triangles are:\n";
-	for (int j = 0; j < 5522; ++j) {
-		if (elementBuffer_B[j].w == 1u) {
+	for (int j = 0; j < 5522; ++j)
+	{
+		if (elementBuffer_B[j].w == 1u)
+		{
 			std::cout << j;
 
 			if (j != 5521) std::cout << ", ";
@@ -126,7 +131,7 @@ void Application::interpretComputedSsbo()
 
 Application::~Application()
 {
-	std::cout << "\nApplication is safely destroyed.\n";
+	std::cout << "Application is safely destroyed.";
 	mpWindowManager = nullptr;
 
 	if (mSsboGpuID)
@@ -195,9 +200,9 @@ void Application::initGeom()
 	mVao = mMeshContainer.at(0)->getVaoID();
 }
 
-// Initialize SSBO with the position and element buffers from loading mesh obj, pre-transformed
 void Application::initCpuBuffers()
 {
+	// Initialize SSBO with the position and element buffers from loading mesh obj, pre-transformed
 	{
 		const std::vector<float> &positionBuffer_A = mMeshContainer.at(0)->posBuf;
 		const std::vector<unsigned int> &elementBuffer_A = mMeshContainer.at(0)->eleBuf;
@@ -206,38 +211,48 @@ void Application::initCpuBuffers()
 		const std::vector<unsigned int> &elementBuffer_B = mMeshContainer.at(1)->eleBuf;
 
 		// Multiple loops for better cache locality. It's actually not as inefficient as you might think
-		for (int i = 0; i < 2763; ++i) {
+		for (int i = 0; i < 2763; ++i)
+		{
 			mSsboCpuMem.positionBuffer_A[i] = glm::vec4(positionBuffer_A[3 * i],
 														positionBuffer_A[(3 * i) + 1],
 														positionBuffer_A[(3 * i) + 2],
 														1.0f);
 		}
 
-		for (int i = 0; i < 2763; ++i) {
-			if (i < 4) {
+		for (int i = 0; i < 2763; ++i)
+		{
+			if (i < 4)
+			{
 				mSsboCpuMem.positionBuffer_B[i] = glm::vec4(positionBuffer_B[3 * i],
 															positionBuffer_B[(3 * i) + 1],
 															positionBuffer_B[(3 * i) + 2],
 															1.0f);
-			} else {
+			}
+			else
+			{
 				mSsboCpuMem.positionBuffer_B[i] = glm::vec4(0.0f);
 			}
 		}
 
-		for (int j = 0; j < 5522; ++j) {
+		for (int j = 0; j < 5522; ++j)
+		{
 			mSsboCpuMem.elementBuffer_A[j] = glm::uvec4(elementBuffer_A[3 * j],
 														elementBuffer_A[(3 * j) + 1],
 														elementBuffer_A[(3 * j) + 2],
 														0u);
 		}
 
-		for (int j = 0; j < 5522; ++j) {
-			if (j < 2) {
+		for (int j = 0; j < 5522; ++j)
+		{
+			if (j < 2)
+			{
 				mSsboCpuMem.elementBuffer_B[j] = glm::uvec4(elementBuffer_B[3 * j],
 															elementBuffer_B[(3 * j) + 1],
 															elementBuffer_B[(3 * j) + 2],
 															0u);
-			} else {
+			}
+			else
+			{
 				mSsboCpuMem.elementBuffer_B[j] = glm::uvec4(0u);
 			}
 		}
@@ -245,8 +260,8 @@ void Application::initCpuBuffers()
 
 	// Prep uniform data on the CPU
 	mUboCpuMem.model_A = glm::translate(glm::vec3(1.0f, 0.0f, -1.0f));
-	mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f)) *
-						 glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	mUboCpuMem.model_B = glm::translate(glm::vec3(-1.5f, 0.75f, -1.0f))
+						 * glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	mUboCpuMem.view = mFlyCamera.getViewMatrix();
 	mUboCpuMem.projection = mFlyCamera.getProjectionMatrix();
@@ -256,6 +271,7 @@ void Application::initGpuBuffers()
 {
 	getComputeGroupInfo();
 	getUboInfo();
+	std::cout << '\n';
 
 	// Allocate 2 SSBOs on GPU: 1 for input, and 1 for output
 	glGenBuffers(2, mSsboGpuID);

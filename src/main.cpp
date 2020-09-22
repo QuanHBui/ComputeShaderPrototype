@@ -36,7 +36,14 @@ int main(int argc, char **argv)
 
 	application->setWindowManager(windowManager);
 
-	application->init();
+	try
+	{
+		application->init();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 
 	double lastTime = glfwGetTime();
 	double lastFrameTime = lastTime;

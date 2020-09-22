@@ -5,7 +5,7 @@
 #include "GLSL.h"
 #include "Program.h"
 
-GLuint createComputeProgram(const char *shaderName)
+GLuint createComputeProgram(std::string const &shaderName)
 {
 	// Load the compute shader
 	std::string shaderString = readFileAsString(shaderName);
@@ -22,7 +22,7 @@ GLuint createComputeProgram(const char *shaderName)
 	{
 		GLSL::printShaderInfoLog(computeShader);
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
-		throw std::runtime_error("Error compiling compute shader. Shader object will be deleted.");
+		throw std::runtime_error("Error compiling compute shader " + shaderName + ". Shader object will be deleted.");
 	}
 
 	GLuint programID = glCreateProgram();
@@ -36,7 +36,7 @@ GLuint createComputeProgram(const char *shaderName)
 		GLSL::printShaderInfoLog(computeShader);
 		CHECKED_GL_CALL(glDetachShader(programID, computeShader));
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
-		throw std::runtime_error("Error linking compute shader. Compute program and shader will be deleted.");
+		throw std::runtime_error("Error compiling compute shader " + shaderName + ". Shader object will be deleted.");
 	}
 
 	// Detach and delete compute shader after linking

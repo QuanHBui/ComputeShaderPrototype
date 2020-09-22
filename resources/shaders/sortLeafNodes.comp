@@ -6,6 +6,22 @@ precision highp float;
 
 layout(local_size_x = 1, local_size_y = 2) in;
 
+// layout(std430, binding = 0) readonly buffer ssbo_in
+// {
+
+// };
+
+// layout(std430, binding = 1) writeonly buffer ssbo_out
+// {
+
+// };
+
+// A.k.a scan
+void exclusivePrefixSum()
+{
+
+}
+
 void parallelRadixSort()
 {
 
