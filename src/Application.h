@@ -48,6 +48,7 @@ public:
 
 private:
 	void initGeom();
+	void initUI();
 	void initCpuBuffers();
 	void initGpuBuffers();
 	void initRenderProgram();

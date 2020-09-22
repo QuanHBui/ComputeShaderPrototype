@@ -15,6 +15,9 @@
 #include "Shape.h"
 #include "stb_image.h"
 
+// UI stuff
+#include "imgui/imgui.h"
+
 #define EPSILON 0.0001f
 #define COMPUTE_DEBUG false
 
@@ -149,6 +152,7 @@ Application::~Application()
 void Application::init()
 {
 	initGeom();
+	initUI();
 	initCpuBuffers();
 	initGpuBuffers();
 	initComputePrograms();
@@ -198,6 +202,28 @@ void Application::initGeom()
 
 	// Store VAO handle generated from Shape class
 	mVao = mMeshContainer.at(0)->getVaoID();
+}
+
+void Application::initUI()
+{
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+
+	// Setup Platform/Renderer bindings
+	//ImGui_ImplGlfw_InitForOpenGL(window, true);
+	//ImGui_ImplOpenGL3_Init("#version 430");
+
+
+	//ImGui::Text("Hello, world %d", 123);
+	//if (ImGui::Button("Save"))
+	//{
+
+	//}
 }
 
 void Application::initCpuBuffers()
@@ -497,7 +523,7 @@ void Application::computeOnCpu()
 	glm::vec4 (&colorBuffer_A)[2763] = mColorOutSsbo.colorBuffer_A;
 	glm::vec4 (&colorBuffer_B)[2763] = mColorOutSsbo.colorBuffer_B;
 	glm::vec3 v0(0.0f), v1(0.0f), v2(0.0f), u0(0.0f), u1(0.0f), u2(0.0f);
-	glm::uvec3 tri_A(0.0f), tri_B(0.0f);
+	glm::uvec3 tri_A(0), tri_B(0);
 	bool isColliding = false;
 
 	for (unsigned int elementBufferIdx_B = 0; elementBufferIdx_B < 2; ++elementBufferIdx_B)

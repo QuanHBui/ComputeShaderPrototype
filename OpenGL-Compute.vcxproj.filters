@@ -17,6 +17,9 @@
     <Filter Include="ext">
       <UniqueIdentifier>{7eea8886-8f90-4d4d-b60b-9aac60df0266}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ext\imgui">
+      <UniqueIdentifier>{8d9009f1-fff3-47c1-b7c0-762794e62c1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\assignMortonCodes.comp">
@@ -99,6 +102,18 @@
     <ClCompile Include="ext\tiny_obj_loader\tiny_obj_loader.cpp">
       <Filter>ext</Filter>
     </ClCompile>
+    <ClCompile Include="ext\imgui\imgui.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\imgui\imgui_demo.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\imgui\imgui_draw.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\imgui\imgui_widgets.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -157,6 +172,24 @@
     </ClInclude>
     <ClInclude Include="src\PrototypePhysicsEngine\RigidBody.h">
       <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imconfig.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imgui.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imgui_internal.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imstb_rectpack.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imstb_textedit.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\imstb_truetype.h">
+      <Filter>ext\imgui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
