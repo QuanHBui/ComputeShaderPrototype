@@ -626,6 +626,7 @@ void Application::render()
 
 	mpRenderProgram->unbind();
 
+	// Render the UI last because you want it to be on top of everything
 	renderUI();
 }
 
@@ -641,8 +642,8 @@ void Application::renderUI()
 
 	// Display some text
 	ImGui::Text("This is some useful text.");
-	ImGui::Checkbox("Demo Window", &showDemoWindow);
-	ImGui::Checkbox("Demo Window", &showAnotherWindow);
+	ImGui::Checkbox("A checkbox", &showDemoWindow);
+	ImGui::Checkbox("Another checkbox", &showAnotherWindow);
 
 	// Slider with float values
 	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
@@ -652,11 +653,6 @@ void Application::renderUI()
 
 	// Actual rendering
 	ImGui::Render();
-	int displayWidth, displayHeight;
-	glfwGetFramebufferSize(mpWindowManager->getHandle(), &displayWidth, &displayHeight);
-	glViewport(0, 0, displayWidth, displayHeight);
-	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
-	glClear(GL_COLOR_BUFFER_BIT);
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
