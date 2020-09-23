@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\ext\;$(SolutionDir)\ext\glad\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ext\;$(SolutionDir)ext\imgui;$(SolutionDir)ext\imgui\examples;$(SolutionDir)ext\glad\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\ext\GLFW\lib;$(LibraryPath)</LibraryPath>
     <SourcePath>$(SolutionDir)\ext\tiny_obj_loader;$(SolutionDir)\ext\glad\src\;$(SourcePath)</SourcePath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -155,6 +155,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ext\glad\src\glad.c" />
+    <ClCompile Include="ext\imgui\examples\imgui_impl_glfw.cpp" />
+    <ClCompile Include="ext\imgui\examples\imgui_impl_opengl3.cpp" />
     <ClCompile Include="ext\imgui\imgui.cpp" />
     <ClCompile Include="ext\imgui\imgui_demo.cpp" />
     <ClCompile Include="ext\imgui\imgui_draw.cpp" />
@@ -178,6 +180,8 @@
     <ClCompile Include="src\WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ext\imgui\examples\imgui_impl_glfw.h" />
+    <ClInclude Include="ext\imgui\examples\imgui_impl_opengl3.h" />
     <ClInclude Include="ext\imgui\imconfig.h" />
     <ClInclude Include="ext\imgui\imgui.h" />
     <ClInclude Include="ext\imgui\imgui_internal.h" />

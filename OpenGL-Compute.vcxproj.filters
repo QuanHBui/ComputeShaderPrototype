@@ -114,6 +114,12 @@
     <ClCompile Include="ext\imgui\imgui_widgets.cpp">
       <Filter>ext\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="ext\imgui\examples\imgui_impl_opengl3.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ext\imgui\examples\imgui_impl_glfw.cpp">
+      <Filter>ext\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -189,6 +195,12 @@
       <Filter>ext\imgui</Filter>
     </ClInclude>
     <ClInclude Include="ext\imgui\imstb_truetype.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\examples\imgui_impl_opengl3.h">
+      <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\imgui\examples\imgui_impl_glfw.h">
       <Filter>ext\imgui</Filter>
     </ClInclude>
   </ItemGroup>

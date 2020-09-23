@@ -10,13 +10,17 @@
 #include "ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
-#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
-#include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
 #include "Shape.h"
 #include "stb_image.h"
 
+// Physics stuff
+#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
+
 // UI stuff
-#include "imgui/imgui.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #define EPSILON 0.0001f
 #define COMPUTE_DEBUG false
@@ -27,6 +31,12 @@ static bool moveLeft = false;
 static bool moveRight = false;
 static bool moveForward = false;
 static bool moveBackward = false;
+
+// imgui state
+static bool showDemoWindow = true;
+static bool showAnotherWindow = false;
+static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+static float f = 0.0f;
 
 void Application::printSsbo()
 {
@@ -147,6 +157,11 @@ Application::~Application()
 		for (GLuint computeProgramID : mComputeProgramIDContainer)
 			CHECKED_GL_CALL(glDeleteProgram(computeProgramID));
 	}
+
+	// imgui cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void Application::init()
@@ -215,15 +230,10 @@ void Application::initUI()
 	ImGui::StyleColorsDark();
 
 	// Setup Platform/Renderer bindings
-	//ImGui_ImplGlfw_InitForOpenGL(window, true);
-	//ImGui_ImplOpenGL3_Init("#version 430");
+	ImGui_ImplGlfw_InitForOpenGL(mpWindowManager->getHandle(), true);
+	ImGui_ImplOpenGL3_Init("#version 430");
 
-
-	//ImGui::Text("Hello, world %d", 123);
-	//if (ImGui::Button("Save"))
-	//{
-
-	//}
+	// Usually load font here, but let imgui use default front for now.
 }
 
 void Application::initCpuBuffers()
@@ -325,6 +335,7 @@ void Application::initRenderProgram()
 
 	// Set background color
 	glClearColor(.12f, .34f, .56f, 1.0f);
+
 	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
 
@@ -614,6 +625,39 @@ void Application::render()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	mpRenderProgram->unbind();
+
+	renderUI();
+}
+
+void Application::renderUI()
+{
+	// Start imgui frame
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	// Create a window called "Hello, world!" and append into it
+	ImGui::Begin("Hello, world!");
+
+	// Display some text
+	ImGui::Text("This is some useful text.");
+	ImGui::Checkbox("Demo Window", &showDemoWindow);
+	ImGui::Checkbox("Demo Window", &showAnotherWindow);
+
+	// Slider with float values
+	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+	ImGui::ColorEdit3("clear color", (float *)&clearColor);
+
+	ImGui::End();
+
+	// Actual rendering
+	ImGui::Render();
+	int displayWidth, displayHeight;
+	glfwGetFramebufferSize(mpWindowManager->getHandle(), &displayWidth, &displayHeight);
+	glViewport(0, 0, displayWidth, displayHeight);
+	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+	glClear(GL_COLOR_BUFFER_BIT);
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Application::update(float dt)

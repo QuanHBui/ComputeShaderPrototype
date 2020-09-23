@@ -54,6 +54,8 @@ private:
 	void initRenderProgram();
 	void initComputePrograms();
 
+	void renderUI();
+
 	void updateCpuBuffers(float);
 	void updateGpuBuffers();
 
