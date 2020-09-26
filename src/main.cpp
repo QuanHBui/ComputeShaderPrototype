@@ -43,12 +43,12 @@ int main(int argc, char **argv)
 	{
 		application->init();
 	}
-	catch(const std::exception& e)
+	catch(const std::exception &e)
 	{
 		std::cerr << e.what() << std::endl;
 	}
 
-	double lastTime = glfwGetTime();
+	double lastTime = glfwGetTime();	// In seconds
 	double lastFrameTime = lastTime;
 	double dt = 0.0;
 	int numFrames = 0;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 		if (GPU_COMPUTE) application->computeOnGpu();
 		else application->computeOnCpu();
 
-		application->render();
+		application->renderFrame();
 
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
@@ -74,6 +74,8 @@ int main(int argc, char **argv)
 			numFrames = 0;
 			lastTime += 3.0;
 		}
+
+		application->renderUI(dt);
 
 		// Swap front and back buffers.
 		glfwSwapBuffers(windowManager->getHandle());

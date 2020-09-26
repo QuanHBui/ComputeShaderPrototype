@@ -12,6 +12,7 @@
 #define BOUNDING_VOLUME_H
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 enum BoundingPrimitives { BOX = 0, SPHERE };
 
@@ -63,4 +64,16 @@ private:
 	float radius_{0.f};
 };
 
+
+//---------------------------------- Placeholder/prototyping ----------------------------------
+struct Aabb
+{
+	glm::vec4 minBound, maxBound;
+};
+
+struct CollisionPair
+{
+	Aabb firstBody, secondBody;
+};
+//---------------------------------------------------------------------------------------------
 #endif // BOUNDING_VOLUME_H

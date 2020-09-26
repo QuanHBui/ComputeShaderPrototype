@@ -41,7 +41,8 @@ public:
 	void computeOnGpu();
 	void computeOnCpu();
 
-	void render();
+	void renderFrame();
+	void renderUI(double);
 	void update(float);
 
 	~Application();
@@ -53,8 +54,6 @@ private:
 	void initGpuBuffers();
 	void initRenderProgram();
 	void initComputePrograms();
-
-	void renderUI();
 
 	void updateCpuBuffers(float);
 	void updateGpuBuffers();
@@ -85,15 +84,14 @@ private:
 		glm::vec4 colorBuffer_B[2763];
 	} mColorOutSsbo;
 
-
 	WindowManager *mpWindowManager = nullptr;
 	GLuint mVao, mUboGpuID, mSsboGpuID[2];
 
 	Camera mFlyCamera
 	{
-		glm::vec3{0.f, 0.f, 0.f},
-		glm::vec3{0.f, 0.f, -5.f},
-		glm::vec3{0.f, 1.f, 0.f},
+		glm::vec3{ 0.f, 0.f, 0.f },
+		glm::vec3{ 0.f, 0.f, -5.f },
+		glm::vec3{ 0.f, 1.f, 0.f },
 		(float)(640 / 480)
 	};
 	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;

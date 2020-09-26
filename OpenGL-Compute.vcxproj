@@ -171,6 +171,7 @@
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\ProgramPipeline.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
+    <ClCompile Include="src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\RigidBody.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="src\ProgramPipeline.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\BoundingVolume.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
+    <ClInclude Include="src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsCommon.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />

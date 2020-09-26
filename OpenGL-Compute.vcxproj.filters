@@ -120,6 +120,9 @@
     <ClCompile Include="ext\imgui\examples\imgui_impl_glfw.cpp">
       <Filter>ext\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="src\PrototypePhysicsEngine\P3ConstraintSolver.cpp">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -202,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="ext\imgui\examples\imgui_impl_glfw.h">
       <Filter>ext\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3ConstraintSolver.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

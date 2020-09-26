@@ -9,13 +9,13 @@
 #include "../ComputeProgram.h"
 
 #define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
-#define NUM_BROAD_PHASE_SSBO 1
+#define NUM_BROAD_PHASE_SSBO 2
 
 struct P3OpenGLComputeBroadPhaseCreateInfo
 {
-	glm::vec4 *pAabbPositionBuffer = nullptr;
-	glm::vec4 *pTransformBuffer = nullptr;
-	GLuint aabbPositionBufferSize = 0;
+	Aabb *pAabbBuffer = nullptr;
+	glm::vec4 *pTransformBuffer = nullptr;	// What the heck is this for??
+	GLuint aabbBufferSize = 0;
 	GLuint transformBufferSize = 0;
 };
 
@@ -24,14 +24,25 @@ class P3OpenGLComputeBroadPhase
 public:
 	P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *);
 
-	void p3BuildBvhTreeOnGpu();
-	void p3DetectCollisionPairs();
+	void init();
+
+	//--------------------- Main proccesses --------------------------//
+	void simulateTimestep(float);
+	//----------------------------------------------------------------//
+
+	void reset();
 
 	~P3OpenGLComputeBroadPhase() {}
 
 private:
 	void initGpuBuffers();
 
+	void buildBvhTreeOnGpu();
+	void detectCollisionPairs();
+
+	void resetAtomicCounter();
+	
+	// Indicies of shader programs
 	enum
 	{
 		P3_ASSIGN_MORTON_CODES = 0,
@@ -41,16 +52,23 @@ private:
 		P3_DETECT_PAIRS
 	};
 
+	// Indicices of ssbo
 	enum
 	{
-		P3_AABB_POSITIONS = 0,
-		P3_PARALLEL_LINEAR_BVH
+		P3_AABB = 0,
+		P3_COLLISION_PAIRS
+		//P3_PARALLEL_LINEAR_BVH
 	};
 
-	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> computeProgramContainer;
-	std::array<GLuint, NUM_BROAD_PHASE_SSBO> mSsboContainer;
+	//----------------------------- OpenGL bookkeeping ----------------------------//
+	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer;
+	std::array<GLuint, NUM_BROAD_PHASE_SSBO> mSsboIDContainer;
+	GLuint mAtomicBufferID = 0u;
 
-	P3OpenGLComputeBroadPhaseCreateInfo *mCreateInfo;
+	P3OpenGLComputeBroadPhaseCreateInfo *mCreateInfo = nullptr;
+
+	//--------------------------- For testing purposes ----------------------------//
+	GLuint mAtomicCounterCpu = 0u;
 };
 
 #endif // P3_BROAD_PHASE_COLLISION_DETECTION_H

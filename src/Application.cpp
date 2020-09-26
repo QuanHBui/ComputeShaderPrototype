@@ -32,10 +32,7 @@ static bool moveRight = false;
 static bool moveForward = false;
 static bool moveBackward = false;
 
-// imgui state
-static bool showDemoWindow = true;
-static bool showAnotherWindow = false;
-static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+// imgui state(s)
 static float f = 0.0f;
 
 void Application::printSsbo()
@@ -144,7 +141,7 @@ void Application::interpretComputedSsbo()
 
 Application::~Application()
 {
-	std::cout << "Application is safely destroyed.";
+	std::cout << "Application has been safely destroyed.";
 	mpWindowManager = nullptr;
 
 	if (mSsboGpuID)
@@ -589,7 +586,7 @@ void Application::computeOnCpu()
 }
 
 // Bind SSBO to render program and draw
-void Application::render()
+void Application::renderFrame()
 {
 	// Get current frame buffer size.
 	int width, height;
@@ -625,12 +622,9 @@ void Application::render()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	mpRenderProgram->unbind();
-
-	// Render the UI last because you want it to be on top of everything
-	renderUI();
 }
 
-void Application::renderUI()
+void Application::renderUI(double dt)
 {
 	// Start imgui frame
 	ImGui_ImplOpenGL3_NewFrame();
@@ -641,13 +635,11 @@ void Application::renderUI()
 	ImGui::Begin("Hello, world!");
 
 	// Display some text
-	ImGui::Text("This is some useful text.");
-	ImGui::Checkbox("A checkbox", &showDemoWindow);
-	ImGui::Checkbox("Another checkbox", &showAnotherWindow);
+	ImGui::Text("FPS: %.1f | Frame time: %.3f ms", 1.0f / dt, dt);
+	ImGui::Checkbox("A checkbox", &verticalMove);
 
 	// Slider with float values
 	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-	ImGui::ColorEdit3("clear color", (float *)&clearColor);
 
 	ImGui::End();
 
