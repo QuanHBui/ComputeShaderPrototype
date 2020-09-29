@@ -3,7 +3,7 @@
 #include "../ComputeProgram.h"
 
 P3OpenGLComputeBroadPhase::P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *createInfo)
-	: mCreateInfo(createInfo)
+	: mpCreateInfo(createInfo)
 {
 	assert(createInfo && "createInfo is a nullptr");
 
@@ -25,6 +25,10 @@ void P3OpenGLComputeBroadPhase::simulateTimestep(float dt)
 	detectCollisionPairs();
 }
 
+/**
+ * Maybe hard reset on everything 
+ * 
+ */
 void P3OpenGLComputeBroadPhase::reset()
 {
 	resetAtomicCounter();
@@ -42,11 +46,11 @@ void P3OpenGLComputeBroadPhase::initGpuBuffers()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABB]);
 	// Suggest OpenGL that this buffer is a GL_DYNAMIC_COPY because we assume that the physics engine on GPU is 
 	//  in charge of changing the AABBs and then use them for drawing
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Aabb) * mCreateInfo->aabbBufferSize, mCreateInfo->pAabbBuffer, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Aabb) * mpCreateInfo->aabbBufferSize, mpCreateInfo->pAabbBuffer, GL_DYNAMIC_COPY);
 
 	// The output buffer. This is supposed to store the list of all the potential collision pairs. Allocate size of max num bodies.
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPair) * mCreateInfo->aabbBufferSize, nullptr, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPair) * mpCreateInfo->aabbBufferSize, nullptr, GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	glGenBuffers(1, &mAtomicBufferID);
@@ -64,13 +68,15 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs()
 {
 	glUseProgram(mComputeProgramIDContainer[P3_DETECT_PAIRS]);
 
+	resetAtomicCounter();
+
 	// Set binding points
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSsboIDContainer[P3_AABB]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDContainer[P3_COLLISION_PAIRS]);
 	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 4, mAtomicBufferID);
 
 	GLuint uniformIndex = glGetUniformBlockIndex(mComputeProgramIDContainer[P3_DETECT_PAIRS], "numObjects");
-	glUniform1ui(uniformIndex, mCreateInfo->aabbBufferSize);
+	glUniform1ui(uniformIndex, mpCreateInfo->aabbBufferSize);
 
 	glDispatchCompute(1u, 1u, 1u);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);

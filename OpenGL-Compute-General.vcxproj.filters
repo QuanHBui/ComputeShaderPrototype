@@ -20,6 +20,12 @@
     <Filter Include="ext\imgui">
       <UniqueIdentifier>{8d9009f1-fff3-47c1-b7c0-762794e62c1a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Systems">
+      <UniqueIdentifier>{719fff63-27f8-4d9a-bd9b-620705aa070a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Components">
+      <UniqueIdentifier>{545277e2-e32f-4b22-ad11-c623e5912b0b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\assignMortonCodes.comp">
@@ -207,6 +213,18 @@
       <Filter>ext\imgui</Filter>
     </ClInclude>
     <ClInclude Include="src\PrototypePhysicsEngine\P3ConstraintSolver.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3Transform.h">
+      <Filter>src\PrototypePhysicsEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\TransformComponent.h">
+      <Filter>src\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\RenderSystem.h">
+      <Filter>src\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PrototypePhysicsEngine\P3Integrator.h">
       <Filter>src\PrototypePhysicsEngine</Filter>
     </ClInclude>
   </ItemGroup>

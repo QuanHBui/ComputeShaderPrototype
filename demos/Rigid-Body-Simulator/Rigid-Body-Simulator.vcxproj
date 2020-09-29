@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{122770da-9936-4028-aaea-93fcbe0eb4f7}</ProjectGuid>
-    <RootNamespace>OpenGLCompute</RootNamespace>
+    <ProjectGuid>{09169636-7827-4bca-8cda-eb4538d9f97b}</ProjectGuid>
+    <RootNamespace>RigidBodySimulator</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -59,15 +59,19 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\GeneralPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\GeneralPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\GeneralPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\GeneralPropertySheet.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -78,11 +82,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)ext\;$(SolutionDir)ext\imgui;$(SolutionDir)ext\imgui\examples;$(SolutionDir)ext\glad\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\ext\GLFW\lib;$(LibraryPath)</LibraryPath>
-    <SourcePath>$(SolutionDir)\ext\tiny_obj_loader;$(SolutionDir)\ext\glad\src\;$(SourcePath)</SourcePath>
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -144,71 +146,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="resources\shaders\assignMortonCodes.comp" />
-    <None Include="resources\shaders\buildParallelLinearBvh.comp" />
-    <None Include="resources\shaders\detectPairs.comp" />
-    <None Include="resources\shaders\fs.frag" />
-    <None Include="resources\shaders\sortLeafNodes.comp" />
-    <None Include="resources\shaders\triTriTest.comp" />
-    <None Include="resources\shaders\updateAabbs.comp" />
-    <None Include="resources\shaders\vs.vert" />
+    <ClCompile Include="..\..\ext\glad\src\glad.c" />
+    <ClCompile Include="..\..\ext\imgui\examples\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\..\ext\imgui\examples\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\..\ext\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\ext\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\ext\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\ext\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\src\Camera.cpp" />
+    <ClCompile Include="..\..\src\ComputeProgram.cpp" />
+    <ClCompile Include="..\..\src\GLSL.cpp" />
+    <ClCompile Include="..\..\src\OpenGLUtils.cpp" />
+    <ClCompile Include="..\..\src\Program.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\RigidBody.cpp" />
+    <ClCompile Include="..\..\src\WindowManager.cpp" />
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ext\glad\src\glad.c" />
-    <ClCompile Include="ext\imgui\examples\imgui_impl_glfw.cpp" />
-    <ClCompile Include="ext\imgui\examples\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="ext\imgui\imgui.cpp" />
-    <ClCompile Include="ext\imgui\imgui_demo.cpp" />
-    <ClCompile Include="ext\imgui\imgui_draw.cpp" />
-    <ClCompile Include="ext\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="ext\tiny_obj_loader\tiny_obj_loader.cpp" />
-    <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\Camera.cpp" />
-    <ClCompile Include="src\ComputeProgram.cpp" />
-    <ClCompile Include="src\GLSL.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\OpenGLUtils.cpp" />
-    <ClCompile Include="src\Program.cpp" />
-    <ClCompile Include="src\ProgramPipeline.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\RigidBody.cpp" />
-    <ClCompile Include="src\Shape.cpp" />
-    <ClCompile Include="src\stb_image.cpp" />
-    <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\WindowManager.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ext\imgui\examples\imgui_impl_glfw.h" />
-    <ClInclude Include="ext\imgui\examples\imgui_impl_opengl3.h" />
-    <ClInclude Include="ext\imgui\imconfig.h" />
-    <ClInclude Include="ext\imgui\imgui.h" />
-    <ClInclude Include="ext\imgui\imgui_internal.h" />
-    <ClInclude Include="ext\imgui\imstb_rectpack.h" />
-    <ClInclude Include="ext\imgui\imstb_textedit.h" />
-    <ClInclude Include="ext\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\Application.h" />
-    <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\ComputeProgram.h" />
-    <ClInclude Include="src\GLSL.h" />
-    <ClInclude Include="src\OpenGLUtils.h" />
-    <ClInclude Include="src\Program.h" />
-    <ClInclude Include="src\ProgramPipeline.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\BoundingVolume.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsCommon.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\ParallelLinearBVH.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\RigidBody.h" />
-    <ClInclude Include="src\Shape.h" />
-    <ClInclude Include="src\stb_image.h" />
-    <ClInclude Include="src\stb_image_write.h" />
-    <ClInclude Include="src\Texture.h" />
-    <ClInclude Include="src\WindowManager.h" />
+    <ClInclude Include="Application.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

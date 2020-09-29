@@ -5,7 +5,7 @@
 
 #include <array>
 
-#include "RigidBody.h"
+#include "BoundingVolume.h"
 #include "../ComputeProgram.h"
 
 #define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
@@ -22,7 +22,13 @@ struct P3OpenGLComputeBroadPhaseCreateInfo
 class P3OpenGLComputeBroadPhase
 {
 public:
+	P3OpenGLComputeBroadPhase() {}
 	P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *);
+
+	void setCreateInfoPonter(P3OpenGLComputeBroadPhaseCreateInfo* pCreateInfo)
+	{
+		mpCreateInfo = pCreateInfo;
+	}
 
 	void init();
 
@@ -65,7 +71,7 @@ private:
 	std::array<GLuint, NUM_BROAD_PHASE_SSBO> mSsboIDContainer;
 	GLuint mAtomicBufferID = 0u;
 
-	P3OpenGLComputeBroadPhaseCreateInfo *mCreateInfo = nullptr;
+	P3OpenGLComputeBroadPhaseCreateInfo *mpCreateInfo = nullptr;
 
 	//--------------------------- For testing purposes ----------------------------//
 	GLuint mAtomicCounterCpu = 0u;

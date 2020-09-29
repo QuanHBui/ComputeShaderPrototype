@@ -5,16 +5,16 @@
  */
 #include "RigidBody.h"
 
-void DynamicBody::move()
-{
-	position_ += linearVelocity_;
-	linearVelocity_ += linearAcceleration_;
-
-	// Due to air drag
-	//linearVelocity_ -= glm::vec3{0.0001f};
-}
-
-void KinematicBody::move()
-{
-
-}
+//void DynamicBody::move()
+//{
+//	position_ += linearVelocity_;
+//	linearVelocity_ += linearAcceleration_;
+//
+//	// Due to air drag
+//	//linearVelocity_ -= glm::vec3{0.0001f};
+//}
+//
+//void KinematicBody::move()
+//{
+//
+//}
