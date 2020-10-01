@@ -87,10 +87,63 @@
     <ClCompile Include="..\..\ext\imgui\examples\imgui_impl_opengl3.cpp">
       <Filter>Ext</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Systems\RenderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ext\tiny_obj_loader\tiny_obj_loader.cpp">
+      <Filter>Ext</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Shape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Systems\RenderSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\resources\shaders\assignMortonCodes.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\detectPairs.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\fs.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\ParticleBuffer.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\sortLeafNodes.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\triTriTest.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\updateAabbs.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\vs.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

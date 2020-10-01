@@ -21,9 +21,11 @@
 #include <vector>
 
 #include "Camera.h"
-#include "Program.h"
-#include "Shape.h"
+#include "Systems/RenderSystem.h"
+#include "PrototypePhysicsEngine/P3DynamicsWorld.h"
 #include "WindowManager.h"
+
+#define MAX_NUM_ENTITIES 10u
 
 class Application : public EventCallbacks
 {
@@ -45,18 +47,14 @@ public:
 	~Application();
 
 private:
-	void initGeom();
+	void initRenderSystem();
 	void initUI();
-	void initRenderProgram();
-
-	void updateCpuBuffers(float);
-	void updateGpuBuffers();
 
 	WindowManager *mpWindowManager = nullptr;
 
 	Camera mFlyCamera
 	{
-		glm::vec3{ 0.f, 0.f, 0.f },
+		glm::vec3{ 0.f, 1.f, 5.f },
 		glm::vec3{ 0.f, 0.f, -5.f },
 		glm::vec3{ 0.f, 1.f, 0.f },
 		(float)(640 / 480)
@@ -64,6 +62,11 @@ private:
 	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;
 	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
 	bool mIsFirstCursorFocus = true;
+
+	RenderSystem renderSystem;
+	P3DynamicsWorld physicsWorld;
+
+	std::shared_ptr<MatrixContainer> pModelMatrixContainer = nullptr;
 };
 
 #endif // APPLICATION_H

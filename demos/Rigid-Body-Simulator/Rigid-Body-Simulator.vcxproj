@@ -153,6 +153,7 @@
     <ClCompile Include="..\..\ext\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\..\ext\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\..\ext\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\ext\tiny_obj_loader\tiny_obj_loader.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\ComputeProgram.cpp" />
     <ClCompile Include="..\..\src\GLSL.cpp" />
@@ -163,12 +164,30 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\RigidBody.cpp" />
+    <ClCompile Include="..\..\src\Shape.cpp" />
+    <ClCompile Include="..\..\src\Systems\RenderSystem.cpp" />
     <ClCompile Include="..\..\src\WindowManager.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
+    <ClInclude Include="..\..\src\Systems\RenderSystem.h" />
     <ClInclude Include="Application.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\resources\shaders\assignMortonCodes.comp" />
+    <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp" />
+    <None Include="..\..\resources\shaders\detectPairs.comp" />
+    <None Include="..\..\resources\shaders\fs.frag" />
+    <None Include="..\..\resources\shaders\ParticleBuffer.comp" />
+    <None Include="..\..\resources\shaders\sortLeafNodes.comp" />
+    <None Include="..\..\resources\shaders\triTriTest.comp" />
+    <None Include="..\..\resources\shaders\updateAabbs.comp" />
+    <None Include="..\..\resources\shaders\vs.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

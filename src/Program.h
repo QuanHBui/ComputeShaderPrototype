@@ -43,7 +43,7 @@ public:
 	bool isVerbose() const { return verbose; }
 
 	void setShaderNames(const std::string &, const std::string &);
-	virtual bool init();
+	virtual void init();
 
 	virtual void bind();
 	virtual void unbind();

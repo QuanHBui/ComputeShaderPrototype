@@ -48,54 +48,18 @@ Application::~Application()
 
 void Application::init()
 {
-	initGeom();
+	initRenderSystem();
 	initUI();
-	initRenderProgram();
 }
 
-void Application::initGeom()
+void Application::initRenderSystem()
 {
-	//std::vector<tinyobj::shape_t> bunnyShapes, quadShapes;
-	//std::vector<tinyobj::material_t> bunnyMaterials, quadMaterials;
-	//std::string errStrBunny, errStrQuad;
-	//bool bunnyLoadCheck, quadLoadCheck;
+	renderSystem.init();
+	renderSystem.setView(mFlyCamera.getViewMatrix());
+	renderSystem.setProjection(mFlyCamera.getProjectionMatrix());
 
-	//bunnyLoadCheck = tinyobj::LoadObj(bunnyShapes, bunnyMaterials, errStrBunny,
-	//								  "../resources/models/bunny.obj");
-	//quadLoadCheck = tinyobj::LoadObj(quadShapes, quadMaterials, errStrQuad,
-	//								 "../resources/models/quad.obj");
-	//if (!bunnyLoadCheck)
-	//{
-	//	std::cerr << errStrBunny << std::endl;
-	//}
-	//else if (!quadLoadCheck)
-	//{
-	//	std::cerr << errStrQuad << std::endl;
-	//}
-	//else
-	//{
-	//	mMeshContainer.emplace_back(std::make_unique<Shape>());
-	//	mMeshContainer.back()->createShape(bunnyShapes.at(0));
-	//	mMeshContainer.back()->init();
-	//	mMeshContainer.back()->measure();
-	//	mMeshContainer.back()->resize();
-
-	//	mMeshContainer.emplace_back(std::make_unique<Shape>());
-	//	mMeshContainer.back()->createShape(quadShapes.at(0));
-	//	mMeshContainer.back()->init();
-	//	mMeshContainer.back()->measure();
-	//	mMeshContainer.back()->resize();
-	//}
-
-	//// Check for the size of the bunny mesh vertex buffer
-	//printf("\nSize of bunny position buffer: %zd\nSize of bunny element buffer: %zd\n",
-	//		mMeshContainer.at(0)->posBuf.size(), mMeshContainer.at(0)->eleBuf.size());
-	//printf("\nSize of quad position buffer: %zd\nSize of quad element buffer: %zd\n\n",
-	//		mMeshContainer.at(1)->posBuf.size(), mMeshContainer.at(1)->eleBuf.size());
-	//fflush(stdout);
-
-	//// Store VAO handle generated from Shape class
-	//mVao = mMeshContainer.at(0)->getVaoID();
+	pModelMatrixContainer = std::make_shared<MatrixContainer>();
+	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
 void Application::initUI()
@@ -113,25 +77,6 @@ void Application::initUI()
 	ImGui_ImplOpenGL3_Init("#version 430");
 
 	// Usually load font here, but let imgui use default front for now.
-}
-
-void Application::initRenderProgram()
-{
-	GLSL::checkVersion();
-
-	// Set background color
-	glClearColor(.12f, .34f, .56f, 1.0f);
-
-	// Enabel z-buffer test
-	glEnable(GL_DEPTH_TEST);
-
-	//mpRenderProgram = std::make_unique<Program>();
-	//mpRenderProgram->setVerbose(true);
-	//mpRenderProgram->setShaderNames("../resources/shaders/vs.vert",
-	//								"../resources/shaders/fs.frag");
-	//mpRenderProgram->init();
-	//mpRenderProgram->addAttribute("vertPos");
-	//mpRenderProgram->addAttribute("vertNor");
 }
 
 void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -229,33 +174,15 @@ void Application::renderFrame()
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
 
-	glViewport(0, 0, width, height);
+	static glm::vec3 position{ .0f, 1.0f, -4.0f };
 
-	// Clear framebuffer.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	position.y -= 0.01f;
+	
+	glm::mat4 translateY = glm::translate(position);
+	// Fill in the model matrix container
+	pModelMatrixContainer->at(0) = translateY;
 
-	float aspect = width/(float)height;
-
-	//// Bind UBO
-	//glBindBuffer(GL_UNIFORM_BUFFER, mUboGpuID);
-	//glBindBufferBase(GL_UNIFORM_BUFFER, 0, mUboGpuID);
-
-	//// Bind render program
-	//mpRenderProgram->bind();
-	//// Send model matrix
-	//glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
-	//				   1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_A));
-	//mMeshContainer.at(0)->draw(mpRenderProgram, mSsboGpuID[1]);		// Draw bunny
-
-	//glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
-	//				   1, GL_FALSE, glm::value_ptr(mUboCpuMem.model_B));
-	//mMeshContainer.at(1)->draw(mpRenderProgram, 0u);				// Draw quad
-
-	//// When done, unbind UBO
-	//glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
-	//glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	//mpRenderProgram->unbind();
+	renderSystem.render(width, height, pModelMatrixContainer);
 }
 
 void Application::renderUI(double dt)
@@ -284,4 +211,5 @@ void Application::renderUI(double dt)
 
 void Application::update(float dt)
 {
+	
 }

@@ -25,51 +25,48 @@ int main()
 
 	pApplication->setWindowManager(pWindowManager);
 
-	//try
-	//{
-	//	application->init();
-	//}
-	//catch (const std::exception& e)
-	//{
-	//	std::cerr << e.what() << std::endl;
-	//}
+	try
+	{
+		pApplication->init();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 
-	//double lastTime = glfwGetTime();	// In seconds
-	//double lastFrameTime = lastTime;
-	//double dt = 0.0;
-	//int numFrames = 0;
+	double lastTime = glfwGetTime();	// In seconds
+	double lastFrameTime = lastTime;
+	double dt = 0.0;
+	int numFrames = 0;
 
-	//// Render and computeloop
-	//while (!glfwWindowShouldClose(windowManager->getHandle()))
-	//{
-	//	if (GPU_COMPUTE) application->computeOnGpu();
-	//	else application->computeOnCpu();
+	// Render and physics loop
+	while (!glfwWindowShouldClose(pWindowManager->getHandle()))
+	{
+		pApplication->renderFrame();
 
-	//	application->renderFrame();
+		// Measure fps and frame time
+		double currentTime = glfwGetTime();
+		dt = currentTime - lastFrameTime;
+		lastFrameTime = currentTime;
+		++numFrames;
+		// If last prinf() was more than 3 sec ago
+		if (currentTime - lastTime >= 3.0)
+		{
+			// printf and reset timer
+			printf("FPS: %d | Frame time: %f\n", numFrames / 3, 3.0f / (float)numFrames);
+			numFrames = 0;
+			lastTime += 3.0;
+		}
 
-	//	// Measure fps and frame time
-	//	double currentTime = glfwGetTime();
-	//	dt = currentTime - lastFrameTime;
-	//	lastFrameTime = currentTime;
-	//	++numFrames;
-	//	// If last prinf() was more than 3 sec ago
-	//	if (currentTime - lastTime >= 3.0)
-	//	{
-	//		// printf and reset timer
-	//		printf("FPS: %d | Frame time: %f\n", numFrames / 3, 3.0f / (float)numFrames);
-	//		numFrames = 0;
-	//		lastTime += 3.0;
-	//	}
+		pApplication->renderUI(dt);
 
-	//	application->renderUI(dt);
+		// Swap front and back buffers.
+		glfwSwapBuffers(pWindowManager->getHandle());
+		// Poll for and process events.
+		glfwPollEvents();
 
-	//	// Swap front and back buffers.
-	//	glfwSwapBuffers(windowManager->getHandle());
-	//	// Poll for and process events.
-	//	glfwPollEvents();
-
-	//	application->update((float)dt);
-	//}
+		pApplication->update((float)dt);
+	}
 
 	// Destroy application before deleting the current OpenGL context
 	delete pApplication;

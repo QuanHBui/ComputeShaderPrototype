@@ -7,8 +7,6 @@
 
 #include "P3DynamicsWorld.h"
 
-#include <iostream>
-
 bool P3DynamicsWorld::addRigidBody(glm::vec3 const &position, float mass)
 {
 	return false;

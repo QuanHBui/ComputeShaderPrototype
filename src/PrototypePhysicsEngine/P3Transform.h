@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef P3_RIGID_BODY
-#define P3_RIGID_BODY
+#ifndef P3_TRANSFORM_H
+#define P3_TRANSFORM_H
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -60,9 +60,9 @@ struct AngularTransformDerivative
 	glm::vec3 torque;
 };
 
-glm::vec3 torque(AngularTransform &state, double t)
+inline glm::vec3 calculateTorque(AngularTransform &state, double t)
 {
 	return glm::vec3(1.0f, 0.0f, 0.0f) - state.angularVelocity * 0.1f;
 }
 
-#endif // P3_RIGID_BODY
+#endif // P3_TRANSFORM_H

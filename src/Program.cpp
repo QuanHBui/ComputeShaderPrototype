@@ -19,7 +19,7 @@ std::string readFileAsString(const std::string &fileName)
 		result.assign((std::istreambuf_iterator<char>(fileHandle)), std::istreambuf_iterator<char>());
 	}
 	else {
-		std::cerr << "Could not open file: '" << fileName << "'\n";
+		throw std::runtime_error("Could not open file: " + fileName);
 	}
 
 	return result;
@@ -39,7 +39,7 @@ void Program::setShaderNames(const std::string &v, const std::string &f)
 	fShaderName = f;
 }
 
-bool Program::init()
+void Program::init()
 {
 	GLint success;
 
@@ -61,13 +61,10 @@ bool Program::init()
 	if (!success) {
 		if (isVerbose()) {
 			GLSL::printShaderInfoLog(vs);
-			std::cerr << "Error compiling vertex shader " << vShaderName << '\n'
-				<< "Shader object will be deleted\n";
 		}
 
 		glDeleteShader(vs);
-
-		return false;
+		throw std::runtime_error("Error compiling vertex shader " + vShaderName);
 	}
 
 	// Compile fragment shader
@@ -76,13 +73,10 @@ bool Program::init()
 	if (!success) {
 		if (isVerbose()) {
 			GLSL::printShaderInfoLog(fs);
-			std::cerr << "Error compiling fragment shader " << fShaderName << '\n'
-				<< "Shader object will be deleted\n";
 		}
 
 		glDeleteShader(fs);
-
-		return false;
+		throw std::runtime_error("Error compiling fragment shader " + fShaderName);
 	}
 
 	// Create the program and link
@@ -94,8 +88,6 @@ bool Program::init()
 	if (!success) {
 		if (isVerbose()) {
 			GLSL::printProgramInfoLog(pid);
-			std::cerr << "Error linking shaders " << vShaderName << " and " << fShaderName << '\n'
-				<< "Program object and its associated shader objects will be deleted\n";
 		}
 
 		glDeleteProgram(pid);
@@ -107,7 +99,7 @@ bool Program::init()
 		glDeleteShader(vs);
 		glDeleteShader(fs);
 
-		return false;
+		throw std::runtime_error("Error linking shaders " + vShaderName + " and " + fShaderName);
 	}
 
 	// Detach shaders after successful link
@@ -117,8 +109,6 @@ bool Program::init()
 	// Deferred deletion of shaders
 	glDeleteShader(vs);
 	glDeleteShader(fs);
-
-	return true;
 }
 
 void Program::bind()

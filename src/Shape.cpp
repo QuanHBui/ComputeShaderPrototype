@@ -216,7 +216,7 @@ void Shape::init()
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-void Shape::draw(unique_ptr<Program> const &prog, GLuint colorCollisionBufferID)
+void Shape::draw(shared_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 {
 	int h_pos, h_nor, h_tex;
 	h_pos = h_nor = h_tex = -1;

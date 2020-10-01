@@ -4,13 +4,7 @@ layout(location = 0) in vec4 vertPos;
 layout(location = 1) in vec4 vertNor;
 layout(location = 2) in vec4 vertColor;
 
-layout(std140, binding = 0) uniform transform_matrices
-{
-	mat4 projection;
-	mat4 view;
-};
-
-uniform mat4 model;
+uniform mat4 projection, view, model;
 
 out VS_OUT {
 	vec3 fragNor;
