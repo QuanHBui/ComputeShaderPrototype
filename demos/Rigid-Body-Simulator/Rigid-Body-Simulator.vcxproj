@@ -171,10 +171,14 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\RigidBody.h" />
     <ClInclude Include="..\..\src\Systems\RenderSystem.h" />
     <ClInclude Include="Application.h" />
   </ItemGroup>
@@ -184,6 +188,7 @@
     <None Include="..\..\resources\shaders\detectPairs.comp" />
     <None Include="..\..\resources\shaders\fs.frag" />
     <None Include="..\..\resources\shaders\ParticleBuffer.comp" />
+    <None Include="..\..\resources\shaders\simplePhysicsPipeline.comp" />
     <None Include="..\..\resources\shaders\sortLeafNodes.comp" />
     <None Include="..\..\resources\shaders\triTriTest.comp" />
     <None Include="..\..\resources\shaders\updateAabbs.comp" />

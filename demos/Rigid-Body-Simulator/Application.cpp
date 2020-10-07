@@ -14,8 +14,7 @@
 #include "stb_image.h"
 
 // Physics stuff
-#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
-#include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3DynamicsWorld.h"
 
 // UI stuff
 #include "imgui.h"
@@ -49,6 +48,7 @@ Application::~Application()
 void Application::init()
 {
 	initRenderSystem();
+	initPhysicsWorld();
 	initUI();
 }
 
@@ -59,7 +59,13 @@ void Application::initRenderSystem()
 	renderSystem.setProjection(mFlyCamera.getProjectionMatrix());
 
 	pModelMatrixContainer = std::make_shared<MatrixContainer>();
-	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 1.0f, 0.0f)));
+	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)));
+	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)));
+}
+
+void Application::initPhysicsWorld()
+{
+	physicsWorld.stackingBoxesDemo();
 }
 
 void Application::initUI()
@@ -67,7 +73,7 @@ void Application::initUI()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
+	ImGuiIO &io = ImGui::GetIO();
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -174,14 +180,6 @@ void Application::renderFrame()
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
 
-	static glm::vec3 position{ .0f, 1.0f, -4.0f };
-
-	position.y -= 0.01f;
-	
-	glm::mat4 translateY = glm::translate(position);
-	// Fill in the model matrix container
-	pModelMatrixContainer->at(0) = translateY;
-
 	renderSystem.render(width, height, pModelMatrixContainer);
 }
 
@@ -211,5 +209,16 @@ void Application::renderUI(double dt)
 
 void Application::update(float dt)
 {
+	physicsWorld.stepSimulation(dt);
+
+	// Get position array from the physics world
+	std::vector<LinearTransform> const & linearTransformContainer = physicsWorld.getLinearTransformContainer();
 	
+	size_t i = 0u;
+	// Update the model matrix array
+	for (auto const &linearTransform : linearTransformContainer)
+	{
+		glm::mat4 transform = glm::translate(linearTransform.position);
+		pModelMatrixContainer->at(i++) = transform;
+	}
 }

@@ -7,25 +7,93 @@
 
 #include "P3DynamicsWorld.h"
 
-bool P3DynamicsWorld::addRigidBody(glm::vec3 const &position, float mass)
+// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
+void P3DynamicsWorld::stepSimulation(double dt)
 {
-	return false;
+	for (auto &linearTransform : mLinearTransformContainer)
+	{
+		// Collision detection - broad phase + near phase
+
+		// Apply forces - gravity most likely
+		linearTransform.velocity.y -= 9.81f * dt;
+		linearTransform.momentum.y = linearTransform.mass * linearTransform.velocity.y;
+
+		// Constraint solver - position and velocity - floor constraint
+		if (linearTransform.position.y < 1.0f)
+		{
+			// We have to modify the accumulate velocity to solve this position constraint
+		}
+
+		// Integrate change in velocity
+
+		linearTransform.position += linearTransform.velocity * (float)dt;
+	}
 }
 
+void P3DynamicsWorld::addRigidBody()
+{
+	// Generate unique ID and add to ID container
+	mBodyContainer.emplace_back(mUniqueID++);
+	// Add to linear transform container
+	mLinearTransformContainer.emplace_back();
+	// Add to angular transform container
+	mAngularTransformContainer.emplace_back();
+
+	// TODO: Set up appropriate entity -> index and index -> entity maps. This is needed
+	// in the case of removing bodies.
+}
+
+void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const& position, glm::vec3 const& velocity)
+{
+	mBodyContainer.emplace_back(mUniqueID++);
+
+	mLinearTransformContainer.emplace_back();
+	LinearTransform &lastLinearTransform = mLinearTransformContainer.back();
+	lastLinearTransform.mass = mass;
+	lastLinearTransform.inverseMass = 1.0f / mass;
+	lastLinearTransform.position = position;
+	lastLinearTransform.velocity = velocity;
+	lastLinearTransform.momentum = mass * velocity;
+
+	mAngularTransformContainer.emplace_back();
+}
+
+void P3DynamicsWorld::addRigidBody(LinearTransform const &linearTransform, AngularTransform const &angularTransform)
+{
+	mBodyContainer.emplace_back(mUniqueID++);
+
+	mLinearTransformContainer.emplace_back(linearTransform);	// Copy constructor will be called here.
+	
+	// Add to angular transform container
+	mAngularTransformContainer.emplace_back(angularTransform);
+}
+
+// TODO
 void P3DynamicsWorld::fillWorldWithBodies()
 {
 	glm::vec3 position(0.0f);
-	float mass = 0.0f;;
+	float mass = 0.0f;
 	
-	// They stack
 	for (size_t i = 0; i < mMaxCapacity; ++i)
 	{
 		// Append unique ID
 		mBodyContainer.emplace_back(mUniqueID);
-
-
 		++mUniqueID;
 	}
+}
+
+void P3DynamicsWorld::stackingSpheresDemo()
+{
+	// Stack 2 unit spheres on top of each other. Same mass.
+	addRigidBody(1, glm::vec3(0, 4, -20), glm::vec3(0));
+	addRigidBody(1, glm::vec3(0, 5, -20), glm::vec3(0));
+}
+
+void P3DynamicsWorld::stackingBoxesDemo()
+{
+	// Stack 2 unit cubes on top of each other. Same mass.
+	addRigidBody(1, glm::vec3(0, 0, -15), glm::vec3(0));
+	addRigidBody(1, glm::vec3(0, 5, -15), glm::vec3(0));
 }
 
 //// Might have to create bounding primitives in these functions

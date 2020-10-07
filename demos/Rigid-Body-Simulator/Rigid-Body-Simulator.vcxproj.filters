@@ -116,6 +116,18 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\RigidBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp">
@@ -143,6 +155,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\..\resources\shaders\vs.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\simplePhysicsPipeline.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

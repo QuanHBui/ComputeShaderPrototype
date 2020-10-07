@@ -11,6 +11,8 @@
 #define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
 #define NUM_BROAD_PHASE_SSBO 2
 
+void P3CpuBroadPhase(Aabb *, size_t);
+
 struct P3OpenGLComputeBroadPhaseCreateInfo
 {
 	Aabb *pAabbBuffer = nullptr;
@@ -23,9 +25,13 @@ class P3OpenGLComputeBroadPhase
 {
 public:
 	P3OpenGLComputeBroadPhase() {}
-	P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *);
+	P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo* createInfo)
+		: mpCreateInfo(createInfo)
+	{
+		assert(createInfo && "createInfo is a nullptr");
+	}
 
-	void setCreateInfoPonter(P3OpenGLComputeBroadPhaseCreateInfo* pCreateInfo)
+	void setCreateInfoPointer(P3OpenGLComputeBroadPhaseCreateInfo* pCreateInfo)
 	{
 		mpCreateInfo = pCreateInfo;
 	}
@@ -41,6 +47,7 @@ public:
 	~P3OpenGLComputeBroadPhase() {}
 
 private:
+	void initShaderPrograms();
 	void initGpuBuffers();
 
 	void buildBvhTreeOnGpu();
@@ -67,8 +74,8 @@ private:
 	};
 
 	//----------------------------- OpenGL bookkeeping ----------------------------//
-	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer;
-	std::array<GLuint, NUM_BROAD_PHASE_SSBO> mSsboIDContainer;
+	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{ { 0u } };
+	std::array<GLuint, NUM_BROAD_PHASE_SSBO> mSsboIDContainer{ { 0u } };
 	GLuint mAtomicBufferID = 0u;
 
 	P3OpenGLComputeBroadPhaseCreateInfo *mpCreateInfo = nullptr;

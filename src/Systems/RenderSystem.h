@@ -18,8 +18,8 @@ public:
 
 	void render(int, int, std::shared_ptr<MatrixContainer>);
 
-	void setView(glm::mat4 const& view) { mView = view; }
-	void setProjection(glm::mat4 const& projection) { mProjection = projection; }
+	void setView(glm::mat4 const &view) { mView = view; }
+	void setProjection(glm::mat4 const &projection) { mProjection = projection; }
 
 private:
 	void initRenderPrograms();
@@ -31,4 +31,4 @@ private:
 	glm::mat4 mView, mProjection;
 };
 
-#endif // RENDER_SYSTEM_H
+#endif // RENDER_SYSTEM_H 

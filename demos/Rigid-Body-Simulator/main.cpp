@@ -42,6 +42,7 @@ int main()
 	// Render and physics loop
 	while (!glfwWindowShouldClose(pWindowManager->getHandle()))
 	{
+		pApplication->update((float)dt);
 		pApplication->renderFrame();
 
 		// Measure fps and frame time

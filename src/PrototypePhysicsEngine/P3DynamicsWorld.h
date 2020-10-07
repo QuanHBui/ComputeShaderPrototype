@@ -16,9 +16,12 @@
 
 #include "RigidBody.h"
 #include "P3BroadPhaseCollisionDetection.h"
+#include "P3NarrowPhaseCollisionDetection.h"
 #include "P3Transform.h"
 #include "P3ConstraintSolver.h"
 #include "P3Integrator.h"
+
+using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
 
 class P3DynamicsWorld
 {
@@ -26,37 +29,56 @@ public:
 	P3DynamicsWorld() {}
 	P3DynamicsWorld(size_t maxCapacity) : mMaxCapacity(maxCapacity) {}	// Might want error checking here
 
-	//----------------------- Some getters and setters -----------------------
-	float getGravity() const { return mGravity; }
-	float getAirDrag() const { return mAirDrag; }
-	size_t getMaxCapacity() const { return mMaxCapacity; }
+	//---------------------------- Core ----------------------------//
+	void stepSimulation(double dt);
+
+	//---------------------- Add bodies to the world ----------------------//
+	// Is it the world responsibility to check for max capacity before adding?
+	void addRigidBody();
+	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
+	void addRigidBody(LinearTransform const &, AngularTransform const &);
+	
+	//------------------------ Demos ------------------------//
+	void fillWorldWithBodies();
+	void stackingSpheresDemo();
+	void stackingBoxesDemo();
+
+	//----------------------- Some getters and setters -----------------------//
+	inline float getGravity() const { return mGravity; }
+	inline float getAirDrag() const { return mAirDrag; }
+	inline size_t getMaxCapacity() const { return mMaxCapacity; }
+
+	inline std::vector<LinearTransform> const & getLinearTransformContainer() const
+	{
+		return mLinearTransformContainer;
+	}
 
 	void setGravity(float gravity) { mGravity = gravity; }
 	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; }	// Need error checking
-	
-	//---------------------- Add bodies to the world ----------------------
-	bool addRigidBody(glm::vec3 const &, float);
-	void fillWorldWithBodies();	// For demo purposes
 
-	bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
+	inline bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
 
 private:
-	//---------------- Constant physics quantities ----------------
+	//---------------- Constant physics quantities ----------------//
 	float mGravity{ 0.001f }, mAirDrag{ 2.0f };
 	size_t mMaxCapacity{ 20 };
+	float tickRate{ 0.0167f };	// 1/60
 	
-	//------------------------- Entity list -------------------------
+	//------------------------- Entity list -------------------------//
 	std::vector<RigidBody> mBodyContainer;
 	RigidBody mUniqueID = 0u;
-	//----------------------- Component list -----------------------
+	
+	//----------------------- Component list -----------------------//
 	std::vector<LinearTransform> mLinearTransformContainer;
 	std::vector<AngularTransform> mAngularTransformContainer;
-	//----------------- Map of index to rigid body -----------------
+	
+	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
 	std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
 	std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
 
-	//--------------------- Physics pipeline ---------------------
+	//--------------------- Physics pipeline ---------------------//
+	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions 
 	P3OpenGLComputeBroadPhase broadPhase;
 	//P3OpenGLComputeNarrowPhase narrowPhase;
 	P3ConstraintSolver constraintSolver;	// Produces forces to make sure things don't phase past each other

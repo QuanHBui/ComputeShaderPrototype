@@ -2,16 +2,23 @@
 
 #include "../ComputeProgram.h"
 
-P3OpenGLComputeBroadPhase::P3OpenGLComputeBroadPhase(P3OpenGLComputeBroadPhaseCreateInfo *createInfo)
-	: mpCreateInfo(createInfo)
+void P3CpuBroadPhase(Aabb *pAabbContainer, size_t size)
 {
-	assert(createInfo && "createInfo is a nullptr");
+	for (size_t i = 0u; i < size; ++i)
+	{
+		Aabb bodyi = pAabbContainer[i];
+		
+		for (size_t j = i; j < size; ++j) 
+		{
+			Aabb bodyj = pAabbContainer[j];
 
-	mComputeProgramIDContainer[P3_ASSIGN_MORTON_CODES] = createComputeProgram("../resources/shaders/assignMortonCodes.comp");
-	mComputeProgramIDContainer[P3_BUILD_PARALLEL_LINEAR_BVH] = createComputeProgram("../resources/shaders/buildParallelLinearBVH.comp");
-	mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");
-	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
-	mComputeProgramIDContainer[P3_DETECT_PAIRS] = createComputeProgram("../resources/shaders/detectPairs.comp");
+			// Check if the body is a static body, the one with infinite mass, or inverse mass of 0
+
+			// Create Arbiter
+
+			// Look out for contact points
+		}
+	}
 }
 
 void P3OpenGLComputeBroadPhase::init()
@@ -32,6 +39,15 @@ void P3OpenGLComputeBroadPhase::simulateTimestep(float dt)
 void P3OpenGLComputeBroadPhase::reset()
 {
 	resetAtomicCounter();
+}
+
+void P3OpenGLComputeBroadPhase::initShaderPrograms()
+{
+	mComputeProgramIDContainer[P3_ASSIGN_MORTON_CODES] = createComputeProgram("../resources/shaders/assignMortonCodes.comp");
+	mComputeProgramIDContainer[P3_BUILD_PARALLEL_LINEAR_BVH] = createComputeProgram("../resources/shaders/buildParallelLinearBVH.comp");
+	mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");
+	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
+	mComputeProgramIDContainer[P3_DETECT_PAIRS] = createComputeProgram("../resources/shaders/detectPairs.comp");
 }
 
 /**

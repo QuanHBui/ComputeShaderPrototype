@@ -15,7 +15,7 @@ void RenderSystem::init()
 	initMeshes();
 }
 
-void RenderSystem::render(int width, int height, std::shared_ptr<std::vector<glm::mat4>> pModelMatrixContainer)
+void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer> pModelMatrixContainer)
 {
 	glViewport(0, 0, width, height);
 

@@ -42,20 +42,22 @@ public:
 
 	void renderFrame();
 	void renderUI(double);
+	
 	void update(float);
 
 	~Application();
 
 private:
 	void initRenderSystem();
+	void initPhysicsWorld();
 	void initUI();
 
 	WindowManager *mpWindowManager = nullptr;
 
 	Camera mFlyCamera
 	{
-		glm::vec3{ 0.f, 1.f, 5.f },
-		glm::vec3{ 0.f, 0.f, -5.f },
+		glm::vec3{ 0.f, 0.f, 5.f },
+		glm::vec3{ 0.f, 0.f, -1.f },
 		glm::vec3{ 0.f, 1.f, 0.f },
 		(float)(640 / 480)
 	};
