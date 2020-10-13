@@ -40,12 +40,14 @@ public:
 	
 	//------------------------ Demos ------------------------//
 	void fillWorldWithBodies();
+	void bowlingGameDemo();
 	void stackingSpheresDemo();
 	void stackingBoxesDemo();
 
 	//----------------------- Some getters and setters -----------------------//
 	inline float getGravity() const { return mGravity; }
 	inline float getAirDrag() const { return mAirDrag; }
+	inline size_t getOccupancy() const { return mLinearTransformContainer.size(); }
 	inline size_t getMaxCapacity() const { return mMaxCapacity; }
 
 	inline std::vector<LinearTransform> const & getLinearTransformContainer() const

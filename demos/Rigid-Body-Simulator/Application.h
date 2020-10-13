@@ -35,7 +35,7 @@ public:
 	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
-	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override {};
+	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override;
 	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
 	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
 	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
@@ -52,6 +52,16 @@ private:
 	void initPhysicsWorld();
 	void initUI();
 
+	// Mouse ultility methods
+	void calculateWorldExtents();
+	void calculateScale(float*, float*, uint32_t, uint32_t);
+	void calculateShift(float*, float*, uint32_t, uint32_t);
+	
+	inline float pixelToWorld(double pixel, float scale, float shift)
+	{
+		return static_cast<float>((pixel - shift) / scale);
+	}
+
 	WindowManager *mpWindowManager = nullptr;
 
 	Camera mFlyCamera
@@ -61,6 +71,11 @@ private:
 		glm::vec3{ 0.f, 1.f, 0.f },
 		(float)(640 / 480)
 	};
+
+	// World extent
+	glm::vec2 mWorldExtentMin = glm::vec2{ 0.0f };
+	glm::vec2 mWorldExtentMax = glm::vec2{ 0.0f };
+
 	double mLastCursorPosX = 0.0, mLastCursorPosY = 0.0;
 	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
 	bool mIsFirstCursorFocus = true;

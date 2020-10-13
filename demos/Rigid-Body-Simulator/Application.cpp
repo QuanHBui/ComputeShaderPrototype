@@ -25,14 +25,13 @@
 #define COMPUTE_DEBUG false
 
 static bool firstRun = true;
-static bool verticalMove = false;
 static bool moveLeft = false;
 static bool moveRight = false;
 static bool moveForward = false;
 static bool moveBackward = false;
 
 // imgui state(s)
-static float f = 0.0f;
+static bool showStackingBoxesDemo = 0.0f;
 
 Application::~Application()
 {
@@ -40,9 +39,9 @@ Application::~Application()
 	mpWindowManager = nullptr;
 
 	// imgui cleanup
-	//ImGui_ImplOpenGL3_Shutdown();
-	//ImGui_ImplGlfw_Shutdown();
-	//ImGui::DestroyContext();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void Application::init()
@@ -59,13 +58,12 @@ void Application::initRenderSystem()
 	renderSystem.setProjection(mFlyCamera.getProjectionMatrix());
 
 	pModelMatrixContainer = std::make_shared<MatrixContainer>();
-	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)));
-	pModelMatrixContainer->emplace_back(glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)));
 }
 
 void Application::initPhysicsWorld()
 {
-	physicsWorld.stackingBoxesDemo();
+	//physicsWorld.stackingBoxesDemo();
+	physicsWorld.bowlingGameDemo();
 }
 
 void Application::initUI()
@@ -85,26 +83,59 @@ void Application::initUI()
 	// Usually load font here, but let imgui use default front for now.
 }
 
+void Application::calculateWorldExtents()
+{
+	float left, right, top, bottom;
+	left = -6.25f;
+	right = 6.25f;
+	top = -7.8f;
+	bottom = 7.8f;
+
+	int width, height;
+	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
+
+	if (width > height) 
+	{
+		float aspect = static_cast<float>(width) / height;
+		left *= aspect;
+		right *= aspect;
+	}
+	else 
+	{
+		float aspect = static_cast<float>(height) / width;
+		top *= aspect;
+		bottom *= aspect;
+	}
+
+	mWorldExtentMin = glm::vec2(left, top);
+	mWorldExtentMax = glm::vec2(right, bottom);
+}
+
+void Application::calculateScale(float *scaleX, float *scaleY, uint32_t frameWidth, uint32_t frameHeight)
+{
+	*scaleX = (frameWidth - 1) / (mWorldExtentMax.x - mWorldExtentMin.x);
+	*scaleY = (frameHeight - 1) / (mWorldExtentMin.y - mWorldExtentMax.y);
+}
+
+void Application::calculateShift(float* shiftX, float* shiftY, uint32_t frameWidth, uint32_t frameHeight)
+{
+	*shiftX = mWorldExtentMin.x * (1 - static_cast<int>(frameWidth)) / (mWorldExtentMax.x - mWorldExtentMin.x);
+	*shiftY = mWorldExtentMin.y * (1 - static_cast<int>(frameHeight)) / (mWorldExtentMax.y - mWorldExtentMin.y);
+}
+
 void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
-		if (glfwGetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
-		{
-			glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
-		else
-		{
-			glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		}
-	}
-	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
-	{
+		//if (glfwGetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+		//{
+		//	glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		//}
+		//else
+		//{
+		//	glfwSetInputMode(mpWindowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		//}
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	}
-	if (key == GLFW_KEY_C && action == GLFW_PRESS)
-	{
-		verticalMove = !verticalMove;
 	}
 	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
 	{
@@ -149,6 +180,39 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 }
 
 /**
+ *	mouseCallback
+ *	Every time the mouse click, this callback got invoked.
+ */
+void Application::mouseCallback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_PRESS)
+		return;
+
+	double posX, posY;
+	glfwGetCursorPos(window, &posX, &posY);
+
+	printf("posX: %f | posY: %f\n", posX, posY);
+	fflush(stdout);
+
+	calculateWorldExtents();
+
+	int width, height;
+	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
+
+	float scaleX, scaleY, shiftX, shiftY;
+	scaleX = scaleY = shiftX = shiftY = 0.0f;
+
+	calculateScale(&scaleX, &scaleY, width, height);
+	calculateShift(&shiftX, &shiftY, width, height);
+
+	glm::vec2 cursorPosDeviceCoords = glm::vec2(pixelToWorld(posX, scaleX, shiftX), pixelToWorld(posY, scaleY, shiftY));
+
+	std::cout << "posX: " << cursorPosDeviceCoords.x << ", posY: " << cursorPosDeviceCoords.y << std::endl;
+
+	physicsWorld.addRigidBody(1, glm::vec3(cursorPosDeviceCoords.x, cursorPosDeviceCoords.y, -15.0f), glm::vec3(0.0f));
+}
+
+/**
  *	cursorCallback
  *	Every time the cursor move, this callback got invoked.
  */
@@ -156,18 +220,18 @@ void Application::cursorCallback(GLFWwindow *window, double xPos, double yPos)
 {
 	// Calculate deltaX and deltaY, then send to moveCameraView function
 	//  camera should ONLY move after the initial cursor focus.
-	if (mIsFirstCursorFocus)
-	{
-		mLastCursorPosX = xPos;
-		mLastCursorPosY = yPos;
-		mIsFirstCursorFocus = false;
-	}
-	mCursorPosDeltaX = static_cast<float>(xPos - mLastCursorPosX);
-	mCursorPosDeltaY = static_cast<float>(mLastCursorPosY - yPos);	// Has to be reversed cuz math
-	mFlyCamera.moveView(mCursorPosDeltaX, mCursorPosDeltaY);
+	//if (mIsFirstCursorFocus)
+	//{
+	//	mLastCursorPosX = xPos;
+	//	mLastCursorPosY = yPos;
+	//	mIsFirstCursorFocus = false;
+	//}
+	//mCursorPosDeltaX = static_cast<float>(xPos - mLastCursorPosX);
+	//mCursorPosDeltaY = static_cast<float>(mLastCursorPosY - yPos);	// Has to be reversed cuz math
+	//mFlyCamera.moveView(mCursorPosDeltaX, mCursorPosDeltaY);
 
-	mLastCursorPosX = xPos;
-	mLastCursorPosY = yPos;
+	//mLastCursorPosX = xPos;
+	//mLastCursorPosY = yPos;
 }
 
 // Bind SSBO to render program and draw
@@ -195,10 +259,8 @@ void Application::renderUI(double dt)
 
 	// Display some text
 	ImGui::Text("FPS: %.1f | Frame time: %.3f ms", 1.0f / dt, dt);
-	ImGui::Checkbox("A checkbox", &verticalMove);
-
-	// Slider with float values
-	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+	ImGui::Text("Number of objects in world: %d", physicsWorld.getOccupancy());
+	ImGui::Checkbox("Stacking boxes", &showStackingBoxesDemo);
 
 	ImGui::End();
 
@@ -219,6 +281,14 @@ void Application::update(float dt)
 	for (auto const &linearTransform : linearTransformContainer)
 	{
 		glm::mat4 transform = glm::translate(linearTransform.position);
-		pModelMatrixContainer->at(i++) = transform;
+		
+		try
+		{
+			pModelMatrixContainer->at(i++) = transform;
+		}
+		catch (std::out_of_range const &oor)
+		{
+			pModelMatrixContainer->emplace_back(transform);
+		}
 	}
 }

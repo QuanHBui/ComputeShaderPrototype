@@ -21,6 +21,14 @@ public:
 	void setView(glm::mat4 const &view) { mView = view; }
 	void setProjection(glm::mat4 const &projection) { mProjection = projection; }
 
+	enum
+	{
+		QUAD = 0,
+		CUBE,
+		SPHERE,
+		BOWLING_PIN
+	};
+
 private:
 	void initRenderPrograms();
 	void initMeshes();

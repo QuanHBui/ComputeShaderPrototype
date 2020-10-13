@@ -40,7 +40,7 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 			1, GL_FALSE, glm::value_ptr(mView));
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
 			1, GL_FALSE, glm::value_ptr(*it));
-		mpMeshContainer[0]->draw(mpRenderProgram);
+		mpMeshContainer[BOWLING_PIN]->draw(mpRenderProgram);
 	}
 	
 	mpRenderProgram->unbind();
@@ -64,6 +64,7 @@ void RenderSystem::initRenderPrograms()
 	mpRenderProgram->init();
 	mpRenderProgram->addAttribute("vertPos");
 	mpRenderProgram->addAttribute("vertNor");
+	mpRenderProgram->addAttribute("vertTex");
 
 	mpProgramContainer.emplace_back(mpRenderProgram);
 }
@@ -74,18 +75,70 @@ void RenderSystem::initMeshes()
 	std::vector<tinyobj::material_t> objMaterials;
 	std::string errStr;
 
-	bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/cube.obj");
+	bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/quad.obj");
 	if (!rc) 
 	{
 		throw std::runtime_error(errStr);
 	}
 	else 
 	{
+		std::shared_ptr<Shape> pQuadMesh = std::make_shared<Shape>();
+		pQuadMesh->createShape(TOshapes[0]);
+		pQuadMesh->measure();
+		pQuadMesh->init();
+
+		mpMeshContainer.emplace_back(pQuadMesh);
+	}
+
+	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/cube.obj");
+	if (!rc)
+	{
+		throw std::runtime_error(errStr);
+	}
+	else
+	{
+		size_t size = TOshapes.size();
+
 		std::shared_ptr<Shape> pCubeMesh = std::make_shared<Shape>();
 		pCubeMesh->createShape(TOshapes[0]);
 		pCubeMesh->measure();
 		pCubeMesh->init();
 
 		mpMeshContainer.emplace_back(pCubeMesh);
+	}
+
+	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/sphere.obj");
+	if (!rc)
+	{
+		throw std::runtime_error(errStr);
+	}
+	else
+	{
+		size_t size = TOshapes.size();
+
+		std::shared_ptr<Shape> pSphereMesh = std::make_shared<Shape>();
+		pSphereMesh->createShape(TOshapes[0]);
+		pSphereMesh->measure();
+		pSphereMesh->init();
+
+		mpMeshContainer.emplace_back(pSphereMesh);
+	}
+
+	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/bowling_pin.obj");
+	if (!rc)
+	{
+		throw std::runtime_error(errStr);
+	}
+	else
+	{
+		size_t size = TOshapes.size();
+
+		std::shared_ptr<Shape> pBowlPinMesh = std::make_shared<Shape>();
+		pBowlPinMesh->createShape(TOshapes[0]);
+		pBowlPinMesh->measure();
+		pBowlPinMesh->resize();
+		pBowlPinMesh->init();
+
+		mpMeshContainer.emplace_back(pBowlPinMesh);
 	}
 }

@@ -69,7 +69,7 @@ bool WindowManager::init(int const width, int const height)
 	glfwSwapInterval(1);
 
 	// Hide the cursor and capture it
-	glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(windowHandle, cursor_callback);		// For cursor position change
 
 	glfwSetKeyCallback(windowHandle, key_callback);

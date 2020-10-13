@@ -10,19 +10,30 @@
 // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 void P3DynamicsWorld::stepSimulation(double dt)
 {
+	// To define a plane, we need a normal and a point
+	glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
+	glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
+
+	// There will be another outer loop to iterate through how many iterations to reach convergence.
+	// For 1 body and 1 position constraint, prob only needs 1 iteration.
 	for (auto &linearTransform : mLinearTransformContainer)
 	{
 		// Collision detection - broad phase + near phase
 
 		// Apply forces - gravity most likely
-		linearTransform.velocity.y -= 9.81f * dt;
+		//linearTransform.velocity.y -= 9.81f * dt;
 		linearTransform.momentum.y = linearTransform.mass * linearTransform.velocity.y;
 
-		// Constraint solver - position and velocity - floor constraint
-		if (linearTransform.position.y < 1.0f)
-		{
-			// We have to modify the accumulate velocity to solve this position constraint
-		}
+		// Check for constraint and solve it
+		// Express the constraint in term of position. This is a position constraint.
+		//if (linearTransform.position.y < 1.0f)
+		//{
+		//	// We have to modify the accumulate velocity to solve this position constraint
+		//	
+		//	// How much in the y direction that we have to push the object, this y direction can be generalize
+		//	//  to just the surface/plane normal
+		//	float dy = linearTransform.position.y - 
+		//}
 
 		// Integrate change in velocity
 
@@ -82,18 +93,30 @@ void P3DynamicsWorld::fillWorldWithBodies()
 	}
 }
 
+void P3DynamicsWorld::bowlingGameDemo()
+{
+	float startingX = -2.0f;
+	for (float i = 0.0f; i < 5.0f; ++i)
+	{
+		addRigidBody(1, glm::vec3(startingX + i, -3.0f, -15.0f), glm::vec3(0.0f));
+
+		printf("%f\n", i);
+		fflush(stdout);
+	}
+}
+
 void P3DynamicsWorld::stackingSpheresDemo()
 {
 	// Stack 2 unit spheres on top of each other. Same mass.
-	addRigidBody(1, glm::vec3(0, 4, -20), glm::vec3(0));
-	addRigidBody(1, glm::vec3(0, 5, -20), glm::vec3(0));
+	addRigidBody(1, glm::vec3(0.0f, 4.0f, -20.0f), glm::vec3(0.0f));
+	addRigidBody(1, glm::vec3(0.0f, 5.0f, -20.0f), glm::vec3(0.0f));
 }
 
 void P3DynamicsWorld::stackingBoxesDemo()
 {
 	// Stack 2 unit cubes on top of each other. Same mass.
-	addRigidBody(1, glm::vec3(0, 0, -15), glm::vec3(0));
-	addRigidBody(1, glm::vec3(0, 5, -15), glm::vec3(0));
+	addRigidBody(1, glm::vec3(0.0f, 0.0f, -15.0f), glm::vec3(0.0f));
+	addRigidBody(1, glm::vec3(0.0f, 5.0f, -15.0f), glm::vec3(0.0f));
 }
 
 //// Might have to create bounding primitives in these functions

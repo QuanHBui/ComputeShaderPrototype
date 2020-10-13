@@ -29,9 +29,10 @@ int main()
 	{
 		pApplication->init();
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << e.what() << std::endl;
+		glfwSetWindowShouldClose(pWindowManager->getHandle(), GL_TRUE);
 	}
 
 	double lastTime = glfwGetTime();	// In seconds
