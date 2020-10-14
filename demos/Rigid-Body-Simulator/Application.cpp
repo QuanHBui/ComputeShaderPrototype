@@ -87,8 +87,8 @@ void Application::initUI()
 void Application::calculateWorldExtents()
 {
 	float left, right, top, bottom;
-	left = -6.25f;
-	right = 6.25f;
+	left = -8.0f;
+	right = 8.0f;
 	top = -7.8f;
 	bottom = 7.8f;
 

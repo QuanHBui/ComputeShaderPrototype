@@ -7,6 +7,8 @@
 
 #include "P3DynamicsWorld.h"
 
+#include <iostream>
+
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 void P3DynamicsWorld::stepSimulation(double dt)
 {
@@ -29,7 +31,7 @@ void P3DynamicsWorld::stepSimulation(double dt)
 		// Check for constraint and solve it
 		// MULTIPLE ITERATIONS
 		// NO BOUNCE!
-		int iterations = 8;
+		int iterations = 4;
 		glm::vec3 sampleVelocity = linearTransform.velocity;
 		glm::vec3 samplePosition = linearTransform.position;
 		while (iterations--)
@@ -38,26 +40,35 @@ void P3DynamicsWorld::stepSimulation(double dt)
 			samplePosition += sampleVelocity * float(dt);
 
 			// Express the constraint in term of position. This is a position constraint.
-			if (samplePosition.y - (-1.0f) < 0.0f)
+			if (samplePosition.y - (-3.0f) < 0.0f)
 			{
 				// We have to modify the accumulate velocity to solve this position constraint
 				// How much in the y direction that we have to push the object, this y direction can be generalize
 				//  to just the surface/plane normal.
-				float signedDistance = samplePosition.y - (-1.0f);
-				accumulateImpulse += 0.01f * glm::vec3(0.0f, -signedDistance, 0.0f);
+				// THE IMPULSE CAN PUSH, BUT NOT PULL.
+				float signedDistance = samplePosition.y - (-3.0f);
+				//accumulateImpulse += glm::vec3(0.0f, -signedDistance, 0.0f);
 
 				// Has the constraint been satisfied
-				sampleVelocity += accumulateImpulse;
-				samplePosition += sampleVelocity * float(dt);
+				//sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
+				//samplePosition += sampleVelocity * float(dt);
+
+				samplePosition.y -= signedDistance;
+				linearTransform.position = samplePosition;
+				// Make current velocity zero
+				accumulateImpulse = glm::length(sampleVelocity) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
 			}
 		}
 
 		// Apply the final impulse
-		linearTransform.velocity += accumulateImpulse;
+		linearTransform.velocity += accumulateImpulse * linearTransform.inverseMass;
 
 		// Integrate change in velocity
+		
 		linearTransform.position += linearTransform.velocity * float(dt);
 	}
+
+	//std::cout << mLinearTransformContainer[0].position.y << std::endl;
 }
 
 void P3DynamicsWorld::addRigidBody()

@@ -2,13 +2,13 @@
 
 #include "../ComputeProgram.h"
 
-void P3CpuBroadPhase(Aabb *pAabbContainer, size_t size)
+void P3CpuBroadPhase(Aabb *pAabbContainer, unsigned int size)
 {
-	for (size_t i = 0u; i < size; ++i)
+	for (unsigned int i = 0u; i < size; ++i)
 	{
 		Aabb bodyi = pAabbContainer[i];
 		
-		for (size_t j = i; j < size; ++j) 
+		for (unsigned int j = i; j < size; ++j)
 		{
 			Aabb bodyj = pAabbContainer[j];
 
