@@ -35,9 +35,9 @@ public:
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
 	void addRigidBody();
-	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
-	void addRigidBody(LinearTransform const &, AngularTransform const &);
-	
+	void addRigidBody(float, glm::vec3 const&, glm::vec3 const&);
+	void addRigidBody(LinearTransform const&, AngularTransform const&);
+
 	//------------------------ Demos ------------------------//
 	void fillWorldWithBodies();
 	void bowlingGameDemo();
@@ -50,7 +50,7 @@ public:
 	inline size_t getOccupancy() const { return mLinearTransformContainer.size(); }
 	inline size_t getMaxCapacity() const { return mMaxCapacity; }
 
-	inline std::vector<LinearTransform> const & getLinearTransformContainer() const
+	inline std::vector<LinearTransform> const& getLinearTransformContainer() const
 	{
 		return mLinearTransformContainer;
 	}
@@ -65,15 +65,15 @@ private:
 	float mGravity{ 0.001f }, mAirDrag{ 2.0f };
 	size_t mMaxCapacity{ 20 };
 	float tickRate{ 0.0167f };	// 1/60
-	
+
 	//------------------------- Entity list -------------------------//
 	std::vector<RigidBody> mBodyContainer;
 	RigidBody mUniqueID = 0u;
-	
+
 	//----------------------- Component list -----------------------//
 	std::vector<LinearTransform> mLinearTransformContainer;
 	std::vector<AngularTransform> mAngularTransformContainer;
-	
+
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
 	std::unordered_map<RigidBody, size_t> mEntityToIndexMap;

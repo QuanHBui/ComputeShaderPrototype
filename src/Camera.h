@@ -18,7 +18,7 @@
 class Camera
 {
 public:
-	enum MOVEMENT_SET { LEFT, RIGHT, FORWARD, BACKWARD };
+	enum class MovementSet { LEFT, RIGHT, FORWARD, BACKWARD };
 
 	Camera() {}
 	Camera(glm::vec3 const&, glm::vec3 const&, glm::vec3 const&, float);
@@ -43,23 +43,23 @@ public:
 
 	void moveView(float, float);
 	void zoomFieldOfView(double, float);
-	void movePosition(MOVEMENT_SET const&, float deltaTime = 1.f);
+	void movePosition(MovementSet const&, float deltaTime = 1.f);
 
 private:
 	void updateViewMatrix();
 	void updateProjectionMatrix(float);
 
-	float yaw_{-90.f}, pitch_{0.f};		// In degrees, yaw is default at -90 degrees to make sure that camera looking at -x by default
-	float sensitivityX_{0.05f}, sensitivityY_{0.05f};
-	float movementSpeed_{2.5f};
-	float fieldOfView_{45.f};
-	glm::vec3 position_{0.f};
-	glm::vec3 front_{0.f};
-	glm::vec3 up_{0.f};
+	float yaw_{ -90.f }, pitch_{ 0.f };		// In degrees, yaw is default at -90 degrees to make sure that camera looking at -x by default
+	float sensitivityX_{ 0.05f }, sensitivityY_{ 0.05f };
+	float movementSpeed_{ 2.5f };
+	float fieldOfView_{ 45.f };
+	glm::vec3 position_{ 0.f };
+	glm::vec3 front_{ 0.f };
+	glm::vec3 up_{ 0.f };
 
 	// View and projection matrices that represents the camera. Can be sent straight to vertex shader
-	glm::mat4 viewMatrix_{0.f};
-	glm::mat4 projectionMatrix_{0.f};
+	glm::mat4 viewMatrix_{ 0.f };
+	glm::mat4 projectionMatrix_{ 0.f };
 };
 
 #endif  // LAB471_CAMERA_H

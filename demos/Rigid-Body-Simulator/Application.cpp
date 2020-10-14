@@ -64,6 +64,7 @@ void Application::initPhysicsWorld()
 {
 	//physicsWorld.stackingBoxesDemo();
 	physicsWorld.bowlingGameDemo();
+	renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
 }
 
 void Application::initUI()
@@ -71,7 +72,7 @@ void Application::initUI()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -94,13 +95,13 @@ void Application::calculateWorldExtents()
 	int width, height;
 	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
 
-	if (width > height) 
+	if (width > height)
 	{
 		float aspect = static_cast<float>(width) / height;
 		left *= aspect;
 		right *= aspect;
 	}
-	else 
+	else
 	{
 		float aspect = static_cast<float>(height) / width;
 		top *= aspect;
@@ -111,7 +112,7 @@ void Application::calculateWorldExtents()
 	mWorldExtentMax = glm::vec2(right, bottom);
 }
 
-void Application::calculateScale(float *scaleX, float *scaleY, uint32_t frameWidth, uint32_t frameHeight)
+void Application::calculateScale(float* scaleX, float* scaleY, uint32_t frameWidth, uint32_t frameHeight)
 {
 	*scaleX = (frameWidth - 1) / (mWorldExtentMax.x - mWorldExtentMin.x);
 	*scaleY = (frameHeight - 1) / (mWorldExtentMin.y - mWorldExtentMax.y);
@@ -123,7 +124,7 @@ void Application::calculateShift(float* shiftX, float* shiftY, uint32_t frameWid
 	*shiftY = mWorldExtentMin.y * (1 - static_cast<int>(frameHeight)) / (mWorldExtentMax.y - mWorldExtentMin.y);
 }
 
-void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
@@ -191,9 +192,6 @@ void Application::mouseCallback(GLFWwindow* window, int button, int action, int 
 	double posX, posY;
 	glfwGetCursorPos(window, &posX, &posY);
 
-	printf("posX: %f | posY: %f\n", posX, posY);
-	fflush(stdout);
-
 	calculateWorldExtents();
 
 	int width, height;
@@ -207,16 +205,16 @@ void Application::mouseCallback(GLFWwindow* window, int button, int action, int 
 
 	glm::vec2 cursorPosDeviceCoords = glm::vec2(pixelToWorld(posX, scaleX, shiftX), pixelToWorld(posY, scaleY, shiftY));
 
-	std::cout << "posX: " << cursorPosDeviceCoords.x << ", posY: " << cursorPosDeviceCoords.y << std::endl;
-
 	physicsWorld.addRigidBody(1, glm::vec3(cursorPosDeviceCoords.x, cursorPosDeviceCoords.y, -15.0f), glm::vec3(0.0f));
+
+	renderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
 }
 
 /**
  *	cursorCallback
  *	Every time the cursor move, this callback got invoked.
  */
-void Application::cursorCallback(GLFWwindow *window, double xPos, double yPos)
+void Application::cursorCallback(GLFWwindow* window, double xPos, double yPos)
 {
 	// Calculate deltaX and deltaY, then send to moveCameraView function
 	//  camera should ONLY move after the initial cursor focus.
@@ -257,8 +255,20 @@ void Application::renderUI(double dt)
 	// Create a window called "Hello, world!" and append into it
 	ImGui::Begin("Hello, world!");
 
+	// Update physics tick interval every half a sec.
+	static double lastTime = glfwGetTime();
+	static double lastPhysicsTickInterval = physicsTickInterval;
+	
+	if (glfwGetTime() - lastTime >= 0.5)
+	{
+		lastPhysicsTickInterval = physicsTickInterval;
+		lastTime += 0.5;
+	}
+
 	// Display some text
-	ImGui::Text("FPS: %.1f | Frame time: %.3f ms", 1.0f / dt, dt);
+	ImGui::Text("FPS: %.3f | Frame time: %.3f ms", 1.0f / dt, dt * 1000.0f);
+	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
+		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);
 	ImGui::Text("Number of objects in world: %d", physicsWorld.getOccupancy());
 	ImGui::Checkbox("Stacking boxes", &showStackingBoxesDemo);
 
@@ -273,20 +283,22 @@ void Application::update(float dt)
 {
 	physicsWorld.stepSimulation(dt);
 
+	physicsTickInterval = dt;
+
 	// Get position array from the physics world
-	std::vector<LinearTransform> const & linearTransformContainer = physicsWorld.getLinearTransformContainer();
-	
-	size_t i = 0u;
+	std::vector<LinearTransform> const& linearTransformContainer = physicsWorld.getLinearTransformContainer();
+
+	unsigned int i = 0u;
 	// Update the model matrix array
-	for (auto const &linearTransform : linearTransformContainer)
+	for (auto const& linearTransform : linearTransformContainer)
 	{
 		glm::mat4 transform = glm::translate(linearTransform.position);
-		
+
 		try
 		{
 			pModelMatrixContainer->at(i++) = transform;
 		}
-		catch (std::out_of_range const &oor)
+		catch (std::out_of_range const& oor)
 		{
 			pModelMatrixContainer->emplace_back(transform);
 		}

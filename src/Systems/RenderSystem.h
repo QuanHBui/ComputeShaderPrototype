@@ -14,14 +14,7 @@ using MatrixContainerConstIter = MatrixContainer::const_iterator;
 class RenderSystem
 {
 public:
-	void init();
-
-	void render(int, int, std::shared_ptr<MatrixContainer>);
-
-	void setView(glm::mat4 const &view) { mView = view; }
-	void setProjection(glm::mat4 const &projection) { mProjection = projection; }
-
-	enum
+	enum Mesh
 	{
 		QUAD = 0,
 		CUBE,
@@ -29,12 +22,21 @@ public:
 		BOWLING_PIN
 	};
 
+	void init();
+
+	void render(int, int, std::shared_ptr<MatrixContainer>);
+
+	void registerMeshForBody(Mesh const&, unsigned int = 1u);
+	void setView(glm::mat4 const& view) { mView = view; }
+	void setProjection(glm::mat4 const& projection) { mProjection = projection; }
+
 private:
 	void initRenderPrograms();
 	void initMeshes();
 
 	std::vector<std::shared_ptr<class Program>> mpProgramContainer;
 	std::vector<std::shared_ptr<class Shape>> mpMeshContainer;
+	std::vector<Mesh> meshContainer;
 
 	glm::mat4 mView, mProjection;
 };

@@ -30,6 +30,8 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 	mpRenderProgram->bind();
 	// Send model matrix
 
+	std::vector<Mesh>::const_iterator meshContainerIter = meshContainer.begin();
+
 	for (MatrixContainerConstIter it = pModelMatrixContainer->begin();
 		it != pModelMatrixContainer->end();
 		++it)
@@ -40,9 +42,13 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 			1, GL_FALSE, glm::value_ptr(mView));
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
 			1, GL_FALSE, glm::value_ptr(*it));
-		mpMeshContainer[BOWLING_PIN]->draw(mpRenderProgram);
+		mpMeshContainer[*meshContainerIter]->draw(mpRenderProgram);
+
+		++meshContainerIter;
+		if (meshContainerIter == meshContainer.end())
+			meshContainerIter = meshContainer.begin();
 	}
-	
+
 	mpRenderProgram->unbind();
 }
 
@@ -76,11 +82,11 @@ void RenderSystem::initMeshes()
 	std::string errStr;
 
 	bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/quad.obj");
-	if (!rc) 
+	if (!rc)
 	{
 		throw std::runtime_error(errStr);
 	}
-	else 
+	else
 	{
 		std::shared_ptr<Shape> pQuadMesh = std::make_shared<Shape>();
 		pQuadMesh->createShape(TOshapes[0]);
@@ -140,5 +146,13 @@ void RenderSystem::initMeshes()
 		pBowlPinMesh->init();
 
 		mpMeshContainer.emplace_back(pBowlPinMesh);
+	}
+}
+
+void RenderSystem::registerMeshForBody(Mesh const& shape, unsigned int quantity)
+{
+	for (unsigned int i = 0u; i < quantity; ++i)
+	{
+		meshContainer.emplace_back(shape);
 	}
 }

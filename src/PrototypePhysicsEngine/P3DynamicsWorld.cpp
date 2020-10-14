@@ -7,7 +7,7 @@
 
 #include "P3DynamicsWorld.h"
 
-// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
+ // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 void P3DynamicsWorld::stepSimulation(double dt)
 {
 	// To define a plane, we need a normal and a point
@@ -15,29 +15,48 @@ void P3DynamicsWorld::stepSimulation(double dt)
 	glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
 
 	// There will be another outer loop to iterate through how many iterations to reach convergence.
-	// For 1 body and 1 position constraint, prob only needs 1 iteration.
-	for (auto &linearTransform : mLinearTransformContainer)
+	// For 1 body and 1 position constraint.
+	for (auto& linearTransform : mLinearTransformContainer)
 	{
 		// Collision detection - broad phase + near phase
 
 		// Apply forces - gravity most likely
-		//linearTransform.velocity.y -= 9.81f * dt;
+		linearTransform.velocity.y -= 9.81f * dt;
 		linearTransform.momentum.y = linearTransform.mass * linearTransform.velocity.y;
 
+		glm::vec3 accumulateImpulse{ 0.0f };
+		
 		// Check for constraint and solve it
-		// Express the constraint in term of position. This is a position constraint.
-		//if (linearTransform.position.y < 1.0f)
-		//{
-		//	// We have to modify the accumulate velocity to solve this position constraint
-		//	
-		//	// How much in the y direction that we have to push the object, this y direction can be generalize
-		//	//  to just the surface/plane normal
-		//	float dy = linearTransform.position.y - 
-		//}
+		// MULTIPLE ITERATIONS
+		// NO BOUNCE!
+		int iterations = 8;
+		glm::vec3 sampleVelocity = linearTransform.velocity;
+		glm::vec3 samplePosition = linearTransform.position;
+		while (iterations--)
+		{
+			// Update position of rigid body after apply forces
+			samplePosition += sampleVelocity * float(dt);
+
+			// Express the constraint in term of position. This is a position constraint.
+			if (samplePosition.y - (-1.0f) < 0.0f)
+			{
+				// We have to modify the accumulate velocity to solve this position constraint
+				// How much in the y direction that we have to push the object, this y direction can be generalize
+				//  to just the surface/plane normal.
+				float signedDistance = samplePosition.y - (-1.0f);
+				accumulateImpulse += 0.01f * glm::vec3(0.0f, -signedDistance, 0.0f);
+
+				// Has the constraint been satisfied
+				sampleVelocity += accumulateImpulse;
+				samplePosition += sampleVelocity * float(dt);
+			}
+		}
+
+		// Apply the final impulse
+		linearTransform.velocity += accumulateImpulse;
 
 		// Integrate change in velocity
-
-		linearTransform.position += linearTransform.velocity * (float)dt;
+		linearTransform.position += linearTransform.velocity * float(dt);
 	}
 }
 
@@ -59,7 +78,7 @@ void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const& position, glm::v
 	mBodyContainer.emplace_back(mUniqueID++);
 
 	mLinearTransformContainer.emplace_back();
-	LinearTransform &lastLinearTransform = mLinearTransformContainer.back();
+	LinearTransform& lastLinearTransform = mLinearTransformContainer.back();
 	lastLinearTransform.mass = mass;
 	lastLinearTransform.inverseMass = 1.0f / mass;
 	lastLinearTransform.position = position;
@@ -69,12 +88,12 @@ void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const& position, glm::v
 	mAngularTransformContainer.emplace_back();
 }
 
-void P3DynamicsWorld::addRigidBody(LinearTransform const &linearTransform, AngularTransform const &angularTransform)
+void P3DynamicsWorld::addRigidBody(LinearTransform const& linearTransform, AngularTransform const& angularTransform)
 {
 	mBodyContainer.emplace_back(mUniqueID++);
 
 	mLinearTransformContainer.emplace_back(linearTransform);	// Copy constructor will be called here.
-	
+
 	// Add to angular transform container
 	mAngularTransformContainer.emplace_back(angularTransform);
 }
@@ -84,7 +103,7 @@ void P3DynamicsWorld::fillWorldWithBodies()
 {
 	glm::vec3 position(0.0f);
 	float mass = 0.0f;
-	
+
 	for (size_t i = 0; i < mMaxCapacity; ++i)
 	{
 		// Append unique ID
@@ -99,9 +118,6 @@ void P3DynamicsWorld::bowlingGameDemo()
 	for (float i = 0.0f; i < 5.0f; ++i)
 	{
 		addRigidBody(1, glm::vec3(startingX + i, -3.0f, -15.0f), glm::vec3(0.0f));
-
-		printf("%f\n", i);
-		fflush(stdout);
 	}
 }
 

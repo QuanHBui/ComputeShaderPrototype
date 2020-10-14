@@ -11,7 +11,7 @@
  * Based on Baraff-Witkins lecture notes and Glenn Fiedler's blog post
  * http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
  * https://gafferongames.com/post/physics_in_3d/
- * 
+ *
  * @author: Quan Bui
  * @version: 09/28/2020
  */
@@ -46,7 +46,7 @@ struct AngularTransform
 	inline void recalculate()
 	{
 		angularVelocity = angularMomentum * inverseInertia;
-		
+
 		/*orientation.normalize();*/
 		glm::quat q(0, angularVelocity.x, angularVelocity.y, angularVelocity.z);
 
@@ -60,7 +60,7 @@ struct AngularTransformDerivative
 	glm::vec3 torque;
 };
 
-inline glm::vec3 calculateTorque(AngularTransform &state, double t)
+inline glm::vec3 calculateTorque(AngularTransform& state, double t)
 {
 	return glm::vec3(1.0f, 0.0f, 0.0f) - state.angularVelocity * 0.1f;
 }
