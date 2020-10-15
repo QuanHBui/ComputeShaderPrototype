@@ -159,9 +159,11 @@
     <ClCompile Include="..\..\src\GLSL.cpp" />
     <ClCompile Include="..\..\src\OpenGLUtils.cpp" />
     <ClCompile Include="..\..\src\Program.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Collider.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Gjk.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\RigidBody.cpp" />
     <ClCompile Include="..\..\src\Shape.cpp" />
@@ -174,11 +176,14 @@
     <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Collider.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Gjk.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\RigidBody.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Simplex.h" />
     <ClInclude Include="..\..\src\Systems\RenderSystem.h" />
     <ClInclude Include="Application.h" />
   </ItemGroup>
