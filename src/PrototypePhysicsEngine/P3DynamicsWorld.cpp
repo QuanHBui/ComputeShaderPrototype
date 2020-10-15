@@ -20,8 +20,6 @@ void P3DynamicsWorld::step(double dt)
 
 	std::vector<glm::vec3> sampleVelocityContainer;
 
-	// There will be another outer loop to iterate through how many iterations to reach convergence.
-	// For 1 body and 1 position constraint.
 	for (RigidBody const& rigidBody : mBodyContainer)
 	{
 		LinearTransform& linearTransform = mLinearTransformContainer[rigidBody];
@@ -77,7 +75,7 @@ void P3DynamicsWorld::step(double dt)
 				samplePosition.y -= signedDistance;
 				linearTransform.position = samplePosition;
 				// Make current velocity zero
-				accumulateImpulse += glm::length(sampleVelocity) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
+				accumulateImpulse += glm::abs(sampleVelocity.y) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
 			}
 		}
 
