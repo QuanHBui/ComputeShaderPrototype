@@ -11,15 +11,16 @@ glm::vec3 P3MeshCollider::findFarthestPoint(glm::vec3 const& direction) const
 	glm::vec3 maxPoint{ 0.0f };
 	float maxProjectedDistance = std::numeric_limits<float>::min();
 
-	for (size_t i = 0u; i < mVertices.size() - 3u; i += 3u)
+	std::vector<glm::vec4>::const_iterator vertex;
+	for (vertex = mVertices.begin(); vertex != mVertices.end(); ++vertex)
 	{
-		glm::vec3 vertex{ mVertices[i], mVertices[i + 1], mVertices[i + 2] };
-		float projectedDistance = glm::dot(vertex, direction);
+		glm::vec3 vert = glm::vec3(mModelMatrix * *vertex);
+		float projectedDistance = glm::dot(vert, direction);
 		
 		if (projectedDistance > maxProjectedDistance)
 		{
 			maxProjectedDistance = projectedDistance;
-			maxPoint = vertex;
+			maxPoint = vert;
 		}
 	}
 

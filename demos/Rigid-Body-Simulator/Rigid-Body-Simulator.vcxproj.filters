@@ -60,9 +60,6 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\PrototypePhysicsEngine\RigidBody.cpp">
-      <Filter>Source Files\PhysicsEngine</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\ext\glad\src\glad.c">
       <Filter>Ext</Filter>
     </ClCompile>
@@ -126,9 +123,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\PrototypePhysicsEngine\RigidBody.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Camera.h">

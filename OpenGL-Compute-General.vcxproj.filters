@@ -99,9 +99,6 @@
     <ClCompile Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp">
       <Filter>src\PrototypePhysicsEngine</Filter>
     </ClCompile>
-    <ClCompile Include="src\PrototypePhysicsEngine\RigidBody.cpp">
-      <Filter>src\PrototypePhysicsEngine</Filter>
-    </ClCompile>
     <ClCompile Include="ext\glad\src\glad.c">
       <Filter>ext</Filter>
     </ClCompile>
@@ -183,9 +180,6 @@
       <Filter>src\PrototypePhysicsEngine</Filter>
     </ClInclude>
     <ClInclude Include="src\PrototypePhysicsEngine\ParallelLinearBVH.h">
-      <Filter>src\PrototypePhysicsEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PrototypePhysicsEngine\RigidBody.h">
       <Filter>src\PrototypePhysicsEngine</Filter>
     </ClInclude>
     <ClInclude Include="ext\imgui\imconfig.h">

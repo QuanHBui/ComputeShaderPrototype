@@ -4,6 +4,8 @@
 #define P3_COLLIDER_H
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <vector>
 
 /**
@@ -19,10 +21,28 @@ public:
 class P3MeshCollider : public P3Collider
 {
 public:
+	void setModelMatrix(glm::mat4 const& modelMatrix)
+	{
+		mModelMatrix = modelMatrix;
+	}
+
 	glm::vec3 findFarthestPoint(glm::vec3 const&) const override;
 
 private:
-	std::vector<float> mVertices;
+	std::vector<glm::vec4> mVertices
+	{
+		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+
+		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+	};	// A unit box
+
+	glm::mat4 mModelMatrix{ 1.0f };
 };
 
 /**
@@ -32,7 +52,6 @@ private:
 inline glm::vec3 computeSupportPoint(P3Collider const* pColliderA, P3Collider const* pColliderB,
 	glm::vec3 const& direction)
 {
-
 	return pColliderA->findFarthestPoint(direction) - pColliderB->findFarthestPoint(-direction);
 }
 

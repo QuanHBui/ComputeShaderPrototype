@@ -281,7 +281,7 @@ void Application::renderUI(double dt)
 
 void Application::update(float dt)
 {
-	physicsWorld.stepSimulation(dt);
+	physicsWorld.step(dt);
 
 	physicsTickInterval = dt;
 

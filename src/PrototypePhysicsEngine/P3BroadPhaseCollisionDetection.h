@@ -39,7 +39,7 @@ public:
 	void init();
 
 	//--------------------- Main proccesses --------------------------//
-	void simulateTimestep(float);
+	void step(float);
 	//----------------------------------------------------------------//
 
 	void reset();

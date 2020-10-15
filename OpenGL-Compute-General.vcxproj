@@ -179,7 +179,6 @@
     <ClCompile Include="src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
     <ClCompile Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
-    <ClCompile Include="src\PrototypePhysicsEngine\RigidBody.cpp" />
     <ClCompile Include="src\Shape.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\Texture.cpp" />
@@ -211,7 +210,6 @@
     <ClInclude Include="src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />
     <ClInclude Include="src\PrototypePhysicsEngine\ParallelLinearBVH.h" />
-    <ClInclude Include="src\PrototypePhysicsEngine\RigidBody.h" />
     <ClInclude Include="src\Shape.h" />
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\stb_image_write.h" />

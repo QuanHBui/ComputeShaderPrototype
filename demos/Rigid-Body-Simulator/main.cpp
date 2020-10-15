@@ -77,7 +77,7 @@ int main()
 		{
 			double actualPhysicsTickInterval = 
 				frameTimeInterval < fixedPhysicsTickInterval ? frameTimeInterval : fixedPhysicsTickInterval;
-			pApplication->update(actualPhysicsTickInterval);
+			pApplication->update(float(actualPhysicsTickInterval));
 			remainingFrameTimeInterval -= fixedPhysicsTickInterval;
 		}
 	}

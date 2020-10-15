@@ -26,7 +26,7 @@ void P3OpenGLComputeBroadPhase::init()
 	initGpuBuffers();
 }
 
-void P3OpenGLComputeBroadPhase::simulateTimestep(float dt)
+void P3OpenGLComputeBroadPhase::step(float dt)
 {
 	buildBvhTreeOnGpu();
 	detectCollisionPairs();

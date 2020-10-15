@@ -14,7 +14,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 #include <memory>
