@@ -49,6 +49,17 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 			meshContainerIter = mMeshKeyContainer.begin();
 	}
 
+	// Render the platform
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });	
+	model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
+	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
+		1, GL_FALSE, glm::value_ptr(mProjection));
+	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
+		1, GL_FALSE, glm::value_ptr(mView));
+	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+		1, GL_FALSE, glm::value_ptr(model));
+	mpMeshContainer[QUAD]->draw(mpRenderProgram);
+
 	mpRenderProgram->unbind();
 }
 

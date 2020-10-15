@@ -2,7 +2,7 @@
  * Implementation of the DynamicsWorld
  * For now just check collision between 2 Dynamic bodies
  * @author: Quan Bui
- * @version: 02/26/2020
+ * @version: 10/15/2020
  */
 
 #include "P3DynamicsWorld.h"
@@ -33,7 +33,7 @@ void P3DynamicsWorld::step(double dt)
 			for (unsigned int i = 5u; i < getOccupancy(); ++i)
 			{
 				// A very very terrible broad phase
-				if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.0f)
+				if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
 				{
 					// A very very terrible narrow phase
 					hasCollided = gjk(&mMeshColliderContainer[rigidBody], &mMeshColliderContainer[i]);
