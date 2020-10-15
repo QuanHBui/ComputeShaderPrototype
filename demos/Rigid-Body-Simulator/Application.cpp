@@ -285,6 +285,8 @@ void Application::renderUI(double dt)
 	
 	if (ImGui::Button("Add"))
 		allowToAdd = true;
+	if (ImGui::Button("Shoot"))
+		shootBall();
 	if (ImGui::Button("Reset"))
 		reset();
 
@@ -297,6 +299,16 @@ void Application::renderUI(double dt)
 	// Actual rendering
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Application::shootBall()
+{
+	physicsWorld.addRigidBody(
+		1, 
+		glm::vec3(mFlyCamera.getPosition() + 1.0f * mFlyCamera.getFront()),
+		glm::vec3(0.0f, 0.0f, -10.0f));
+
+	renderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
 }
 
 void Application::update(float dt)

@@ -125,6 +125,7 @@ void RenderSystem::initMeshes()
 		std::shared_ptr<Shape> pSphereMesh = std::make_shared<Shape>();
 		pSphereMesh->createShape(TOshapes[0]);
 		pSphereMesh->measure();
+		pSphereMesh->resize();
 		pSphereMesh->init();
 
 		mpMeshContainer.emplace_back(pSphereMesh);

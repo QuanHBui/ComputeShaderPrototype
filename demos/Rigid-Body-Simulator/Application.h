@@ -44,6 +44,8 @@ public:
 	void renderFrame();
 	void renderUI(double);
 
+	void shootBall();
+
 	void update(float);
 
 	~Application();

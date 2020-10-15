@@ -18,6 +18,8 @@ void P3DynamicsWorld::step(double dt)
 	glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
 
+	std::vector<glm::vec3> sampleVelocityContainer;
+
 	// There will be another outer loop to iterate through how many iterations to reach convergence.
 	// For 1 body and 1 position constraint.
 	for (RigidBody const& rigidBody : mBodyContainer)
@@ -30,28 +32,37 @@ void P3DynamicsWorld::step(double dt)
 		{
 			for (unsigned int i = 5u; i < getOccupancy(); ++i)
 			{
-				hasCollided = gjk(&mMeshColliderContainer[rigidBody], &mMeshColliderContainer[i]);
+				// A very very terrible broad phase
+				if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.0f)
+				{
+					// A very very terrible narrow phase
+					hasCollided = gjk(&mMeshColliderContainer[rigidBody], &mMeshColliderContainer[i]);
+				}
 			}
 		}
 
 		glm::vec3 accumulateImpulse{ 0.0f };
+		glm::vec3 sampleVelocity = linearTransform.velocity;
+		glm::vec3 samplePosition = linearTransform.position;
+
+		// A very very terrible collision resolution
+		if (hasCollided)
+		{
+			accumulateImpulse.z -= 0.10f;
+			std::cout << "Collided!" << std::endl;
+		}
 
 		// Apply forces - gravity most likely
-		if (hasCollided)
-			accumulateImpulse.y += 0.10f;
-
-		linearTransform.velocity.y -= 9.81f * dt;
-		linearTransform.momentum.y = linearTransform.mass * linearTransform.velocity.y;
+		sampleVelocity.y -= 9.81f * dt;
 
 		// Check for constraint and solve it
 		// MULTIPLE ITERATIONS
 		// NO BOUNCE!
 		int iterations = 4;
-		glm::vec3 sampleVelocity = linearTransform.velocity;
-		glm::vec3 samplePosition = linearTransform.position;
 		while (iterations--)
 		{
 			// Update position of rigid body after apply forces
+			sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
 			samplePosition += sampleVelocity * float(dt);
 
 			// Express the constraint in term of position. This is a position constraint.
@@ -62,11 +73,6 @@ void P3DynamicsWorld::step(double dt)
 				//  to just the surface/plane normal.
 				// THE IMPULSE CAN PUSH, BUT NOT PULL.
 				float signedDistance = samplePosition.y - (-3.0f);
-				//accumulateImpulse += glm::vec3(0.0f, -signedDistance, 0.0f);
-
-				// Has the constraint been satisfied
-				//sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
-				//samplePosition += sampleVelocity * float(dt);
 
 				samplePosition.y -= signedDistance;
 				linearTransform.position = samplePosition;
@@ -76,14 +82,21 @@ void P3DynamicsWorld::step(double dt)
 		}
 
 		// Apply the final impulse
-		linearTransform.velocity += accumulateImpulse * linearTransform.inverseMass;
-
-		// Integrate velocity to get change in position
-		linearTransform.position += linearTransform.velocity * float(dt);
-		mMeshColliderContainer[rigidBody].setModelMatrix(glm::translate(glm::mat4(1.0f), linearTransform.position));
+		sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
+		sampleVelocityContainer.emplace_back(sampleVelocity);
 	}
 
-	//std::cout << mLinearTransformContainer[0].position.y << std::endl;
+	std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
+	for ( sampleVelocityContainerIter = sampleVelocityContainer.begin()
+		; sampleVelocityContainerIter != sampleVelocityContainer.end()
+		; sampleVelocityContainerIter++)
+	{
+		ptrdiff_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
+		mLinearTransformContainer[i].velocity = *sampleVelocityContainerIter;
+
+		mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
+		mMeshColliderContainer[i].setModelMatrix(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
+	}
 }
 
 void P3DynamicsWorld::addRigidBody()
