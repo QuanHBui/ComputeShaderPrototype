@@ -47,9 +47,6 @@ int main()
 	// Render and physics loop
 	while (!glfwWindowShouldClose(pWindowManager->getHandle()))
 	{
-		pApplication->update((float)frameTimeInterval);
-		pApplication->renderFrame();
-
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
 		frameTimeInterval = currentTime - lastFrameTime;
@@ -80,6 +77,8 @@ int main()
 			pApplication->update(float(actualPhysicsTickInterval));
 			remainingFrameTimeInterval -= fixedPhysicsTickInterval;
 		}
+
+		pApplication->renderFrame();
 	}
 
 	// Destroy application before deleting the current OpenGL context

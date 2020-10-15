@@ -31,7 +31,7 @@ static bool moveForward = false;
 static bool moveBackward = false;
 
 // imgui state(s)
-static bool showStackingBoxesDemo = 0.0f;
+static bool allowToAdd = false;
 
 Application::~Application()
 {
@@ -189,25 +189,30 @@ void Application::mouseCallback(GLFWwindow* window, int button, int action, int 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_PRESS)
 		return;
 
-	double posX, posY;
-	glfwGetCursorPos(window, &posX, &posY);
+	if (allowToAdd)
+	{
+		double posX, posY;
+		glfwGetCursorPos(window, &posX, &posY);
 
-	calculateWorldExtents();
+		calculateWorldExtents();
 
-	int width, height;
-	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
+		int width, height;
+		glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
 
-	float scaleX, scaleY, shiftX, shiftY;
-	scaleX = scaleY = shiftX = shiftY = 0.0f;
+		float scaleX, scaleY, shiftX, shiftY;
+		scaleX = scaleY = shiftX = shiftY = 0.0f;
 
-	calculateScale(&scaleX, &scaleY, width, height);
-	calculateShift(&shiftX, &shiftY, width, height);
+		calculateScale(&scaleX, &scaleY, width, height);
+		calculateShift(&shiftX, &shiftY, width, height);
 
-	glm::vec2 cursorPosDeviceCoords = glm::vec2(pixelToWorld(posX, scaleX, shiftX), pixelToWorld(posY, scaleY, shiftY));
+		glm::vec2 cursorPosDeviceCoords = glm::vec2(pixelToWorld(posX, scaleX, shiftX), pixelToWorld(posY, scaleY, shiftY));
 
-	physicsWorld.addRigidBody(1, glm::vec3(cursorPosDeviceCoords.x, cursorPosDeviceCoords.y, -15.0f), glm::vec3(0.0f));
+		physicsWorld.addRigidBody(1, glm::vec3(cursorPosDeviceCoords.x, cursorPosDeviceCoords.y, -15.0f), glm::vec3(0.0f));
 
-	renderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
+		renderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
+
+		allowToAdd = false;
+	}
 }
 
 /**
@@ -232,7 +237,14 @@ void Application::cursorCallback(GLFWwindow* window, double xPos, double yPos)
 	//mLastCursorPosY = yPos;
 }
 
-// Bind SSBO to render program and draw
+void Application::reset()
+{
+	pModelMatrixContainer->clear();
+	renderSystem.reset();
+	physicsWorld.reset();
+	initPhysicsWorld();
+}
+
 void Application::renderFrame()
 {
 	// Get current frame buffer size.
@@ -270,7 +282,15 @@ void Application::renderUI(double dt)
 	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
 		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);
 	ImGui::Text("Number of objects in world: %d", physicsWorld.getOccupancy());
-	ImGui::Checkbox("Stacking boxes", &showStackingBoxesDemo);
+	
+	if (ImGui::Button("Add"))
+		allowToAdd = true;
+	if (ImGui::Button("Reset"))
+		reset();
+
+	// Plot some values
+	//const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };
+	//ImGui::PlotLines("Frame time", my_values, IM_ARRAYSIZE(my_values));
 
 	ImGui::End();
 
@@ -290,7 +310,7 @@ void Application::update(float dt)
 
 	unsigned int i = 0u;
 	// Update the model matrix array
-	for (auto const& linearTransform : linearTransformContainer)
+	for (LinearTransform const& linearTransform : linearTransformContainer)
 	{
 		glm::mat4 transform = glm::translate(linearTransform.position);
 

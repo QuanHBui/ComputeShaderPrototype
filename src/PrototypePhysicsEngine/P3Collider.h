@@ -25,6 +25,11 @@ public:
 	{
 		mModelMatrix = modelMatrix;
 	}
+	
+	void setVertices(std::vector<glm::vec4> const& vertices)
+	{
+		mVertices = vertices;
+	}
 
 	glm::vec3 findFarthestPoint(glm::vec3 const&) const override;
 

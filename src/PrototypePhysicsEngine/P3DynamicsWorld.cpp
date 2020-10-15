@@ -130,6 +130,15 @@ void P3DynamicsWorld::addRigidBody(LinearTransform const& linearTransform, Angul
 	mAngularTransformContainer.emplace_back(angularTransform);
 }
 
+void P3DynamicsWorld::reset()
+{
+	mBodyContainer.clear();
+	mLinearTransformContainer.clear();
+	mAngularTransformContainer.clear();
+	mMeshColliderContainer.clear();
+	mUniqueID = 0u;
+}
+
 // TODO
 void P3DynamicsWorld::fillWorldWithBodies()
 {
@@ -147,9 +156,24 @@ void P3DynamicsWorld::fillWorldWithBodies()
 void P3DynamicsWorld::bowlingGameDemo()
 {
 	float startingX = -2.0f;
+
+	std::vector<glm::vec4> vertices
+	{
+		glm::vec4{ -0.2f,  1.0f,  0.2f,  1.0f },
+		glm::vec4{  0.2f,  1.0f,  0.2f,  1.0f },
+		glm::vec4{  0.2f, -1.0f,  0.2f,  1.0f },
+		glm::vec4{ -0.2f, -1.0f,  0.2f,  1.0f },
+
+		glm::vec4{ -0.2f,  1.0f, -0.2f,  1.0f },
+		glm::vec4{  0.2f,  1.0f, -0.2f,  1.0f },
+		glm::vec4{  0.2f, -1.0f, -0.2f,  1.0f },
+		glm::vec4{ -0.2f, -1.0f, -0.2f,  1.0f }
+	};	// A skinny verson of a unit box
+
 	for (float i = 0.0f; i < 5.0f; ++i)
 	{
-		addRigidBody(1, glm::vec3(startingX + i, -3.0f, -15.0f), glm::vec3(0.0f));
+		addRigidBody(1, glm::vec3(startingX + i, 1.0f, -15.0f), glm::vec3(0.0f));
+		mMeshColliderContainer.back().setVertices(vertices);
 	}
 }
 

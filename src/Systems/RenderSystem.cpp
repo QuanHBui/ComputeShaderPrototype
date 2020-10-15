@@ -30,7 +30,7 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 	mpRenderProgram->bind();
 	// Send model matrix
 
-	std::vector<Mesh>::const_iterator meshContainerIter = meshContainer.begin();
+	std::vector<Mesh>::const_iterator meshContainerIter = mMeshKeyContainer.begin();
 
 	for (MatrixContainerConstIter it = pModelMatrixContainer->begin();
 		it != pModelMatrixContainer->end();
@@ -45,8 +45,8 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 		mpMeshContainer[*meshContainerIter]->draw(mpRenderProgram);
 
 		++meshContainerIter;
-		if (meshContainerIter == meshContainer.end())
-			meshContainerIter = meshContainer.begin();
+		if (meshContainerIter == mMeshKeyContainer.end())
+			meshContainerIter = mMeshKeyContainer.begin();
 	}
 
 	mpRenderProgram->unbind();
@@ -153,6 +153,11 @@ void RenderSystem::registerMeshForBody(Mesh const& shape, unsigned int quantity)
 {
 	for (unsigned int i = 0u; i < quantity; ++i)
 	{
-		meshContainer.emplace_back(shape);
+		mMeshKeyContainer.emplace_back(shape);
 	}
+}
+
+void RenderSystem::reset()
+{
+	mMeshKeyContainer.clear();
 }

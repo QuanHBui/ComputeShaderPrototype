@@ -30,13 +30,15 @@ public:
 	void setView(glm::mat4 const& view) { mView = view; }
 	void setProjection(glm::mat4 const& projection) { mProjection = projection; }
 
+	void reset();
+
 private:
 	void initRenderPrograms();
 	void initMeshes();
 
 	std::vector<std::shared_ptr<class Program>> mpProgramContainer;
 	std::vector<std::shared_ptr<class Shape>> mpMeshContainer;
-	std::vector<Mesh> meshContainer;
+	std::vector<Mesh> mMeshKeyContainer;
 
 	glm::mat4 mView, mProjection;
 };

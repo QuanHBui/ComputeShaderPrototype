@@ -40,6 +40,7 @@ public:
 	void addRigidBody(LinearTransform const&, AngularTransform const&);
 
 	//------------------------ Demos ------------------------//
+	void reset();
 	void fillWorldWithBodies();
 	void bowlingGameDemo();
 	void stackingSpheresDemo();
@@ -48,7 +49,7 @@ public:
 	//----------------------- Some getters and setters -----------------------//
 	inline float getGravity() const { return mGravity; }
 	inline float getAirDrag() const { return mAirDrag; }
-	inline size_t getOccupancy() const { return mLinearTransformContainer.size(); }
+	inline size_t getOccupancy() const { return mBodyContainer.size(); }
 	inline size_t getMaxCapacity() const { return mMaxCapacity; }
 
 	inline std::vector<LinearTransform> const& getLinearTransformContainer() const
@@ -65,7 +66,6 @@ private:
 	//---------------- Constant physics quantities ----------------//
 	float mGravity{ 0.001f }, mAirDrag{ 2.0f };
 	size_t mMaxCapacity{ 20u };
-	float tickRate{ 0.0167f };	// 1/60
 
 	//------------------------- Entity list -------------------------//
 	std::vector<RigidBody> mBodyContainer;

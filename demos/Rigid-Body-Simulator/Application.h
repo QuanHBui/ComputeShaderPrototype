@@ -39,6 +39,8 @@ public:
 	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) override {};
 	void cursorCallback(GLFWwindow* window, double xpos, double ypos) override;
 
+	void reset();
+
 	void renderFrame();
 	void renderUI(double);
 
