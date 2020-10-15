@@ -20,7 +20,7 @@ int main()
 	Application* pApplication = new Application();
 
 	WindowManager* pWindowManager = new WindowManager();
-	pWindowManager->init(1080, 810);
+	pWindowManager->init(1920, 1080);
 	pWindowManager->setEventCallbacks(pApplication);
 
 	pApplication->setWindowManager(pWindowManager);

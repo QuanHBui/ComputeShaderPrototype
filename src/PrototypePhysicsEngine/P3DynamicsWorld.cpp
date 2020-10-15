@@ -26,6 +26,10 @@ void P3DynamicsWorld::step(double dt)
 	{
 		LinearTransform& linearTransform = mLinearTransformContainer[rigidBody];
 		
+		glm::vec3 accumulateImpulse{ 0.0f };
+		glm::vec3 sampleVelocity = linearTransform.velocity;
+		glm::vec3 samplePosition = linearTransform.position;
+
 		// Collision detection - broad phase + near phase
 		bool hasCollided = false;
 		if (rigidBody < 5u && getOccupancy() > 5u)
@@ -37,19 +41,15 @@ void P3DynamicsWorld::step(double dt)
 				{
 					// A very very terrible narrow phase
 					hasCollided = gjk(&mMeshColliderContainer[rigidBody], &mMeshColliderContainer[i]);
+
+					// A very very terrible collision resolution
+					if (hasCollided)
+					{
+						accumulateImpulse += mLinearTransformContainer[i].momentum;
+						std::cout << "Collided!" << std::endl;
+					}
 				}
 			}
-		}
-
-		glm::vec3 accumulateImpulse{ 0.0f };
-		glm::vec3 sampleVelocity = linearTransform.velocity;
-		glm::vec3 samplePosition = linearTransform.position;
-
-		// A very very terrible collision resolution
-		if (hasCollided)
-		{
-			accumulateImpulse.z -= 0.10f;
-			std::cout << "Collided!" << std::endl;
 		}
 
 		// Apply forces - gravity most likely
@@ -82,7 +82,8 @@ void P3DynamicsWorld::step(double dt)
 		}
 
 		// Apply the final impulse
-		sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
+		sampleVelocity = linearTransform.velocity + accumulateImpulse * linearTransform.inverseMass;
+		sampleVelocity.y -= 9.81f * dt;
 		sampleVelocityContainer.emplace_back(sampleVelocity);
 	}
 
@@ -93,7 +94,7 @@ void P3DynamicsWorld::step(double dt)
 	{
 		ptrdiff_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
 		mLinearTransformContainer[i].velocity = *sampleVelocityContainerIter;
-
+		mLinearTransformContainer[i].momentum = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
 		mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
 		mMeshColliderContainer[i].setModelMatrix(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 	}

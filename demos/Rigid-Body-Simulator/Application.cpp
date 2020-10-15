@@ -87,8 +87,8 @@ void Application::initUI()
 void Application::calculateWorldExtents()
 {
 	float left, right, top, bottom;
-	left = -8.0f;
-	right = 8.0f;
+	left = -6.0f;
+	right = 6.0f;
 	top = -7.8f;
 	bottom = 7.8f;
 
@@ -266,6 +266,9 @@ void Application::renderUI(double dt)
 
 	// Create a window called "Hello, world!" and append into it
 	ImGui::Begin("Hello, world!");
+
+	// UI scaling
+	ImGui::SetWindowFontScale(1.5f);
 
 	// Update physics tick interval every half a sec.
 	static double lastTime = glfwGetTime();
