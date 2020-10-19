@@ -9,8 +9,11 @@
 
 bool checkLine(P3Simplex& points, glm::vec3& direction)
 {
-	glm::vec3 a = points[0];
-	glm::vec3 b = points[1];
+	SupportPoint supA = points[0];
+	SupportPoint supB = points[1];
+
+	glm::vec3 a = supA.mMinkowskiDiffPoint;
+	glm::vec3 b = supB.mMinkowskiDiffPoint;
 
 	glm::vec3 ab = b - a;
 	glm::vec3 ao = -a;	// From a pointing toward origin
@@ -26,7 +29,7 @@ bool checkLine(P3Simplex& points, glm::vec3& direction)
 	//  and start again.
 	else
 	{
-		points = { a };
+		points = { supA };
 		direction = ao;
 	}
 
@@ -35,9 +38,13 @@ bool checkLine(P3Simplex& points, glm::vec3& direction)
 
 bool checkTriangle(P3Simplex& points, glm::vec3& direction)
 {
-	glm::vec3 a = points[0];
-	glm::vec3 b = points[1];
-	glm::vec3 c = points[2];
+	SupportPoint supA = points[0];
+	SupportPoint supB = points[1];
+	SupportPoint supC = points[2];
+
+	glm::vec3 a = supA.mMinkowskiDiffPoint;
+	glm::vec3 b = supB.mMinkowskiDiffPoint;
+	glm::vec3 c = supC.mMinkowskiDiffPoint;
 
 	glm::vec3 ab = b - a;
 	glm::vec3 ac = c - a;
@@ -48,19 +55,19 @@ bool checkTriangle(P3Simplex& points, glm::vec3& direction)
 	// TODO: Need to understand what's going on
 	if (SAME_DIRECTION(glm::cross(abc, ac), ao)) {
 		if (SAME_DIRECTION(ac, ao)) {
-			points = { a, c };
+			points = { supA, supC };
 			direction = glm::cross(glm::cross(ac, ao), ac);
 		}
 		else 
 		{
-			return checkLine(points = { a, b }, direction);
+			return checkLine(points = { supA, supB }, direction);
 		}
 	}
 	else 
 	{
 		if (SAME_DIRECTION(glm::cross(ab, abc), ao)) 
 		{
-			return checkLine(points = { a, b }, direction);
+			return checkLine(points = { supA, supB }, direction);
 		}
 		else 
 		{
@@ -70,7 +77,7 @@ bool checkTriangle(P3Simplex& points, glm::vec3& direction)
 			}
 			else 
 			{
-				points = { a, c, b };
+				points = { supA, supC, supB };
 				direction = -abc;
 			}
 		}
@@ -82,10 +89,15 @@ bool checkTriangle(P3Simplex& points, glm::vec3& direction)
 // TODO: Need to understand what's going on
 bool checkTetrahedron(P3Simplex& points, glm::vec3& direction)
 {
-	glm::vec3 a = points[0];
-	glm::vec3 b = points[1];
-	glm::vec3 c = points[2];
-	glm::vec3 d = points[3];
+	SupportPoint supA = points[0];
+	SupportPoint supB = points[1];
+	SupportPoint supC = points[2];
+	SupportPoint supD = points[3];
+
+	glm::vec3 a = supA.mMinkowskiDiffPoint;
+	glm::vec3 b = supB.mMinkowskiDiffPoint;
+	glm::vec3 c = supC.mMinkowskiDiffPoint;
+	glm::vec3 d = supD.mMinkowskiDiffPoint;
 
 	glm::vec3 ab = b - a;
 	glm::vec3 ac = c - a;
@@ -97,13 +109,13 @@ bool checkTetrahedron(P3Simplex& points, glm::vec3& direction)
 	glm::vec3 adb = glm::cross(ad, ab);
 
 	if (SAME_DIRECTION(abc, ao))
-		return checkTriangle(points = { a, b, c }, direction);
+		return checkTriangle(points = { supA, supB, supC }, direction);
 
 	if (SAME_DIRECTION(acd, ao))
-		return checkTriangle(points = { a, c, d }, direction);
+		return checkTriangle(points = { supA, supC, supD }, direction);
 
 	if (SAME_DIRECTION(adb, ao))
-		return checkTriangle(points = { a, d, b }, direction);
+		return checkTriangle(points = { supA, supD, supB }, direction);
 
 	return true;
 }
@@ -128,20 +140,20 @@ bool nextSimplex(P3Simplex& points, glm::vec3& direction)
 bool gjk(P3Collider const& colliderA, P3Collider const& colliderB, P3Simplex& points)
 {
 	// Get inital support point in an arbitrary direction
-	glm::vec3 supportPoint = computeSupportPoint(colliderA, colliderB, glm::vec3(1.0f, 0.0f, 0.0f));
+	SupportPoint supportPoint(colliderA, colliderB, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	// Add support point to the simplex and get the new search direction
 	points.pushFront(supportPoint);
-	glm::vec3 direction = -supportPoint;
+	glm::vec3 direction = -supportPoint.mMinkowskiDiffPoint;
 
 	// Find new support point. If this new support point not in front of the search direction,
 	//  the loop ends.
 	while (true)
 	{
-		supportPoint = computeSupportPoint(colliderA, colliderB, direction);
+		supportPoint = SupportPoint(colliderA, colliderB, direction);
 
 		// Origin not included in the Minkowski difference, so no collision.
-		if (glm::dot(supportPoint, direction) <= 0.0f)
+		if (glm::dot(supportPoint.mMinkowskiDiffPoint, direction) <= 0.0f)
 			return false;
 
 		points.pushFront(supportPoint);
