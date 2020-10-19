@@ -54,10 +54,10 @@ private:
  * Take 2 Colliders and a direction, and determine the supporting point on the
  *  Minkowski difference.
  */
-inline glm::vec3 computeSupportPoint(P3Collider const* pColliderA, P3Collider const* pColliderB,
+inline glm::vec3 computeSupportPoint(P3Collider const& pColliderA, P3Collider const& pColliderB,
 	glm::vec3 const& direction)
 {
-	return pColliderA->findFarthestPoint(direction) - pColliderB->findFarthestPoint(-direction);
+	return pColliderA.findFarthestPoint(direction) - pColliderB.findFarthestPoint(-direction);
 }
 
 #endif // P3_COLLIDER_H

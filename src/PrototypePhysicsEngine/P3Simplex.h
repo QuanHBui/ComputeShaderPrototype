@@ -9,8 +9,8 @@
 
 /**
  * A simple std::array wrapper specialized for GJK alogrithm.
- * 
- * @reference: https://blog.winter.dev/2020/gjk-algorithm/
+ *
+ * Reference: https://blog.winter.dev/2020/gjk-algorithm/
  */
 class P3Simplex
 {
@@ -24,7 +24,7 @@ public:
 	{
 		for (auto listIter = list.begin(); listIter != list.end(); ++listIter)
 			mPoints[std::distance(list.begin(), listIter)] = *listIter;
-		
+
 		mSize = list.size();
 
 		return *this;
@@ -49,4 +49,48 @@ private:
 	unsigned int mSize = 0u;
 };
 
+struct SupportPoint
+{
+	glm::vec3 minkowskiDiffPoint{ 0.0f };	// The position of the Minkowski difference itself.
+	glm::vec3 colliderASupport{ 0.0f };
+	glm::vec3 colliderBSupport{ 0.0f };
+
+	bool operator==(SupportPoint const& another) const
+	{
+		return minkowskiDiffPoint == another.minkowskiDiffPoint;
+	}
+
+	glm::vec3 operator-(SupportPoint const& another) const
+	{
+		return minkowskiDiffPoint - another.minkowskiDiffPoint;
+	}
+};
+
+//================= Data structures to keep track of polytope =================//
+// Reference: http://hacktank.net/blog/?p=119
+struct TriangleSimplex
+{
+	SupportPoint points[3];
+	glm::vec3 precomputedNormal{ 0.0f };
+
+	TriangleSimplex(SupportPoint const& a, SupportPoint const& b, SupportPoint const& c)
+	{
+		points[0] = a;
+		points[1] = b;
+		points[2] = c;
+
+		precomputedNormal = glm::normalize(glm::cross(b - a, c - a));
+	}
+};
+
+struct EdgeSimplex
+{
+	SupportPoint points[2];
+
+	EdgeSimplex(SupportPoint const& a, SupportPoint const& b)
+	{
+		points[0] = a;
+		points[1] = b;
+	}
+};
 #endif // P3_SIMPLEX_H

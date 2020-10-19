@@ -125,13 +125,12 @@ bool nextSimplex(P3Simplex& points, glm::vec3& direction)
  * 
  * @reference: https://blog.winter.dev/2020/gjk-algorithm/
  */
-bool gjk(P3Collider const* colliderA, P3Collider const* colliderB)
+bool gjk(P3Collider const& colliderA, P3Collider const& colliderB, P3Simplex& points)
 {
 	// Get inital support point in an arbitrary direction
 	glm::vec3 supportPoint = computeSupportPoint(colliderA, colliderB, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	// Add support point to the simplex and get the new search direction
-	P3Simplex points;
 	points.pushFront(supportPoint);
 	glm::vec3 direction = -supportPoint;
 

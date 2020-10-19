@@ -8,8 +8,10 @@
 #include "P3DynamicsWorld.h"
 
 #include <iostream>
+#include <list>
 
 #include "P3Gjk.h"
+#include "P3Simplex.h"
 
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 void P3DynamicsWorld::step(double dt)
@@ -23,7 +25,7 @@ void P3DynamicsWorld::step(double dt)
 	for (RigidBody const& rigidBody : mBodyContainer)
 	{
 		LinearTransform& linearTransform = mLinearTransformContainer[rigidBody];
-		
+
 		glm::vec3 accumulateImpulse{ 0.0f };
 		glm::vec3 sampleVelocity = linearTransform.velocity;
 		glm::vec3 samplePosition = linearTransform.position;
@@ -38,11 +40,23 @@ void P3DynamicsWorld::step(double dt)
 				if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
 				{
 					// A very very terrible narrow phase
-					hasCollided = gjk(&mMeshColliderContainer[rigidBody], &mMeshColliderContainer[i]);
+					P3Simplex points;
+					hasCollided = gjk(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], points);
 
 					// A very very terrible collision resolution
 					if (hasCollided)
 					{
+						// Build the initial polytope from the simplex returned from the gjk
+						// Reference: http://hacktank.net/blog/?p=119
+						std::list<TriangleSimplex> triangles;
+						std::list<EdgeSimplex> edges;
+
+						triangles.emplace_back(points[0], points[1], points[2]);
+						triangles.emplace_back(points[0], points[2], points[3]);
+						triangles.emplace_back(points[0], points[3], points[1]);
+						triangles.emplace_back(points[1], points[3], points[2]);
+
+						// Response impulse
 						accumulateImpulse += mLinearTransformContainer[i].momentum;
 						std::cout << "Collided!" << std::endl;
 					}
@@ -86,13 +100,13 @@ void P3DynamicsWorld::step(double dt)
 	}
 
 	std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
-	for ( sampleVelocityContainerIter = sampleVelocityContainer.begin()
+	for ( sampleVelocityContainerIter  = sampleVelocityContainer.begin()
 		; sampleVelocityContainerIter != sampleVelocityContainer.end()
-		; sampleVelocityContainerIter++)
+		; sampleVelocityContainerIter++ )
 	{
-		ptrdiff_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
-		mLinearTransformContainer[i].velocity = *sampleVelocityContainerIter;
-		mLinearTransformContainer[i].momentum = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
+		size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
+		mLinearTransformContainer[i].velocity  = *sampleVelocityContainerIter;
+		mLinearTransformContainer[i].momentum  = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
 		mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
 		mMeshColliderContainer[i].setModelMatrix(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 	}
@@ -112,8 +126,8 @@ void P3DynamicsWorld::addRigidBody()
 }
 
 void P3DynamicsWorld::addRigidBody(
-	float mass, 
-	glm::vec3 const& position, 
+	float mass,
+	glm::vec3 const& position,
 	glm::vec3 const& velocity)
 {
 	mBodyContainer.emplace_back(mUniqueID++);
@@ -151,7 +165,7 @@ void P3DynamicsWorld::reset()
 	mUniqueID = 0u;
 }
 
-// TODO
+// TODO:
 void P3DynamicsWorld::fillWorldWithBodies()
 {
 	glm::vec3 position(0.0f);
