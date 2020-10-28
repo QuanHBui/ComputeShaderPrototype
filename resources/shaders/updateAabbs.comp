@@ -4,10 +4,14 @@
 
 precision highp float;
 
-#define MAX_NUM_OBJECTS 1000
+#define MAX_NUM_COLLIDERS 1000
 #define NUM_COLLIDER_VERT 8
 
-layout(local_size_x = MAX_NUM_OBJECTS) in;
+// source: https://www.khronos.org/opengl/wiki/Small_Float_Formats
+#define NEG_INF_32_BIT_FLOAT -3.4028237e38
+#define POS_INF_32_BIT_FLOAT 3.4028237e38
+
+layout(local_size_x = MAX_NUM_COLLIDERS) in;
 
 struct MeshCollider
 {
@@ -21,11 +25,45 @@ layout(std430, binding = 0) readonly buffer in_data
 
 layout(std430, binding = 1) writeonly buffer out_data
 {
-	vec4 minCoords[MAX_NUM_OBJECTS];
-	vec4 maxCoords[MAX_NUM_OBJECTS];
+	vec4 minCoords[MAX_NUM_COLLIDERS];
+	vec4 maxCoords[MAX_NUM_COLLIDERS];
 };
+
+uniform uint currNumColliders;
 
 void main()
 {
-	uint i = gl_LocalInvocationID.x;
+	uint colliderIdx = gl_LocalInvocationID.x;
+
+	if (colliderIdx >= currNumColliders) return;
+
+	MeshCollider meshCollider = meshColliders[colliderIdx];
+
+	float minX, minY, minZ;
+	float maxX, maxY, maxZ;
+
+	minX = minY = minZ = POS_INF_32_BIT_FLOAT;
+	maxX = maxY = maxZ = NEG_INF_32_BIT_FLOAT;
+
+	vec3 vertex = vec3(0.0f, 0.0f, 0.0f);
+
+	// Go through all vertices
+	for (int i = 0; i < NUM_COLLIDER_VERT; ++i)
+	{
+		// Go through each dimension
+		vertex = meshCollider.vertices[i].xyz;
+
+		minX = min(minX, vertex.x);
+		maxX = max(maxX, vertex.x);
+
+		minY = min(minY, vertex.y);
+		maxY = max(maxY, vertex.y);
+
+		minZ = min(minZ, vertex.z);
+		maxZ = max(maxZ, vertex.z);
+	}
+
+	// Store the results
+	minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx);
+	maxCoords[colliderIdx] = vec4(maxX, maxY, maxZ, colliderIdx);
 }

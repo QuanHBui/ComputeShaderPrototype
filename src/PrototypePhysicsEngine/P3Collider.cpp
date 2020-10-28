@@ -3,15 +3,6 @@
 #include <glm/glm.hpp>
 #include <limits>
 
-void P3MeshCollider::update(glm::mat4 const &model)
-{
-	for (glm::vec4 &vertex : mVertices)
-	{
-		vertex = model * vertex;
-		vertex.w = 1.0f;
-	}
-}
-
 /**
  * Look at a certain direction and return the farthest point in that.
  *

@@ -23,7 +23,7 @@ public:
 	void init();
 
 	//--------------------- Main proccesses --------------------------//
-	void step(std::vector<P3MeshCollider> const &);
+	void step(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
 	void reset();
@@ -35,7 +35,7 @@ private:
 	void initGpuBuffers();
 
 	void buildBvhTreeOnGpu();
-	void detectCollisionPairs(std::vector<P3MeshCollider> const &);
+	void detectCollisionPairs(std::vector<P3BoxCollider> const &);
 
 	void resetAtomicCounter();
 
@@ -43,6 +43,7 @@ private:
 	enum
 	{
 		P3_UPDATE_AABBS = 0,
+		P3_ODD_EVEN_SORT,
 		P3_DETECT_PAIRS,
 		P3_ASSIGN_MORTON_CODES,
 		P3_SORT_LEAF_NODES,
@@ -52,7 +53,7 @@ private:
 	// Indicices of ssbo
 	enum
 	{
-		P3_MESH_COLLIDERS = 0,
+		P3_BOX_COLLIDERS = 0,
 		P3_AABBS,
 		P3_COLLISION_PAIRS
 	};
@@ -62,6 +63,7 @@ private:
 	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDContainer{ { 0u } };
 	GLuint mAtomicBufferID = 0u;
 
+	//--------------------------------- Debug ---------------------------------//
 	GLuint mAtomicCounterCpu = 0u;
 	AabbGpuPackage mAabbCpuData;
 };

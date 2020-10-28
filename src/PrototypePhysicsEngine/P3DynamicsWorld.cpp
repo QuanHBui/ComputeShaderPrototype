@@ -25,7 +25,7 @@ void P3DynamicsWorld::update(double dt)
 
 	std::vector<glm::vec3> sampleVelocityContainer;
 
-	broadPhase.step(mMeshColliderContainer);
+	broadPhase.step(mBoxColliders);
 
 	for (RigidBody const &rigidBody : mBodyContainer)
 	{
@@ -111,8 +111,14 @@ void P3DynamicsWorld::update(double dt)
 	{
 		mMeshColliderContainer[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].velocity * float(dt)));
 	}
+
+	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
+	{
+		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].velocity * float(dt)));
+	}
 }
 
+// TODO: WIP
 void P3DynamicsWorld::addRigidBody()
 {
 	// Generate unique ID and add to ID container
@@ -142,9 +148,14 @@ void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::v
 	mMeshColliderContainer.emplace_back();
 	mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), position));
 
+	// For Gpu collision detection
+	mBoxColliders.emplace_back();
+	mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), position));
+
 	mAngularTransformContainer.emplace_back();
 }
 
+// TODO: WIP
 void P3DynamicsWorld::addRigidBody(LinearTransform const &linearTransform, AngularTransform const &angularTransform)
 {
 	mBodyContainer.emplace_back(mUniqueID++);
@@ -200,6 +211,9 @@ void P3DynamicsWorld::bowlingGameDemo()
 		addRigidBody(1, glm::vec3(startingX + i, 1.0f, -15.0f), glm::vec3(0.0f));
 		mMeshColliderContainer.back().setVertices(vertices);
 		mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f)));
+
+		mBoxColliders.back().setVertices(vertices.data());
+		mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f)));
 	}
 }
 

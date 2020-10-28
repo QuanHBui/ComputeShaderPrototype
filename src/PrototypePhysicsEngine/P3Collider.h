@@ -23,7 +23,14 @@ public:
 class P3MeshCollider : public P3Collider
 {
 public:
-	void update(glm::mat4 const &);
+	void update(glm::mat4 const &model)
+	{
+		for (glm::vec4 &vertex : mVertices)
+		{
+			vertex = model * vertex;
+			vertex.w = 1.0f;
+		}
+	}
 
 	void setVertices(std::vector<glm::vec4> const &vertices)
 	{
@@ -33,7 +40,7 @@ public:
 	glm::vec3 findFarthestPoint(glm::vec3 const &) const override;
 
 private:
-	std::vector<glm::vec4> mVertices
+	std::vector<glm::vec4> mVertices =
 	{
 		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
 		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
@@ -45,6 +52,40 @@ private:
 		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
 	};	// A unit box
+};
+
+// A collection of 8 vec4's
+struct P3BoxCollider
+{
+	void update(glm::mat4 const &model)
+	{
+		for (glm::vec4 &vertex : mVertices)
+		{
+			vertex = model * vertex;
+			vertex.w = 1.0f;
+		}
+	}
+
+	void setVertices(glm::vec4 *vertices)
+	{
+		for (int i = 0; i < 8; ++i)
+		{
+			mVertices[i] = vertices[i];
+		}
+	}
+
+	glm::vec4 mVertices[8] =
+	{
+		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+
+		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+	};
 };
 
 bool P3Gjk(P3Collider const &, P3Collider const &, P3Simplex &);
