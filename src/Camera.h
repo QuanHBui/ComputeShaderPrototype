@@ -21,7 +21,7 @@ public:
 	enum class MovementSet { LEFT, RIGHT, FORWARD, BACKWARD };
 
 	Camera() {}
-	Camera(glm::vec3 const&, glm::vec3 const&, glm::vec3 const&, float);
+	Camera(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, float);
 	~Camera() {}
 
 	glm::vec3 getPosition() const { return position_; }
@@ -34,16 +34,16 @@ public:
 	float getPitch() const { return pitch_; }
 	float getYaw() const { return yaw_; }
 
-	void setPosition(glm::vec3 const& cameraPosition) { position_ = cameraPosition; }
-	void setFront(glm::vec3 const& cameraFront) { front_ = cameraFront; }
-	void setUp(glm::vec3 const& cameraUp) { up_ = cameraUp; }
+	void setPosition(glm::vec3 const &cameraPosition) { position_ = cameraPosition; }
+	void setFront(glm::vec3 const &cameraFront) { front_ = cameraFront; }
+	void setUp(glm::vec3 const &cameraUp) { up_ = cameraUp; }
 	void setSensitivityX(float sensitivityX) { sensitivityX_ = sensitivityX; }
 	void setSensitivityY(float sensitivityY) { sensitivityY_ = sensitivityY; }
 	void setMovementSpeed(float movementSpeed) { movementSpeed_ = movementSpeed; }
 
 	void moveView(float, float);
 	void zoomFieldOfView(double, float);
-	void movePosition(MovementSet const&, float deltaTime = 1.f);
+	void movePosition(MovementSet const &, float deltaTime = 1.f);
 
 private:
 	void updateViewMatrix();

@@ -13,6 +13,7 @@ void RenderSystem::init()
 {
 	initRenderPrograms();
 	initMeshes();
+	initDebug();
 }
 
 void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer> pModelMatrixContainer)
@@ -28,13 +29,12 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 
 	// Bind render program
 	mpRenderProgram->bind();
-	// Send model matrix
 
 	std::vector<Mesh>::const_iterator meshContainerIter = mMeshKeyContainer.begin();
 
-	for (MatrixContainerConstIter it = pModelMatrixContainer->begin();
-		it != pModelMatrixContainer->end();
-		++it)
+	for ( MatrixContainerConstIter it = pModelMatrixContainer->begin()
+		; it != pModelMatrixContainer->end()
+		; ++it )
 	{
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
 			1, GL_FALSE, glm::value_ptr(mProjection));
@@ -42,7 +42,7 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 			1, GL_FALSE, glm::value_ptr(mView));
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
 			1, GL_FALSE, glm::value_ptr(*it));
-		mpMeshContainer[*meshContainerIter]->draw(mpRenderProgram);
+		mpMeshContainer[*meshContainerIter]->draw(mpRenderProgram);	// Reusing the loaded meshes
 
 		++meshContainerIter;
 		if (meshContainerIter == mMeshKeyContainer.end())
@@ -50,7 +50,7 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 	}
 
 	// Render the platform
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });	
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });
 	model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
 	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
 		1, GL_FALSE, glm::value_ptr(mProjection));
@@ -61,6 +61,24 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 	mpMeshContainer[QUAD]->draw(mpRenderProgram);
 
 	mpRenderProgram->unbind();
+}
+
+void RenderSystem::renderDebug()
+{
+
+}
+
+void RenderSystem::registerMeshForBody(Mesh const &shape, unsigned int quantity)
+{
+	for (unsigned int i = 0u; i < quantity; ++i)
+	{
+		mMeshKeyContainer.emplace_back(shape);
+	}
+}
+
+void RenderSystem::reset()
+{
+	mMeshKeyContainer.clear();
 }
 
 void RenderSystem::initRenderPrograms()
@@ -161,15 +179,7 @@ void RenderSystem::initMeshes()
 	}
 }
 
-void RenderSystem::registerMeshForBody(Mesh const& shape, unsigned int quantity)
+void RenderSystem::initDebug()
 {
-	for (unsigned int i = 0u; i < quantity; ++i)
-	{
-		mMeshKeyContainer.emplace_back(shape);
-	}
-}
 
-void RenderSystem::reset()
-{
-	mMeshKeyContainer.clear();
 }

@@ -8,7 +8,7 @@
 
 #define EPSILON 0.000001f
 
-// We are going old school
+ // We are going old school
 #define ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd)	\
 			  isectStart = projVert0 + (projVert1 - projVert0) * distVert0/(distVert0 - distVert1);		\
 			  isectEnd = projVert0 + (projVert2 - projVert0) * distVert0/(distVert0 - distVert2);
@@ -23,15 +23,15 @@
 
 // Test for intersection between coplanar triangles
 bool coplanarTriTriTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
-						glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2,
-						glm::vec3 const &N1)
+	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2,
+	glm::vec3 const &N1)
 {
 	return false;
 }
 
 // Fast test for general 3D tri tri intersection. Does not return intersection segment
 bool fastTriTriIntersect3DTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::vec3 const &v2,
-							   glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	// 2 edges originating from v0 of the first triangle
 	glm::vec3 p1 = v1 - v0;
@@ -107,13 +107,13 @@ bool fastTriTriIntersect3DTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::ve
 
 	// Compute intersection interval for triangle 1
 	computeIntersectInterval(projV0, projV1, projV2, distV0, distV1, distV2,
-							 prodDistV0DistV1, prodDistV0DistV2,
-							 isect0[0], isect0[1], isCoplanar);
+		prodDistV0DistV1, prodDistV0DistV2,
+		isect0[0], isect0[1], isCoplanar);
 
 	// Compute intersection interval for triangle 2
 	computeIntersectInterval(projU0, projU1, projU2, distU0, distU1, distU2,
-							 prodDistU0DistU1, prodDistU0DistU2,
-							 isect1[0], isect1[1], isCoplanar);
+		prodDistU0DistU1, prodDistU0DistU2,
+		isect1[0], isect1[1], isCoplanar);
 
 	// If the first triangle is coplanar, then the second should too, so
 	//  perform this check only once.
@@ -132,9 +132,9 @@ bool fastTriTriIntersect3DTest(glm::vec3 const &v0, glm::vec3 const &v1, glm::ve
 }
 
 void computeIntersectInterval(float projVert0, float projVert1, float projVert2,
-							  float distVert0, float distVert1, float distVert2,
-							  float prodDistVert0DistVert1, float prodDistVert0DistVert2,
-							  float &isectStart, float &isectEnd, bool &isCoplanar)
+	float distVert0, float distVert1, float distVert2,
+	float prodDistVert0DistVert1, float prodDistVert0DistVert2,
+	float &isectStart, float &isectEnd, bool &isCoplanar)
 {
 	// Check for which 2 edges are intersecting the plane by looking at the
 	//  product of their vertices' signed distances.
@@ -154,7 +154,7 @@ void computeIntersectInterval(float projVert0, float projVert1, float projVert2,
 	// Vert1 and Vert2 on the same side, look at edge Vert1...Vert0 and
 	//  edge Vert2...Vert0. Note that there's an extra check if Vert0 is
 	//  in the plane.
-	else if (distVert1*distVert2 > 0.0f || distVert0 != 0.0f)
+	else if (distVert1 * distVert2 > 0.0f || distVert0 != 0.0f)
 	{
 		ISECT(projVert0, projVert1, projVert2, distVert0, distVert1, distVert2, isectStart, isectEnd);
 	}
@@ -184,13 +184,13 @@ bool edgeEdgeTest(glm::vec3 const &v0, glm::vec3 const &u0, glm::vec3 const &u1)
 }
 
 bool edgeTriTest(glm::vec3 const &v0, glm::vec3 const &v1,
-				 glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	return false;
 }
 
 bool pointInTriTest(glm::vec3 const &v0,
-					glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
+	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	return false;
 }

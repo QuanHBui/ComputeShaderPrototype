@@ -1,13 +1,14 @@
 #include "P3BroadPhaseCollisionDetection.h"
 
-#include "../ComputeProgram.h"
+#include "ComputeProgram.h"
+#include "GLSL.h"
 
 void P3CpuBroadPhase(Aabb *pAabbContainer, unsigned int size)
 {
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		Aabb bodyi = pAabbContainer[i];
-		
+
 		for (unsigned int j = i; j < size; ++j)
 		{
 			Aabb bodyj = pAabbContainer[j];
@@ -23,18 +24,18 @@ void P3CpuBroadPhase(Aabb *pAabbContainer, unsigned int size)
 
 void P3OpenGLComputeBroadPhase::init()
 {
+	initShaderPrograms();
 	initGpuBuffers();
 }
 
-void P3OpenGLComputeBroadPhase::step(float dt)
+void P3OpenGLComputeBroadPhase::step(std::vector<P3MeshCollider> const &meshColliderContainer)
 {
-	buildBvhTreeOnGpu();
-	detectCollisionPairs();
+	detectCollisionPairs(meshColliderContainer);
 }
 
 /**
- * Maybe hard reset on everything 
- * 
+ * Maybe hard reset on everything
+ *
  */
 void P3OpenGLComputeBroadPhase::reset()
 {
@@ -43,31 +44,16 @@ void P3OpenGLComputeBroadPhase::reset()
 
 void P3OpenGLComputeBroadPhase::initShaderPrograms()
 {
+	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
+	mComputeProgramIDContainer[P3_DETECT_PAIRS] = createComputeProgram("../resources/shaders/detectPairs.comp");
 	mComputeProgramIDContainer[P3_ASSIGN_MORTON_CODES] = createComputeProgram("../resources/shaders/assignMortonCodes.comp");
 	mComputeProgramIDContainer[P3_BUILD_PARALLEL_LINEAR_BVH] = createComputeProgram("../resources/shaders/buildParallelLinearBVH.comp");
 	mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");
-	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
-	mComputeProgramIDContainer[P3_DETECT_PAIRS] = createComputeProgram("../resources/shaders/detectPairs.comp");
 }
 
-/**
- * @input: A buffer of AABBs of all the objects in the physics dynamics world. 2 ways to get this:
- *  (1) Calculate the AABB of the shape once when loaded from Shape class, and then multiply all the transform matrices.
- *  (2) Dispatch compute one shader invocation per object and calculate the AABB after all of its vertices are transformed.
- * Quick judgement is that step (2) prob has more unneeded calculations.
- */
 void P3OpenGLComputeBroadPhase::initGpuBuffers()
 {
-	glGenBuffers(NUM_BROAD_PHASE_SSBO, mSsboIDContainer.data());
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABB]);
-	// Suggest OpenGL that this buffer is a GL_DYNAMIC_COPY because we assume that the physics engine on GPU is 
-	//  in charge of changing the AABBs and then use them for drawing
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Aabb) * mpCreateInfo->aabbBufferSize, mpCreateInfo->pAabbBuffer, GL_DYNAMIC_COPY);
-
-	// The output buffer. This is supposed to store the list of all the potential collision pairs. Allocate size of max num bodies.
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPair) * mpCreateInfo->aabbBufferSize, nullptr, GL_DYNAMIC_COPY);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	CHECKED_GL_CALL(glGenBuffers(NUM_BROAD_PHASE_SSBOS, mSsboIDContainer.data()));
 
 	glGenBuffers(1, &mAtomicBufferID);
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
@@ -80,28 +66,38 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 
 }
 
-void P3OpenGLComputeBroadPhase::detectCollisionPairs()
+void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3MeshCollider> const &meshColliderContainer)
 {
-	glUseProgram(mComputeProgramIDContainer[P3_DETECT_PAIRS]);
+	// Bind mesh collider buffer
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_MESH_COLLIDERS]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(P3MeshCollider) * meshColliderContainer.size(),
+		meshColliderContainer.data(), GL_STATIC_READ);
 
-	resetAtomicCounter();
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AabbGpuPackage), nullptr, GL_DYNAMIC_COPY);
 
-	// Set binding points
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSsboIDContainer[P3_AABB]);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 4, mAtomicBufferID);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mSsboIDContainer[P3_MESH_COLLIDERS]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mSsboIDContainer[P3_AABBS]);
 
-	GLuint uniformIndex = glGetUniformBlockIndex(mComputeProgramIDContainer[P3_DETECT_PAIRS], "numObjects");
-	glUniform1ui(uniformIndex, mpCreateInfo->aabbBufferSize);
+	glUseProgram(mComputeProgramIDContainer[P3_UPDATE_AABBS]);
 
-	glDispatchCompute(1u, 1u, 1u);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
+
+	// GLuint uniformIndex = glGetUniformBlockIndex(mComputeProgramIDContainer[P3_EVEN_ODD_SORT], "evenOrOdd");
+	// glUniform1ui(uniformIndex, meshColliderContainer.size());
+
+	CHECKED_GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mSsboIDContainer[P3_UPDATE_AABBS]));
+
+	// glUseProgram(mComputeProgramIDContainer[P3_DETECT_PAIRS]);
+
+	// glDispatchCompute(1u, 1u, 1u);
+	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 }
 
 void P3OpenGLComputeBroadPhase::resetAtomicCounter()
 {
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
-	GLuint* pMappedBufferMemory = (GLuint *)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),
+	GLuint *pMappedBufferMemory = (GLuint *)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 	memset(pMappedBufferMemory, 0, sizeof(GLuint));
 	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);

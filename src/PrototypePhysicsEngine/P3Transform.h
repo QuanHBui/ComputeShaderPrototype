@@ -6,6 +6,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#ifndef MAX_NUM_OBJECTS
+#define MAX_NUM_OBJECTS 1000
+#endif
+
 /**
  * This aims to be used as a component. Should be an upgrade to the other rigid body class
  * Based on Baraff-Witkins lecture notes and Glenn Fiedler's blog post
@@ -15,6 +19,7 @@
  * @author: Quan Bui
  * @version: 09/28/2020
  */
+
 struct LinearTransform
 {
 	//----------------- Constant quantities -----------------//
@@ -27,6 +32,14 @@ struct LinearTransform
 	{
 		velocity = momentum * inverseMass;
 	}
+};
+
+//------------------ Data pack for the GPU (SoA) --------------------//
+struct LinearTransformGpuPackage
+{
+	glm::vec4 positions[MAX_NUM_OBJECTS];
+	glm::vec4 velocities[MAX_NUM_OBJECTS];
+	glm::vec4 masses[MAX_NUM_OBJECTS];
 };
 
 struct LinearTransformDerivate
@@ -60,7 +73,7 @@ struct AngularTransformDerivative
 	glm::vec3 torque;
 };
 
-inline glm::vec3 calculateTorque(AngularTransform& state, double t)
+inline glm::vec3 calculateTorque(AngularTransform &state, double t)
 {
 	return glm::vec3(1.0f, 0.0f, 0.0f) - state.angularVelocity * 0.1f;
 }

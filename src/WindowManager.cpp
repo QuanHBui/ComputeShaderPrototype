@@ -4,12 +4,12 @@
 
 #include <iostream>
 
-void error_callback(int error, const char* description)
+void error_callback(int error, const char *description)
 {
 	std::cerr << description << std::endl;
 }
 
-WindowManager* WindowManager::instance = nullptr;
+WindowManager *WindowManager::instance = nullptr;
 
 WindowManager::WindowManager()
 {
@@ -86,17 +86,17 @@ void WindowManager::shutdown()
 	glfwTerminate();
 }
 
-void WindowManager::setEventCallbacks(EventCallbacks* callbacks_in)
+void WindowManager::setEventCallbacks(EventCallbacks *callbacks_in)
 {
 	callbacks = callbacks_in;
 }
 
-GLFWwindow* WindowManager::getHandle()
+GLFWwindow *WindowManager::getHandle()
 {
 	return windowHandle;
 }
 
-void WindowManager::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void WindowManager::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if (instance && instance->callbacks)
 	{
@@ -104,7 +104,7 @@ void WindowManager::key_callback(GLFWwindow* window, int key, int scancode, int 
 	}
 }
 
-void WindowManager::mouse_callback(GLFWwindow* window, int button, int action, int mods)
+void WindowManager::mouse_callback(GLFWwindow *window, int button, int action, int mods)
 {
 	if (instance && instance->callbacks)
 	{
@@ -112,7 +112,7 @@ void WindowManager::mouse_callback(GLFWwindow* window, int button, int action, i
 	}
 }
 
-void WindowManager::cursor_callback(GLFWwindow* window, double x_pos, double y_pos)
+void WindowManager::cursor_callback(GLFWwindow *window, double x_pos, double y_pos)
 {
 	if (instance && instance->callbacks)
 	{
@@ -120,7 +120,7 @@ void WindowManager::cursor_callback(GLFWwindow* window, double x_pos, double y_p
 	}
 }
 
-void WindowManager::resize_callback(GLFWwindow* window, int in_width, int in_height)
+void WindowManager::resize_callback(GLFWwindow *window, int in_width, int in_height)
 {
 	if (instance && instance->callbacks)
 	{
@@ -128,7 +128,7 @@ void WindowManager::resize_callback(GLFWwindow* window, int in_width, int in_hei
 	}
 }
 
-void WindowManager::scroll_callback(GLFWwindow* window, double in_deltaX, double in_deltaY)
+void WindowManager::scroll_callback(GLFWwindow *window, double in_deltaX, double in_deltaY)
 {
 	if (instance && instance->callbacks)
 	{

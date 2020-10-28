@@ -30,14 +30,14 @@ public:
 	P3DynamicsWorld() {}
 	P3DynamicsWorld(size_t maxCapacity) : mMaxCapacity(maxCapacity) {}	// Might want error checking here
 
-	//---------------------------- Core ----------------------------//
-	void step(double dt);
+	void init();
+	void update(double dt);
 
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
 	void addRigidBody();
-	void addRigidBody(float, glm::vec3 const&, glm::vec3 const&);
-	void addRigidBody(LinearTransform const&, AngularTransform const&);
+	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
+	void addRigidBody(LinearTransform const &, AngularTransform const &);
 
 	//------------------------ Demos ------------------------//
 	void reset();
@@ -47,12 +47,12 @@ public:
 	void stackingBoxesDemo();
 
 	//----------------------- Some getters and setters -----------------------//
-	inline float getGravity() const { return mGravity; }
-	inline float getAirDrag() const { return mAirDrag; }
-	inline size_t getOccupancy() const { return mBodyContainer.size(); }
-	inline size_t getMaxCapacity() const { return mMaxCapacity; }
+	float getGravity() const { return mGravity; }
+	float getAirDrag() const { return mAirDrag; }
+	size_t getOccupancy() const { return mBodyContainer.size(); }
+	size_t getMaxCapacity() const { return mMaxCapacity; }
 
-	inline std::vector<LinearTransform> const& getLinearTransformContainer() const
+	std::vector<LinearTransform> const &getLinearTransformContainer() const
 	{
 		return mLinearTransformContainer;
 	}
@@ -60,7 +60,7 @@ public:
 	void setGravity(float gravity) { mGravity = gravity; }
 	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; }	// Need error checking
 
-	inline bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
+	bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
 
 private:
 	//---------------- Constant physics quantities ----------------//
@@ -76,17 +76,20 @@ private:
 	std::vector<AngularTransform> mAngularTransformContainer;
 	std::vector<P3MeshCollider> mMeshColliderContainer;
 
+	//------------ Data package optimized for the GPU (SoA) ------------//
+	LinearTransformGpuPackage mLinearTransformCpuData;
+
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
 	std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
 	std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
 
 	//--------------------- Physics pipeline ---------------------//
-	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions 
+	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 	P3OpenGLComputeBroadPhase broadPhase;
 	//P3OpenGLComputeNarrowPhase narrowPhase;
 	P3ConstraintSolver constraintSolver;	// Produces forces to make sure things don't phase past each other
-	P3Integrator integrator;				// Actually integrate the force vector and apply to linear transform
+	P3Integrator integrator;				// Actually integrates the force vector and apply to linear transform
 };
 
 #endif // P3_DYNAMICS_WORLD_H

@@ -17,9 +17,9 @@
 
 int main()
 {
-	Application* pApplication = new Application();
+	Application *pApplication = new Application();
 
-	WindowManager* pWindowManager = new WindowManager();
+	WindowManager *pWindowManager = new WindowManager();
 	pWindowManager->init(1920, 1080);
 	pWindowManager->setEventCallbacks(pApplication);
 
@@ -29,7 +29,7 @@ int main()
 	{
 		pApplication->init();
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << e.what() << std::endl;
 		glfwSetWindowShouldClose(pWindowManager->getHandle(), GL_TRUE);
@@ -50,7 +50,7 @@ int main()
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
 		frameTimeInterval = currentTime - lastFrameTime;
-		
+
 		lastFrameTime = currentTime;
 		++numFrames;
 

@@ -62,6 +62,7 @@ void Application::initRenderSystem()
 
 void Application::initPhysicsWorld()
 {
+	physicsWorld.init();
 	//physicsWorld.stackingBoxesDemo();
 	physicsWorld.bowlingGameDemo();
 	renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
@@ -72,7 +73,7 @@ void Application::initUI()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
+	ImGuiIO &io = ImGui::GetIO();
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -112,19 +113,19 @@ void Application::calculateWorldExtents()
 	mWorldExtentMax = glm::vec2(right, bottom);
 }
 
-void Application::calculateScale(float* scaleX, float* scaleY, uint32_t frameWidth, uint32_t frameHeight)
+void Application::calculateScale(float *scaleX, float *scaleY, uint32_t frameWidth, uint32_t frameHeight)
 {
 	*scaleX = (frameWidth - 1) / (mWorldExtentMax.x - mWorldExtentMin.x);
 	*scaleY = (frameHeight - 1) / (mWorldExtentMin.y - mWorldExtentMax.y);
 }
 
-void Application::calculateShift(float* shiftX, float* shiftY, uint32_t frameWidth, uint32_t frameHeight)
+void Application::calculateShift(float* shiftX, float *shiftY, uint32_t frameWidth, uint32_t frameHeight)
 {
 	*shiftX = mWorldExtentMin.x * (1 - static_cast<int>(frameWidth)) / (mWorldExtentMax.x - mWorldExtentMin.x);
 	*shiftY = mWorldExtentMin.y * (1 - static_cast<int>(frameHeight)) / (mWorldExtentMax.y - mWorldExtentMin.y);
 }
 
-void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Application::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
@@ -184,7 +185,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
  *	mouseCallback
  *	Every time the mouse click, this callback got invoked.
  */
-void Application::mouseCallback(GLFWwindow* window, int button, int action, int mods)
+void Application::mouseCallback(GLFWwindow *window, int button, int action, int mods)
 {
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_PRESS)
 		return;
@@ -219,7 +220,7 @@ void Application::mouseCallback(GLFWwindow* window, int button, int action, int 
  *	cursorCallback
  *	Every time the cursor move, this callback got invoked.
  */
-void Application::cursorCallback(GLFWwindow* window, double xPos, double yPos)
+void Application::cursorCallback(GLFWwindow *window, double xPos, double yPos)
 {
 	// Calculate deltaX and deltaY, then send to moveCameraView function
 	//  camera should ONLY move after the initial cursor focus.
@@ -273,7 +274,7 @@ void Application::renderUI(double dt)
 	// Update physics tick interval every half a sec.
 	static double lastTime = glfwGetTime();
 	static double lastPhysicsTickInterval = physicsTickInterval;
-	
+
 	if (glfwGetTime() - lastTime >= 0.5)
 	{
 		lastPhysicsTickInterval = physicsTickInterval;
@@ -281,11 +282,12 @@ void Application::renderUI(double dt)
 	}
 
 	// Display some text
+	dt = dt > 0.0001f ? dt : 0.001f;	// Prevent divided by 0
 	ImGui::Text("FPS: %.3f | Frame time: %.3f ms", 1.0f / dt, dt * 1000.0f);
 	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
 		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);
 	ImGui::Text("Number of objects in world: %d", physicsWorld.getOccupancy());
-	
+
 	if (ImGui::Button("Add"))
 		allowToAdd = true;
 	if (ImGui::Button("Shoot"))
@@ -307,7 +309,7 @@ void Application::renderUI(double dt)
 void Application::shootBall()
 {
 	physicsWorld.addRigidBody(
-		1, 
+		1,
 		glm::vec3(mFlyCamera.getPosition() + 1.0f * mFlyCamera.getFront()),
 		glm::vec3(0.0f, 0.0f, -10.0f));
 
@@ -316,26 +318,22 @@ void Application::shootBall()
 
 void Application::update(float dt)
 {
-	physicsWorld.step(dt);
+	physicsWorld.update(dt);
 
 	physicsTickInterval = dt;
 
 	// Get position array from the physics world
-	std::vector<LinearTransform> const& linearTransformContainer = physicsWorld.getLinearTransformContainer();
+	std::vector<LinearTransform> const &linearTransformContainer = physicsWorld.getLinearTransformContainer();
 
 	unsigned int i = 0u;
 	// Update the model matrix array
-	for (LinearTransform const& linearTransform : linearTransformContainer)
+	for (LinearTransform const &linearTransform : linearTransformContainer)
 	{
 		glm::mat4 transform = glm::translate(linearTransform.position);
 
-		try
-		{
-			pModelMatrixContainer->at(i++) = transform;
-		}
-		catch (std::out_of_range const& oor)
-		{
+		if (i >= pModelMatrixContainer->size())
 			pModelMatrixContainer->emplace_back(transform);
-		}
+		else
+			pModelMatrixContainer->at(i++) = transform;
 	}
 }

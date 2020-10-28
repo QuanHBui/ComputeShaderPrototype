@@ -17,19 +17,19 @@ struct SupportPoint
 
 	SupportPoint() {}
 
-	SupportPoint(P3Collider const& colliderA, P3Collider const& colliderB, glm::vec3 const& direction)
+	SupportPoint(P3Collider const &colliderA, P3Collider const &colliderB, glm::vec3 const &direction)
 	{
 		mColliderASupport = colliderA.findFarthestPoint(direction);
 		mColliderBSupport = colliderB.findFarthestPoint(-direction);
 		mMinkowskiDiffPoint = mColliderASupport - mColliderBSupport;
 	}
 
-	bool operator==(SupportPoint const& another) const
+	bool operator==(SupportPoint const &another) const
 	{
 		return mMinkowskiDiffPoint == another.mMinkowskiDiffPoint;
 	}
 
-	glm::vec3 operator-(SupportPoint const& another) const
+	glm::vec3 operator-(SupportPoint const &another) const
 	{
 		return mMinkowskiDiffPoint - another.mMinkowskiDiffPoint;
 	}
@@ -43,7 +43,7 @@ struct SupportPoint
 class P3Simplex
 {
 public:
-	P3Simplex& operator=(std::initializer_list<SupportPoint> list)
+	P3Simplex &operator=(std::initializer_list<SupportPoint> list)
 	{
 		for (auto listIter = list.begin(); listIter != list.end(); ++listIter)
 			mPoints[std::distance(list.begin(), listIter)] = *listIter;
@@ -54,18 +54,20 @@ public:
 	}
 
 	// This is a linked list behavior, but we want to ultilize stack memory for faster access.
-	void pushFront(SupportPoint const& point)
+	void pushFront(SupportPoint const &point)
 	{
 		mPoints = { point, mPoints[0u], mPoints[1u], mPoints[2u] };
 		mSize = std::min(mSize + 1u, 4u);
 	}
 
-	SupportPoint& operator[](unsigned int i) { return mPoints[i]; }
+	SupportPoint &operator[](unsigned int i) { return mPoints[i]; }
 
 	unsigned int getSize() const { return mSize; }
 
-	std::array<SupportPoint, 4u>::const_iterator begin() const { return mPoints.begin(); }
-	std::array<SupportPoint, 4u>::const_iterator end() const { return mPoints.end(); }
+	std::array<SupportPoint, 4u>::const_iterator cbegin() const { return mPoints.cbegin(); }
+	std::array<SupportPoint, 4u>::const_iterator cend() const { return mPoints.cend(); }
+	std::array<SupportPoint, 4u>::const_reverse_iterator crbegin() const { return mPoints.crbegin(); }
+	std::array<SupportPoint, 4u>::const_reverse_iterator crend() const { return mPoints.crend(); }
 
 private:
 	std::array<SupportPoint, 4u> mPoints;
@@ -77,15 +79,15 @@ private:
 struct TriangleSimplex
 {
 	SupportPoint points[3];
-	glm::vec3 precomputedNormal{ 0.0f };
+	glm::vec3 normal{ 0.0f };
 
-	TriangleSimplex(SupportPoint const& a, SupportPoint const& b, SupportPoint const& c)
+	TriangleSimplex(SupportPoint const &a, SupportPoint const &b, SupportPoint const &c)
 	{
 		points[0] = a;
 		points[1] = b;
 		points[2] = c;
 
-		precomputedNormal = glm::normalize(glm::cross(b - a, c - a));
+		normal = glm::normalize(glm::cross(b - a, c - a));
 	}
 };
 
@@ -93,7 +95,7 @@ struct EdgeSimplex
 {
 	SupportPoint points[2];
 
-	EdgeSimplex(SupportPoint const& a, SupportPoint const& b)
+	EdgeSimplex(SupportPoint const &a, SupportPoint const &b)
 	{
 		points[0] = a;
 		points[1] = b;

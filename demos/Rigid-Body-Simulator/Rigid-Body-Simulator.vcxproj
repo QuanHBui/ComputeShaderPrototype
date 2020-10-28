@@ -163,6 +163,7 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Epa.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Gjk.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\Shape.cpp" />
@@ -178,7 +179,6 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Collider.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
-    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Gjk.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Simplex.h" />

@@ -14,58 +14,45 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
- //enum BoundingPrimitives { BOX = 0, SPHERE };
- //
- //class BoundingVolume
- //{
- //public:
- //	BoundingVolume() {}
- //	BoundingVolume(glm::vec3 position) : position_{position} {}
- //	virtual ~BoundingVolume() {}
- //
- //	glm::vec3 getPosition() const { return position_; }
- //
- //	void setPosition(glm::vec3 position) { position_ = position; }
- //
- //protected:
- //	glm::vec3 position_{0.f};
- //};
- //
- //class BoundingBox : public BoundingVolume
- //{
- //public:
- //	BoundingBox() {}
- //	BoundingBox(glm::vec3 const &minBound, glm::vec3 const &maxBound)
- //		: minBound_{minBound}, maxBound_{maxBound} {}
- //
- //	glm::vec3 getMinBound() const { return minBound_; }
- //	glm::vec3 getMaxBound() const { return maxBound_; }
- //
- //	void setMinBound(glm::vec3 minBound) { minBound_ = minBound; }
- //	void setMaxBound(glm::vec3 maxBound) { maxBound_ = maxBound; }
- //
- //private:
- //	// minBound should describe lower left -z direction corner,
- //	//  while maxBound should describe upper right + direction corner. This coordinate system is relative to the object
- //	glm::vec3 minBound_{0.f}, maxBound_{0.f};
- //};
- //
- //class BoundingSphere : public BoundingVolume
- //{
- //public:
- //	BoundingSphere() {}
- //	BoundingSphere(float radius) : radius_{radius} {}
- //
- //	float getRadius() const { return radius_; }
- //
- //	void setRadius(float radius) { radius_ = radius; }
- //
- //private:
- //	float radius_{0.f};
- //};
+#ifndef MAX_NUM_OBJECTS
+#define MAX_NUM_OBJECTS 1000
+#endif
 
+struct BoundingVolume
+{
+	enum BoundingPrimitives { BOX = 0, SPHERE };
 
- //---------------------------------- Placeholder/prototyping ----------------------------------
+	BoundingVolume() {}
+	BoundingVolume(glm::vec3 position) : position_{position} {}
+	virtual ~BoundingVolume() {}
+
+	glm::vec3 position_{0.f};
+};
+
+// This is not axis-aligned.
+struct BoundingBox : public BoundingVolume
+{
+	BoundingBox() {}
+};
+
+struct BoundingSphere : public BoundingVolume
+{
+	BoundingSphere() {}
+	BoundingSphere(float radius) : radius_{radius} {}
+
+	float radius_{0.f};
+};
+
+struct PillBox : public BoundingVolume
+{
+
+};
+
+struct Cylinder : public BoundingVolume
+{
+
+};
+
 struct Aabb
 {
 	glm::vec4 minBound, maxBound;
@@ -75,5 +62,11 @@ struct CollisionPair
 {
 	Aabb firstBody, secondBody;
 };
-//---------------------------------------------------------------------------------------------
+
+//------------------ Data pack for the GPU (SoA) --------------------//
+struct AabbGpuPackage
+{
+	glm::vec4 minCoords[MAX_NUM_OBJECTS];
+	glm::vec4 maxCoords[MAX_NUM_OBJECTS];
+};
 #endif // BOUNDING_VOLUME_H

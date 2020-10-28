@@ -3,6 +3,7 @@
 #ifndef RENDER_SYSTEM_H
 #define RENDER_SYSTEM_H
 
+#include <glad/glad.h>
 #include <memory>
 #include <vector>
 #include <glm/mat4x4.hpp>
@@ -25,22 +26,28 @@ public:
 	void init();
 
 	void render(int, int, std::shared_ptr<MatrixContainer>);
+	void renderDebug();
 
-	void registerMeshForBody(Mesh const&, unsigned int = 1u);
-	void setView(glm::mat4 const& view) { mView = view; }
-	void setProjection(glm::mat4 const& projection) { mProjection = projection; }
+	void registerMeshForBody(Mesh const &, unsigned int = 1u);
+	void setView(glm::mat4 const &view) { mView = view; }
+	void setProjection(glm::mat4 const &projection) { mProjection = projection; }
 
 	void reset();
 
 private:
 	void initRenderPrograms();
 	void initMeshes();
+	void initDebug();
 
 	std::vector<std::shared_ptr<class Program>> mpProgramContainer;
 	std::vector<std::shared_ptr<class Shape>> mpMeshContainer;
 	std::vector<Mesh> mMeshKeyContainer;
 
 	glm::mat4 mView, mProjection;
+
+	//================ For debugging ================//
+	GLuint debugVao = 0u, debugVbo = 0u;
+
 };
 
-#endif // RENDER_SYSTEM_H 
+#endif // RENDER_SYSTEM_H

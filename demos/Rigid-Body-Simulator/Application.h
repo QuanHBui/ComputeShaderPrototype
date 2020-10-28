@@ -31,13 +31,13 @@ class Application : public EventCallbacks
 public:
 	void init();
 
-	void setWindowManager(WindowManager* pWindowManager) { mpWindowManager = pWindowManager; }
+	void setWindowManager(WindowManager *pWindowManager) { mpWindowManager = pWindowManager; }
 
-	void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) override;
-	void mouseCallback(GLFWwindow* window, int button, int action, int mods) override;
-	void resizeCallback(GLFWwindow* window, int in_width, int in_height) override {};
-	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) override {};
-	void cursorCallback(GLFWwindow* window, double xpos, double ypos) override;
+	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
+	void mouseCallback(GLFWwindow *window, int button, int action, int mods) override;
+	void resizeCallback(GLFWwindow *window, int in_width, int in_height) override {};
+	void scrollCallback(GLFWwindow *window, double deltaX, double deltaY) override {};
+	void cursorCallback(GLFWwindow *window, double xpos, double ypos) override;
 
 	void reset();
 
@@ -57,15 +57,15 @@ private:
 
 	// Mouse ultility methods
 	void calculateWorldExtents();
-	void calculateScale(float*, float*, uint32_t, uint32_t);
-	void calculateShift(float*, float*, uint32_t, uint32_t);
+	void calculateScale(float *, float *, uint32_t, uint32_t);
+	void calculateShift(float *, float *, uint32_t, uint32_t);
 
 	inline float pixelToWorld(double pixel, float scale, float shift)
 	{
 		return static_cast<float>((pixel - shift) / scale);
 	}
 
-	WindowManager* mpWindowManager = nullptr;
+	WindowManager *mpWindowManager = nullptr;
 
 	Camera mFlyCamera
 	{

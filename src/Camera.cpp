@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-Camera::Camera(glm::vec3 const& position, glm::vec3 const& front, glm::vec3 const& up, float viewportAspectRatio)
+Camera::Camera(glm::vec3 const &position, glm::vec3 const &front, glm::vec3 const &up, float viewportAspectRatio)
 	: position_(position), front_(glm::normalize(front)), up_(glm::normalize(up))
 {
 	updateViewMatrix();
@@ -49,7 +49,7 @@ void Camera::moveView(float deltaX, float deltaY)
 	updateViewMatrix();
 }
 
-void Camera::movePosition(MovementSet const& movementDirection, float deltaTime)
+void Camera::movePosition(MovementSet const &movementDirection, float deltaTime)
 {
 	switch (movementDirection) {
 	case MovementSet::LEFT:

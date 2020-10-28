@@ -9,29 +9,28 @@
 #include <vector>
 
 /**
- * @reference: https://blog.winter.dev/2020/gjk-algorithm/
+ * Reference: https://blog.winter.dev/2020/gjk-algorithm/
  */
+
+class P3Simplex;
 
 class P3Collider
 {
 public:
-	virtual glm::vec3 findFarthestPoint(glm::vec3 const&) const = 0;
+	virtual glm::vec3 findFarthestPoint(glm::vec3 const &) const = 0;
 };
 
 class P3MeshCollider : public P3Collider
 {
 public:
-	void setModelMatrix(glm::mat4 const& modelMatrix)
-	{
-		mModelMatrix = modelMatrix;
-	}
-	
-	void setVertices(std::vector<glm::vec4> const& vertices)
+	void update(glm::mat4 const &);
+
+	void setVertices(std::vector<glm::vec4> const &vertices)
 	{
 		mVertices = vertices;
 	}
 
-	glm::vec3 findFarthestPoint(glm::vec3 const&) const override;
+	glm::vec3 findFarthestPoint(glm::vec3 const &) const override;
 
 private:
 	std::vector<glm::vec4> mVertices
@@ -46,8 +45,9 @@ private:
 		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
 	};	// A unit box
-
-	glm::mat4 mModelMatrix{ 1.0f };
 };
+
+bool P3Gjk(P3Collider const &, P3Collider const &, P3Simplex &);
+void P3Epa(P3Collider const &, P3Collider const &, P3Simplex &);
 
 #endif // P3_COLLIDER_H

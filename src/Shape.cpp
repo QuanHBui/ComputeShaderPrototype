@@ -53,14 +53,14 @@ void Shape::measure()
 	// Go through all vertices to determine min and max of each dimension
 	for (size_t v = 0; v < posBuf.size() / 3; ++v)
 	{
-		if (posBuf[3*v + 0] < minX) minX = posBuf[3*v + 0];
-		if (posBuf[3*v + 0] > maxX) maxX = posBuf[3*v + 0];
+		if (posBuf[3 * v + 0] < minX) minX = posBuf[3 * v + 0];
+		if (posBuf[3 * v + 0] > maxX) maxX = posBuf[3 * v + 0];
 
-		if (posBuf[3*v + 1] < minY) minY = posBuf[3*v + 1];
-		if (posBuf[3*v + 1] > maxY) maxY = posBuf[3*v + 1];
+		if (posBuf[3 * v + 1] < minY) minY = posBuf[3 * v + 1];
+		if (posBuf[3 * v + 1] > maxY) maxY = posBuf[3 * v + 1];
 
-		if (posBuf[3*v + 2] < minZ) minZ = posBuf[3*v + 2];
-		if (posBuf[3*v + 2] > maxZ) maxZ = posBuf[3*v + 2];
+		if (posBuf[3 * v + 2] < minZ) minZ = posBuf[3 * v + 2];
+		if (posBuf[3 * v + 2] > maxZ) maxZ = posBuf[3 * v + 2];
 	}
 
 	min.x = minX;
@@ -106,15 +106,15 @@ void Shape::resize()
 	// Go through all verticies shift and scale them
 	for (size_t v = 0; v < posBuf.size() / 3; ++v)
 	{
-		posBuf[3*v+0] = (posBuf[3*v+0] - shiftX) * scaleX;
-		assert(posBuf[3*v+0] >= -1.0f - EPSILON);
-		assert(posBuf[3*v+0] <= 1.0f + EPSILON);
-		posBuf[3*v+1] = (posBuf[3*v+1] - shiftY) * scaleY;
-		assert(posBuf[3*v+1] >= -1.0f - EPSILON);
-		assert(posBuf[3*v+1] <= 1.0f + EPSILON);
-		posBuf[3*v+2] = (posBuf[3*v+2] - shiftZ) * scaleZ;
-		assert(posBuf[3*v+2] >= -1.0f - EPSILON);
-		assert(posBuf[3*v+2] <= 1.0f + EPSILON);
+		posBuf[3 * v + 0] = (posBuf[3 * v + 0] - shiftX) * scaleX;
+		assert(posBuf[3 * v + 0] >= -1.0f - EPSILON);
+		assert(posBuf[3 * v + 0] <= 1.0f + EPSILON);
+		posBuf[3 * v + 1] = (posBuf[3 * v + 1] - shiftY) * scaleY;
+		assert(posBuf[3 * v + 1] >= -1.0f - EPSILON);
+		assert(posBuf[3 * v + 1] <= 1.0f + EPSILON);
+		posBuf[3 * v + 2] = (posBuf[3 * v + 2] - shiftZ) * scaleZ;
+		assert(posBuf[3 * v + 2] >= -1.0f - EPSILON);
+		assert(posBuf[3 * v + 2] <= 1.0f + EPSILON);
 	}
 }
 
@@ -132,15 +132,15 @@ void Shape::normalGen()
 	int faceLoopCounter;
 	std::vector<unsigned int>::const_iterator faceIter;
 	for (faceIter = eleBuf.begin(), faceLoopCounter = 0; faceIter != eleBuf.end(); faceIter += 3u, ++faceLoopCounter) {
-		v0 = glm::vec3(	posBuf.at(*(faceIter) * 3u),
-						posBuf.at(*(faceIter) * 3u + 1u),
-						posBuf.at(*(faceIter) * 3u + 2u) );
-		v1 = glm::vec3( posBuf.at(*(faceIter + 1u) * 3u),
-						posBuf.at(*(faceIter + 1u) * 3u + 1u),
-						posBuf.at(*(faceIter + 1u) * 3u + 2u) );
-		v2 = glm::vec3( posBuf.at(*(faceIter + 2u) * 3u),
-						posBuf.at(*(faceIter + 2u) * 3u + 1u),
-						posBuf.at(*(faceIter + 2u) * 3u + 2u) );
+		v0 = glm::vec3(posBuf.at(*(faceIter) * 3u),
+			posBuf.at(*(faceIter) * 3u + 1u),
+			posBuf.at(*(faceIter) * 3u + 2u));
+		v1 = glm::vec3(posBuf.at(*(faceIter + 1u) * 3u),
+			posBuf.at(*(faceIter + 1u) * 3u + 1u),
+			posBuf.at(*(faceIter + 1u) * 3u + 2u));
+		v2 = glm::vec3(posBuf.at(*(faceIter + 2u) * 3u),
+			posBuf.at(*(faceIter + 2u) * 3u + 1u),
+			posBuf.at(*(faceIter + 2u) * 3u + 2u));
 
 		normalVec = glm::cross(v1 - v0, v2 - v0);
 
@@ -160,9 +160,9 @@ void Shape::normalGen()
 	// Normalize the summation of all normals per vertex
 	std::vector<float>::iterator norIter;
 	for (norIter = norBuf.begin(); norIter != norBuf.end(); norIter += 3u) {
-		sumNorm = glm::vec3(	*(norIter),
-								*(norIter + 1u),
-								*(norIter + 2u));
+		sumNorm = glm::vec3(*(norIter),
+			*(norIter + 1u),
+			*(norIter + 2u));
 
 		sumNorm = glm::normalize(sumNorm);
 		*(norIter) = sumNorm.x;
@@ -180,7 +180,7 @@ void Shape::init()
 	// Send the position array to the GPU
 	CHECKED_GL_CALL(glGenBuffers(1, &posBufID));
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, posBufID));
-	CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, posBuf.size()*sizeof(float), &posBuf[0], GL_STATIC_DRAW));
+	CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, posBuf.size() * sizeof(float), &posBuf[0], GL_STATIC_DRAW));
 
 	// Send the normal array to the GPU
 	if (norBuf.empty())
@@ -191,7 +191,7 @@ void Shape::init()
 	{
 		CHECKED_GL_CALL(glGenBuffers(1, &norBufID));
 		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, norBufID));
-		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, norBuf.size()*sizeof(float), &norBuf[0], GL_STATIC_DRAW));
+		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, norBuf.size() * sizeof(float), &norBuf[0], GL_STATIC_DRAW));
 	}
 
 	// Send the texture array to the GPU
@@ -203,13 +203,13 @@ void Shape::init()
 	{
 		CHECKED_GL_CALL(glGenBuffers(1, &texBufID));
 		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, texBufID));
-		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, texBuf.size()*sizeof(float), &texBuf[0], GL_STATIC_DRAW));
+		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, texBuf.size() * sizeof(float), &texBuf[0], GL_STATIC_DRAW));
 	}
 
 	// Send the element array to the GPU
 	CHECKED_GL_CALL(glGenBuffers(1, &eleBufID));
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eleBufID));
-	CHECKED_GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, eleBuf.size()*sizeof(unsigned int), &eleBuf[0], GL_STATIC_DRAW));
+	CHECKED_GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, eleBuf.size() * sizeof(unsigned int), &eleBuf[0], GL_STATIC_DRAW));
 
 	// Unbind the arrays
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
