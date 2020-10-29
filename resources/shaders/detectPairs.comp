@@ -1,0 +1,100 @@
+#version 430
+#extension GL_ARB_shader_storage_buffer_object : require
+
+#define MAX_NUM_COLLIDERS 1000
+
+layout(local_size_x = MAX_NUM_COLLIDERS) in;
+
+layout(std430, binding = 1) volatile buffer in_sorted_data
+{
+	vec4 minCoords[MAX_NUM_COLLIDERS];
+	vec4 maxCoords[MAX_NUM_COLLIDERS];
+};
+
+layout(std430, binding = 2) volatile buffer out_collision_pairs_data
+{
+	vec4 collisionPairs[MAX_NUM_COLLIDERS * 2];
+};
+
+layout(binding = 0) uniform atomic_uint nextAvailableIdx;
+
+uniform uint currNumColliders;
+
+subroutine void sweep(uint i, uint j);
+
+subroutine uniform sweep sweepAxis;
+
+subroutine(sweep)
+void sweepX(uint i, uint j)
+{
+	// Check for collision on the x-axis
+	if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].w)
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
+		collisionPairs[availableIdx].y = minCoords[j].w;
+	}
+}
+
+subroutine(sweep)
+void sweepY(uint i, uint j)
+{
+	// We don't sweep any AABB with w comp of -1.
+	if (minCoords[i].w > -1 && minCoords[j].w > -1 &&
+		minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
+		collisionPairs[availableIdx].y = minCoords[j].w;
+	}
+}
+
+subroutine(sweep)
+void sweepZ(uint i, uint j)
+{
+	// We don't sweep any AABB with w comp of -1.
+	if (minCoords[i].w > -1 && minCoords[j].w > -1 &&
+		minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
+		collisionPairs[availableIdx].y = minCoords[j].w;
+	}
+}
+
+void prune()
+{
+	uint aabbIdx = gl_LocalInvocationID.x;
+
+	if (aabbIdx >= currNumColliders) return;
+
+	for ( uint collisionPairIdx = 0
+		; collisionPairIdx < atomicCounter(nextAvailableIdx)
+		; ++collisionPairIdx )
+	{
+		if (minCoords[aabbIdx].w != collisionPairs[collisionPairIdx].x &&
+			minCoords[aabbIdx].w != collisionPairs[collisionPairIdx].y)
+
+		// Remove by assigning w comp -1
+		minCoords[aabbIdx].w = -1;
+		maxCoords[aabbIdx].w = -1;
+	}
+
+	// Remove AABB from the minCoords and maxCoords buffers
+}
+
+void main()
+{
+	// Figure what index pair we are looking at
+	uint currObjectIdx = gl_LocalInvocationID.x;
+
+	for (uint nextObjectIdx = currObjectIdx + 1; nextObjectIdx < currNumColliders; ++nextObjectIdx)
+	{
+		if (currObjectIdx >= currNumColliders) break;
+		sweepAxis(currObjectIdx, nextObjectIdx);
+	}
+
+	barrier();	//=============================================================
+
+	prune();
+}

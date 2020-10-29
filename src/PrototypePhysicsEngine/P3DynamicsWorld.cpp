@@ -195,15 +195,15 @@ void P3DynamicsWorld::bowlingGameDemo()
 
 	std::vector<glm::vec4> vertices
 	{
-		glm::vec4{ -0.2f,  1.0f,  0.2f,  1.0f },
-		glm::vec4{  0.2f,  1.0f,  0.2f,  1.0f },
-		glm::vec4{  0.2f, -1.0f,  0.2f,  1.0f },
-		glm::vec4{ -0.2f, -1.0f,  0.2f,  1.0f },
+		glm::vec4{ -0.1f,  1.0f,  0.1f,  1.0f },
+		glm::vec4{  0.1f,  1.0f,  0.1f,  1.0f },
+		glm::vec4{  0.1f, -1.0f,  0.1f,  1.0f },
+		glm::vec4{ -0.1f, -1.0f,  0.1f,  1.0f },
 
-		glm::vec4{ -0.2f,  1.0f, -0.2f,  1.0f },
-		glm::vec4{  0.2f,  1.0f, -0.2f,  1.0f },
-		glm::vec4{  0.2f, -1.0f, -0.2f,  1.0f },
-		glm::vec4{ -0.2f, -1.0f, -0.2f,  1.0f }
+		glm::vec4{ -0.1f,  1.0f, -0.1f,  1.0f },
+		glm::vec4{  0.1f,  1.0f, -0.1f,  1.0f },
+		glm::vec4{  0.1f, -1.0f, -0.1f,  1.0f },
+		glm::vec4{ -0.1f, -1.0f, -0.1f,  1.0f }
 	};	// A skinny verson of a unit box
 
 	for (float i = 0.0f; i < 5.0f; ++i)

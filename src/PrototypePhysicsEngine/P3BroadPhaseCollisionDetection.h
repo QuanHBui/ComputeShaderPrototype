@@ -15,8 +15,6 @@
 
 struct Aabb;
 
-void P3CpuBroadPhase(Aabb *, size_t);
-
 class P3OpenGLComputeBroadPhase
 {
 public:
@@ -50,7 +48,7 @@ private:
 		P3_BUILD_PARALLEL_LINEAR_BVH
 	};
 
-	// Indicices of ssbo
+	// Indicices of ssbo's
 	enum
 	{
 		P3_BOX_COLLIDERS = 0,
@@ -66,6 +64,7 @@ private:
 	//--------------------------------- Debug ---------------------------------//
 	GLuint mAtomicCounterCpu = 0u;
 	AabbGpuPackage mAabbCpuData;
+	CollisionPairGpuPackage mCollisionPairCpuData;
 };
 
 #endif // P3_BROAD_PHASE_COLLISION_DETECTION_H

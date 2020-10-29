@@ -11,17 +11,22 @@ layout(std430, binding = 1) volatile buffer unsorted_data
 	vec4 maxCoords[MAX_NUM_COLLIDERS];
 };
 
+layout(std430, binding = 2) readonly buffer out_collision_pairs_data
+{
+	vec4 collisionPairs[MAX_NUM_COLLIDERS * 2];
+};
+
 uniform uint currNumColliders;
 uniform int evenOrOdd;
 
 void swap(uint, uint);
 
-subroutine void sweep(uint i, uint j);
+subroutine void sort(uint i, uint j);
 
-subroutine uniform sweep sweepAxis;
+subroutine uniform sort sortComponent;
 
-subroutine(sweep)
-void sweepX(uint i, uint j)
+subroutine(sort)
+void sortX(uint i, uint j)
 {
 	if (minCoords[i].x > minCoords[j].x)
 	{
@@ -29,19 +34,23 @@ void sweepX(uint i, uint j)
 	}
 }
 
-subroutine(sweep)
-void sweepY(uint i, uint j)
+subroutine(sort)
+void sortY(uint i, uint j)
 {
-	if (minCoords[i].y > minCoords[j].y)
+	// We don't sort any AABB with w comp of -1
+	if (minCoords[i].w > 1 && minCoords[j].w > -1 &&
+		minCoords[i].y > minCoords[j].y)
 	{
 		swap(i, j);
 	}
 }
 
-subroutine(sweep)
-void sweepZ(uint i, uint j)
+subroutine(sort)
+void sortZ(uint i, uint j)
 {
-	if (minCoords[i].z > minCoords[j].z)
+	// We don't sort any AABB with w comp of -1.
+	if (minCoords[i].w > 1 && minCoords[j].w > -1 &&
+		minCoords[i].z > minCoords[j].z)
 	{
 		swap(i, j);
 	}
@@ -61,8 +70,8 @@ void swap(uint i, uint j)
 void main()
 {
 	// Figure what index pair we are looking at
-	uint i = gl_GlobalInvocationID.x;
-	uint j = gl_GlobalInvocationID.x + 1;
+	uint i = gl_LocalInvocationID.x;
+	uint j = gl_LocalInvocationID.x + 1;
 
 	// If either index is bigger than the buffer size, we let the compute unit idle
 	if (i >= currNumColliders || j >= currNumColliders) return;
@@ -75,5 +84,5 @@ void main()
 	else if (evenOrOdd == -1 && i % 2 == 0) return;
 
 	//-------------------- The actual sweeping --------------------//
-	sweepAxis(i, j);
+	sortComponent(i, j);
 }

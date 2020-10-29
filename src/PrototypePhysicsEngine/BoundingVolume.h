@@ -53,20 +53,15 @@ struct Cylinder : public BoundingVolume
 
 };
 
-struct Aabb
-{
-	glm::vec4 minBound, maxBound;
-};
-
-struct CollisionPair
-{
-	Aabb firstBody, secondBody;
-};
-
 //------------------ Data pack for the GPU (SoA) --------------------//
 struct AabbGpuPackage
 {
 	glm::vec4 minCoords[MAX_NUM_OBJECTS];
 	glm::vec4 maxCoords[MAX_NUM_OBJECTS];
+};
+
+struct CollisionPairGpuPackage
+{
+	glm::vec4 collisionPairs[2 * MAX_NUM_OBJECTS];
 };
 #endif // BOUNDING_VOLUME_H

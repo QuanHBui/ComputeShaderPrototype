@@ -35,7 +35,11 @@ void main()
 {
 	uint colliderIdx = gl_LocalInvocationID.x;
 
-	if (colliderIdx >= currNumColliders) return;
+	if (colliderIdx >= currNumColliders)
+	{
+		minCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -1.0f);
+		maxCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -1.0f);
+	}
 
 	MeshCollider meshCollider = meshColliders[colliderIdx];
 
@@ -64,6 +68,6 @@ void main()
 	}
 
 	// Store the results
-	minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx);
+	minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx);	// Store the entity unique ID in the w comp
 	maxCoords[colliderIdx] = vec4(maxX, maxY, maxZ, colliderIdx);
 }
