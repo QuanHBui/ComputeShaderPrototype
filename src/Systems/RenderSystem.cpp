@@ -63,9 +63,33 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 	mpRenderProgram->unbind();
 }
 
-void RenderSystem::renderDebug()
+void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	glBindVertexArray(mDebugVao);
+	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
+
+	// Bind render program
+	std::shared_ptr<Program> pDebugShaderProg = mpProgramContainer[ShaderProg::DEBUG];
+	pDebugShaderProg->bind();
+
+	glUniformMatrix4fv(glGetUniformLocation(pDebugShaderProg->getPID(), "projection"),
+		1, GL_FALSE, glm::value_ptr(mProjection));
+	glUniformMatrix4fv(glGetUniformLocation(pDebugShaderProg->getPID(), "view"),
+		1, GL_FALSE, glm::value_ptr(mView));
+
+	// Iterate through all the box colliders and send the vertices info
+	for (P3BoxCollider const &boxCollider : boxColliders)
+	{
+		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec4), (const void *)boxCollider.mVertices, GL_DYNAMIC_DRAW));
+		CHECKED_GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 8));
+	}
+
+	glBindVertexArray(0u);
+	glBindBuffer(GL_ARRAY_BUFFER, 0u);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void RenderSystem::registerMeshForBody(Mesh const &shape, unsigned int quantity)
@@ -91,7 +115,7 @@ void RenderSystem::initRenderPrograms()
 	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
 
-	std::shared_ptr<Program> mpRenderProgram = std::make_unique<Program>();
+	std::shared_ptr<Program> mpRenderProgram = std::make_shared<Program>();
 	mpRenderProgram->setVerbose(true);
 	mpRenderProgram->setShaderNames(
 		"../resources/shaders/vs.vert",
@@ -181,5 +205,25 @@ void RenderSystem::initMeshes()
 
 void RenderSystem::initDebug()
 {
+	glGenVertexArrays(1, &mDebugVao);
+	glBindVertexArray(mDebugVao);
 
+	glGenBuffers(1, &mDebugVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0u, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0u);
+	glBindVertexArray(0u);
+
+	std::shared_ptr<Program> pDebugRenderProgram = std::make_shared<Program>();
+	pDebugRenderProgram->setVerbose(true);
+	pDebugRenderProgram->setShaderNames(
+		"../resources/shaders/debug.vert",
+		"../resources/shaders/debug.frag");
+	pDebugRenderProgram->init();
+	pDebugRenderProgram->addAttribute("vertPos");
+
+	mpProgramContainer.emplace_back(pDebugRenderProgram);
 }

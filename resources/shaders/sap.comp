@@ -93,7 +93,7 @@ void main()
 	{
 		if (collisionPairIdx >= 2 * MAX_NUM_COLLIDERS - 1u) break;
 		
-		collisionPairs[collisionPairCycle] = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		collisionPairs[collisionPairCycle] = vec4(-1.0f, -1.0f, 0.0f, 0.0f);
 	}
 
 	barrier(); //=============================================================

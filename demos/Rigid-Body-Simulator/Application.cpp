@@ -31,6 +31,7 @@ static bool moveForward = false;
 static bool moveBackward = false;
 
 // imgui state(s)
+static bool showDebug = false;
 static bool allowToAdd = false;
 
 Application::~Application()
@@ -63,7 +64,6 @@ void Application::initRenderSystem()
 void Application::initPhysicsWorld()
 {
 	physicsWorld.init();
-	//physicsWorld.stackingBoxesDemo();
 	physicsWorld.bowlingGameDemo();
 	renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
 }
@@ -256,6 +256,9 @@ void Application::renderFrame()
 	if (!width && !height) return;
 
 	renderSystem.render(width, height, pModelMatrixContainer);
+
+	if (showDebug)
+		renderSystem.renderDebug(physicsWorld.getBoxColliders());
 }
 
 void Application::renderUI(double dt)
@@ -287,6 +290,7 @@ void Application::renderUI(double dt)
 	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
 		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);
 	ImGui::Text("Number of objects in world: %d", physicsWorld.getOccupancy());
+	ImGui::Text("Number of BoxColliders in world: %d", physicsWorld.getNumBoxColliders());
 
 	if (ImGui::Button("Add"))
 		allowToAdd = true;
@@ -294,6 +298,10 @@ void Application::renderUI(double dt)
 		shootBall();
 	if (ImGui::Button("Reset"))
 		reset();
+	if (ImGui::Button("Trigger Breakpoint"))
+		__debugbreak();
+
+	ImGui::Checkbox("Show Debug", &showDebug);
 
 	// Plot some values
 	//const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };

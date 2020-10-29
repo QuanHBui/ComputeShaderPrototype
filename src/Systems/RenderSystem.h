@@ -8,6 +8,8 @@
 #include <vector>
 #include <glm/mat4x4.hpp>
 
+#include "../PrototypePhysicsEngine/P3Collider.h"
+
 using MatrixContainer = std::vector<glm::mat4>;
 using MatrixContainerConstIter = MatrixContainer::const_iterator;
 
@@ -23,10 +25,16 @@ public:
 		BOWLING_PIN
 	};
 
+	enum ShaderProg
+	{
+		NORMAL = 0,
+		DEBUG
+	};
+
 	void init();
 
 	void render(int, int, std::shared_ptr<MatrixContainer>);
-	void renderDebug();
+	void renderDebug(std::vector<P3BoxCollider> const &);
 
 	void registerMeshForBody(Mesh const &, unsigned int = 1u);
 	void setView(glm::mat4 const &view) { mView = view; }
@@ -46,7 +54,7 @@ private:
 	glm::mat4 mView, mProjection;
 
 	//================ For debugging ================//
-	GLuint debugVao = 0u, debugVbo = 0u;
+	GLuint mDebugVao = 0u, mDebugVbo = 0u;
 
 };
 

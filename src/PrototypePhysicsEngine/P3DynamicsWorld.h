@@ -49,8 +49,10 @@ public:
 	//----------------------- Some getters and setters -----------------------//
 	float getGravity() const { return mGravity; }
 	float getAirDrag() const { return mAirDrag; }
-	size_t getOccupancy() const { return mBodyContainer.size(); }
-	size_t getMaxCapacity() const { return mMaxCapacity; }
+	unsigned int getOccupancy() const { return mBodyContainer.size(); }
+	unsigned int getNumBoxColliders() const { return mBoxColliders.size(); }
+	unsigned int getMaxCapacity() const { return mMaxCapacity; }
+	std::vector<P3BoxCollider> const &getBoxColliders() const { return mBoxColliders; }
 
 	std::vector<LinearTransform> const &getLinearTransformContainer() const
 	{
@@ -82,8 +84,8 @@ private:
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
-	// std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
-	// std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
+	std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
+	std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions

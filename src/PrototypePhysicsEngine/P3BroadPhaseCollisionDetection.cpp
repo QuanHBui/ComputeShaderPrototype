@@ -136,6 +136,26 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
 
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	for (int i = 0; i < boxColliders.size(); ++i)
+	{
+		printf("%.03f, %.03f, %.03f, %.03f\n",
+			mAabbCpuData.minCoords[i].x,
+			mAabbCpuData.minCoords[i].y,
+			mAabbCpuData.minCoords[i].z,
+			mAabbCpuData.minCoords[i].w);
+		fflush(stdout);
+	}
+	printf("\n");
+
+
+
+
 	// SORT ON Y-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
 	glUseProgram(currProgID);

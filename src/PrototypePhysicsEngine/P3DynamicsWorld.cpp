@@ -25,7 +25,9 @@ void P3DynamicsWorld::update(double dt)
 
 	std::vector<glm::vec3> sampleVelocityContainer;
 
-	CollisionPairGpuPackage const &collisonPairs = broadPhase.step(mBoxColliders);
+	CollisionPairGpuPackage const &collisonPairsFromGpu = broadPhase.step(mBoxColliders);
+	//std::cout << collisonPairsFromGpu.collisionPairs[0].x << ", "
+	//	<< collisonPairsFromGpu.collisionPairs[0].y << std::endl;
 
 	for (RigidBody const &rigidBody : mBodyContainer)
 	{
@@ -55,7 +57,7 @@ void P3DynamicsWorld::update(double dt)
 
 						// Response impulse
 						accumulateImpulse += mLinearTransformContainer[i].momentum;
-						std::cout << "Collided!" << std::endl;
+						//std::cout << "Collided!" << std::endl;
 					}
 				}
 			}
@@ -172,6 +174,7 @@ void P3DynamicsWorld::reset()
 	mLinearTransformContainer.clear();
 	mAngularTransformContainer.clear();
 	mMeshColliderContainer.clear();
+	mBoxColliders.clear();
 	mUniqueID = 0u;
 }
 
@@ -195,15 +198,15 @@ void P3DynamicsWorld::bowlingGameDemo()
 
 	std::vector<glm::vec4> vertices
 	{
-		glm::vec4{ -0.2f,  1.0f,  0.1f,  1.0f },
-		glm::vec4{  0.2f,  1.0f,  0.1f,  1.0f },
-		glm::vec4{  0.2f, -1.0f,  0.1f,  1.0f },
-		glm::vec4{ -0.2f, -1.0f,  0.1f,  1.0f },
+		glm::vec4{ -0.2f,  1.0f,  0.2f,  1.0f },
+		glm::vec4{  0.2f,  1.0f,  0.2f,  1.0f },
+		glm::vec4{  0.2f, -1.0f,  0.2f,  1.0f },
+		glm::vec4{ -0.2f, -1.0f,  0.2f,  1.0f },
 
-		glm::vec4{ -0.2f,  1.0f, -0.1f,  1.0f },
-		glm::vec4{  0.2f,  1.0f, -0.1f,  1.0f },
-		glm::vec4{  0.2f, -1.0f, -0.1f,  1.0f },
-		glm::vec4{ -0.2f, -1.0f, -0.1f,  1.0f }
+		glm::vec4{ -0.2f,  1.0f, -0.2f,  1.0f },
+		glm::vec4{  0.2f,  1.0f, -0.2f,  1.0f },
+		glm::vec4{  0.2f, -1.0f, -0.2f,  1.0f },
+		glm::vec4{ -0.2f, -1.0f, -0.2f,  1.0f }
 	};	// A skinny verson of a unit box
 
 	for (float i = 0.0f; i < 5.0f; ++i)
