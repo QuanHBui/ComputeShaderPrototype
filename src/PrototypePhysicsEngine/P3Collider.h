@@ -25,16 +25,16 @@ class P3MeshCollider : public P3Collider
 public:
 	void update(glm::mat4 const &model)
 	{
-		for (glm::vec4 &vertex : mVertices)
+		for (unsigned int i = 0u; i < mVertices.size(); ++i)
 		{
-			vertex = model * vertex;
-			vertex.w = 1.0f;
+			mVertices[i] = model * mInstanceVertices[i];
+			mVertices[i].w = 1.0f;
 		}
 	}
 
-	void setVertices(std::vector<glm::vec4> const &vertices)
+	void setInstanceVertices(std::vector<glm::vec4> const &vertices)
 	{
-		mVertices = vertices;
+		mInstanceVertices = vertices;
 	}
 
 	glm::vec3 findFarthestPoint(glm::vec3 const &) const override;
@@ -52,6 +52,19 @@ private:
 		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
 	};	// A unit box
+
+	std::vector<glm::vec4> mInstanceVertices =
+	{
+		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+
+		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+	};
 };
 
 // A collection of 8 vec4's
@@ -59,22 +72,35 @@ struct P3BoxCollider
 {
 	void update(glm::mat4 const &model)
 	{
-		for (glm::vec4 &vertex : mVertices)
+		for (unsigned int i = 0u; i < 8u; ++i)
 		{
-			vertex = model * vertex;
-			vertex.w = 1.0f;
+			mVertices[i] = model * mInstanceVertices[i];
+			mVertices[i].w = 1.0f;
 		}
 	}
 
-	void setVertices(glm::vec4 *vertices)
+	void setInstanceVertices(glm::vec4 *vertices)
 	{
 		for (int i = 0; i < 8; ++i)
 		{
-			mVertices[i] = vertices[i];
+			mInstanceVertices[i] = vertices[i];
 		}
 	}
 
 	glm::vec4 mVertices[8] =
+	{
+		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+
+		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
+		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
+		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+	};
+
+	glm::vec4 mInstanceVertices[8] =
 	{
 		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
 		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },

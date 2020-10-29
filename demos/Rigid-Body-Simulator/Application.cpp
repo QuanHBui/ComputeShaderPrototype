@@ -300,6 +300,9 @@ void Application::renderUI(double dt)
 		reset();
 	if (ImGui::Button("Trigger Breakpoint"))
 		__debugbreak();
+	if (ImGui::Button("Quit"))
+		glfwSetWindowShouldClose(mpWindowManager->getHandle(), GL_TRUE);
+
 
 	ImGui::Checkbox("Show Debug", &showDebug);
 

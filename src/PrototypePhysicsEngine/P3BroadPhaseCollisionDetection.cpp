@@ -55,10 +55,16 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 
 void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> const &boxColliders)
 {
+	// Pack data for GPU
+	std::vector<glm::vec4[8]> boxVertices(boxColliders.size());
+	for (unsigned int i = 0; i < boxColliders.size(); ++i)
+		for (unsigned int j = 0; j < 8; ++j)
+			boxVertices[i][j] = boxColliders[i].mVertices[j];
+
 	// Bind mesh collider buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_BOX_COLLIDERS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(P3BoxCollider) * boxColliders.size(),
-		boxColliders.data(), GL_STATIC_READ);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 8 * sizeof(glm::vec4) * boxColliders.size(),
+		boxVertices.data(), GL_STATIC_READ);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AabbGpuPackage), nullptr, GL_DYNAMIC_COPY);
@@ -137,21 +143,21 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
+	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-	for (int i = 0; i < boxColliders.size(); ++i)
-	{
-		printf("%.03f, %.03f, %.03f, %.03f\n",
-			mAabbCpuData.minCoords[i].x,
-			mAabbCpuData.minCoords[i].y,
-			mAabbCpuData.minCoords[i].z,
-			mAabbCpuData.minCoords[i].w);
-		fflush(stdout);
-	}
-	printf("\n");
+	// for (int i = 0; i < boxColliders.size(); ++i)
+	// {
+	// 	printf("%.03f, %.03f, %.03f, %.03f\n",
+	// 		mAabbCpuData.minCoords[i].x,
+	// 		mAabbCpuData.minCoords[i].y,
+	// 		mAabbCpuData.minCoords[i].z,
+	// 		mAabbCpuData.minCoords[i].w);
+	// 	fflush(stdout);
+	// }
+	// printf("\n");
 
 
 

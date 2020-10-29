@@ -104,20 +104,16 @@ void P3DynamicsWorld::update(double dt)
 		; sampleVelocityContainerIter++)
 	{
 		size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
-		mLinearTransformContainer[i].velocity = *sampleVelocityContainerIter;
-		mLinearTransformContainer[i].momentum = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
+		mLinearTransformContainer[i].velocity  = *sampleVelocityContainerIter;
+		mLinearTransformContainer[i].momentum  = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
 		mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
 	}
 
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
-	{
-		mMeshColliderContainer[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].velocity * float(dt)));
-	}
+		mMeshColliderContainer[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
-	{
-		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].velocity * float(dt)));
-	}
+		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 }
 
 // TODO: WIP
@@ -212,11 +208,13 @@ void P3DynamicsWorld::bowlingGameDemo()
 	for (float i = 0.0f; i < 5.0f; ++i)
 	{
 		addRigidBody(1, glm::vec3(startingX + i, 1.0f, -15.0f), glm::vec3(0.0f));
-		mMeshColliderContainer.back().setVertices(vertices);
-		mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f)));
+		mMeshColliderContainer.back().setInstanceVertices(vertices);
 
-		mBoxColliders.back().setVertices(vertices.data());
-		mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f)));
+		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f));
+		mMeshColliderContainer.back().update(translateMatrix);
+
+		mBoxColliders.back().setInstanceVertices(vertices.data());
+		mBoxColliders.back().update(translateMatrix);
 	}
 }
 

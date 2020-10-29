@@ -77,15 +77,15 @@ private:
 	std::vector<LinearTransform> mLinearTransformContainer;
 	std::vector<AngularTransform> mAngularTransformContainer;
 	std::vector<P3MeshCollider> mMeshColliderContainer;
+	std::vector<P3BoxCollider> mBoxColliders;
 
 	//------------ Data package optimized for the GPU (SoA) ------------//
 	LinearTransformGpuPackage mLinearTransformCpuData;
-	std::vector<P3BoxCollider> mBoxColliders;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
-	std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
-	std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
+	// std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
+	// std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
