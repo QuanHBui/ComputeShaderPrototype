@@ -28,7 +28,7 @@ subroutine(sweep)
 void sweepX(uint i, uint j)
 {
 	// Check for collision on the x-axis
-	if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].w)
+	if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].x)
 	{
 		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
@@ -39,26 +39,26 @@ void sweepX(uint i, uint j)
 subroutine(sweep)
 void sweepY(uint i, uint j)
 {
-	// We don't sweep any AABB with w comp of -1.
-	if (minCoords[i].w > -1 && minCoords[j].w > -1 &&
+	// We don't sweep any AABB with w comp smaller than 1000.
+	if (minCoords[i].w > 1000.0f && minCoords[j].w > 1000.0f &&
 		minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
 	{
 		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
-		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
-		collisionPairs[availableIdx].y = minCoords[j].w;
+		collisionPairs[availableIdx].x = minCoords[i].w - 1000.0f;	// w comp stores object ID
+		collisionPairs[availableIdx].y = minCoords[j].w - 1000.0f;
 	}
 }
 
 subroutine(sweep)
 void sweepZ(uint i, uint j)
 {
-	// We don't sweep any AABB with w comp of -1.
-	if (minCoords[i].w > -1 && minCoords[j].w > -1 &&
+	// We don't sweep any AABB with w comp smaller than 1000.
+	if (minCoords[i].w > 1000.0f && minCoords[j].w > 1000.0f &&
 		minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
 	{
 		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
-		collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
-		collisionPairs[availableIdx].y = minCoords[j].w;
+		collisionPairs[availableIdx].x = minCoords[i].w - 1000.0f;	// w comp stores object ID
+		collisionPairs[availableIdx].y = minCoords[j].w - 1000.0f;
 	}
 }
 
@@ -72,12 +72,12 @@ void prune()
 		; collisionPairIdx < atomicCounter(nextAvailableIdx)
 		; ++collisionPairIdx )
 	{
-		if (minCoords[aabbIdx].w != collisionPairs[collisionPairIdx].x &&
-			minCoords[aabbIdx].w != collisionPairs[collisionPairIdx].y)
-
-		// Remove by assigning w comp -1
-		minCoords[aabbIdx].w = -1;
-		maxCoords[aabbIdx].w = -1;
+		if (minCoords[aabbIdx].w < 1000.0f &&
+			collisionPairs[collisionPairIdx].x == minCoords[aabbIdx].w ||
+			collisionPairs[collisionPairIdx].y == minCoords[aabbIdx].w)
+		{
+			minCoords[aabbIdx].w += 1000.0f;
+		}
 	}
 }
 
@@ -86,14 +86,14 @@ void main()
 	uint collisionPairIdx = 2 * gl_LocalInvocationID.x;
 
 	// Reset collision pair buffer
-	uint collisionPairCycle = 0u;
+	uint collisionPairCycle  = 0u;
 	for ( collisionPairCycle = collisionPairIdx
 		; collisionPairCycle < collisionPairIdx + 2u
 		; ++collisionPairCycle )
 	{
 		if (collisionPairIdx >= 2 * MAX_NUM_COLLIDERS - 1u) break;
-		
-		collisionPairs[collisionPairCycle] = vec4(-1.0f, -1.0f, 0.0f, 0.0f);
+
+		collisionPairs[collisionPairCycle] = vec4(-1.0f, -1.0f, -5.0f, -5.0f);
 	}
 
 	barrier(); //=============================================================
@@ -104,6 +104,17 @@ void main()
 	{
 		if (currObjectIdx >= currNumColliders - 1u) break;
 		sweepAxis(currObjectIdx, nextObjectIdx);
+	}
+
+	barrier(); //=============================================================
+
+	uint aabbIdx = gl_LocalInvocationID.x;
+
+	if (aabbIdx < currNumColliders);
+	{
+		// Reset minCoords
+		if (minCoords[aabbIdx].w > 1000.0f)
+			minCoords[aabbIdx].w -= 1000.0f;
 	}
 
 	barrier(); //=============================================================

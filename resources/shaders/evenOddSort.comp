@@ -39,7 +39,9 @@ subroutine(sort)
 void sortZ(uint i, uint j)
 {
 	if (minCoords[i].z > minCoords[j].z)
+	{
 		swap(i, j);
+	}
 }
 
 void swap(uint i, uint j)
@@ -66,8 +68,8 @@ void main()
 	// If we are doing odd, the starting index must be even
 	if (evenOrOdd == 1 && i % 2 != 0) return;
 
-	// If we are doing odd, the starting index must be odd
-	else if (evenOrOdd == -1 && i % 2 == 0) return;
+	// If we are doing even, the starting index must be odd
+	if (evenOrOdd == -1 && i % 2 == 0) return;
 
 	//-------------------- The actual sweeping --------------------//
 	sortComponent(i, j);

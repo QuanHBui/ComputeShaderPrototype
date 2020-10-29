@@ -31,7 +31,7 @@ static bool moveForward = false;
 static bool moveBackward = false;
 
 // imgui state(s)
-static bool showDebug = false;
+static bool showDebug = true;
 static bool allowToAdd = false;
 
 Application::~Application()

@@ -26,8 +26,8 @@ void P3DynamicsWorld::update(double dt)
 	std::vector<glm::vec3> sampleVelocityContainer;
 
 	CollisionPairGpuPackage const &collisonPairsFromGpu = broadPhase.step(mBoxColliders);
-	//std::cout << collisonPairsFromGpu.collisionPairs[0].x << ", "
-	//	<< collisonPairsFromGpu.collisionPairs[0].y << std::endl;
+	// std::cout << collisonPairsFromGpu.collisionPairs[0].x << ", "
+	// 	<< collisonPairsFromGpu.collisionPairs[0].y << std::endl;
 
 	for (RigidBody const &rigidBody : mBodyContainer)
 	{
@@ -56,7 +56,7 @@ void P3DynamicsWorld::update(double dt)
 						P3Epa(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], gjkSimplex);
 
 						// Response impulse
-						accumulateImpulse += mLinearTransformContainer[i].momentum;
+						//accumulateImpulse += mLinearTransformContainer[i].momentum;
 						//std::cout << "Collided!" << std::endl;
 					}
 				}
