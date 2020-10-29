@@ -11,11 +11,6 @@ layout(std430, binding = 1) volatile buffer unsorted_data
 	vec4 maxCoords[MAX_NUM_COLLIDERS];
 };
 
-layout(std430, binding = 2) readonly buffer out_collision_pairs_data
-{
-	vec4 collisionPairs[MAX_NUM_COLLIDERS * 2];
-};
-
 uniform uint currNumColliders;
 uniform int evenOrOdd;
 
@@ -29,31 +24,22 @@ subroutine(sort)
 void sortX(uint i, uint j)
 {
 	if (minCoords[i].x > minCoords[j].x)
-	{
 		swap(i, j);
-	}
+
 }
 
 subroutine(sort)
 void sortY(uint i, uint j)
 {
-	// We don't sort any AABB with w comp of -1
-	if (minCoords[i].w > 1 && minCoords[j].w > -1 &&
-		minCoords[i].y > minCoords[j].y)
-	{
+	if (minCoords[i].y > minCoords[j].y)
 		swap(i, j);
-	}
 }
 
 subroutine(sort)
 void sortZ(uint i, uint j)
 {
-	// We don't sort any AABB with w comp of -1.
-	if (minCoords[i].w > 1 && minCoords[j].w > -1 &&
-		minCoords[i].z > minCoords[j].z)
-	{
+	if (minCoords[i].z > minCoords[j].z)
 		swap(i, j);
-	}
 }
 
 void swap(uint i, uint j)

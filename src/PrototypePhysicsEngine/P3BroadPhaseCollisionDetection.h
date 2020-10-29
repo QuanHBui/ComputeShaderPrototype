@@ -21,7 +21,7 @@ public:
 	void init();
 
 	//--------------------- Main proccesses --------------------------//
-	void step(std::vector<P3BoxCollider> const &);
+	CollisionPairGpuPackage const &step(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
 	void reset();
@@ -36,13 +36,14 @@ private:
 	void detectCollisionPairs(std::vector<P3BoxCollider> const &);
 
 	void resetAtomicCounter();
+	GLuint readAtomicCounter();
 
 	// Indicies of shader programs
 	enum
 	{
 		P3_UPDATE_AABBS = 0,
 		P3_ODD_EVEN_SORT,
-		P3_DETECT_PAIRS,
+		P3_SAP,
 		P3_ASSIGN_MORTON_CODES,
 		P3_SORT_LEAF_NODES,
 		P3_BUILD_PARALLEL_LINEAR_BVH

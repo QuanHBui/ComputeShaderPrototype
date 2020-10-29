@@ -145,9 +145,6 @@
     <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\..\resources\shaders\detectPairs.comp">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="..\..\resources\shaders\fs.frag">
       <Filter>Resource Files</Filter>
     </None>
@@ -167,6 +164,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\..\resources\shaders\simplePhysicsPipeline.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\evenOddSort.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\sap.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

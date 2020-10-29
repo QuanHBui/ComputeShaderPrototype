@@ -13,7 +13,7 @@ layout(std430, binding = 1) volatile buffer in_sorted_data
 
 layout(std430, binding = 2) volatile buffer out_collision_pairs_data
 {
-	vec4 collisionPairs[MAX_NUM_COLLIDERS * 2];
+	vec4 collisionPairs[2 * MAX_NUM_COLLIDERS];
 };
 
 layout(binding = 0) uniform atomic_uint nextAvailableIdx;
@@ -79,22 +79,34 @@ void prune()
 		minCoords[aabbIdx].w = -1;
 		maxCoords[aabbIdx].w = -1;
 	}
-
-	// Remove AABB from the minCoords and maxCoords buffers
 }
 
 void main()
 {
-	// Figure what index pair we are looking at
+	uint collisionPairIdx = 2 * gl_LocalInvocationID.x;
+
+	// Reset collision pair buffer
+	uint collisionPairCycle = 0u;
+	for ( collisionPairCycle = collisionPairIdx
+		; collisionPairCycle < collisionPairIdx + 2u
+		; ++collisionPairCycle )
+	{
+		if (collisionPairIdx >= 2 * MAX_NUM_COLLIDERS - 1u) break;
+		
+		collisionPairs[collisionPairCycle] = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	barrier(); //=============================================================
+
 	uint currObjectIdx = gl_LocalInvocationID.x;
 
-	for (uint nextObjectIdx = currObjectIdx + 1; nextObjectIdx < currNumColliders; ++nextObjectIdx)
+	for (uint nextObjectIdx = currObjectIdx + 1u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
 	{
-		if (currObjectIdx >= currNumColliders) break;
+		if (currObjectIdx >= currNumColliders - 1u) break;
 		sweepAxis(currObjectIdx, nextObjectIdx);
 	}
 
-	barrier();	//=============================================================
+	barrier(); //=============================================================
 
 	prune();
 }

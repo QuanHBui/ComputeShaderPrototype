@@ -13,9 +13,11 @@ void P3OpenGLComputeBroadPhase::init()
 	initGpuBuffers();
 }
 
-void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
+CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
 {
 	detectCollisionPairs(boxColliders);
+
+	return mCollisionPairCpuData;
 }
 
 /**
@@ -30,7 +32,7 @@ void P3OpenGLComputeBroadPhase::initShaderPrograms()
 {
 	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
 	mComputeProgramIDContainer[P3_ODD_EVEN_SORT] = createComputeProgram("../resources/shaders/evenOddSort.comp");
-	mComputeProgramIDContainer[P3_DETECT_PAIRS] = createComputeProgram("../resources/shaders/detectPairs.comp");
+	mComputeProgramIDContainer[P3_SAP] = createComputeProgram("../resources/shaders/sap.comp");
 	// mComputeProgramIDContainer[P3_ASSIGN_MORTON_CODES] = createComputeProgram("../resources/shaders/assignMortonCodes.comp");
 	// mComputeProgramIDContainer[P3_BUILD_PARALLEL_LINEAR_BVH] = createComputeProgram("../resources/shaders/buildParallelLinearBVH.comp");
 	// mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");
@@ -116,11 +118,11 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	}
 
 	// SWEEP AND PRUNE ON X-AXIS
-	currProgID = mComputeProgramIDContainer[P3_DETECT_PAIRS];
+	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 2 * MAX_NUM_COLLIDERS * sizeof(glm::vec4), nullptr, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, GL_DYNAMIC_COPY);
 
 	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0u, mAtomicBufferID);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDContainer[P3_COLLISION_PAIRS]);
@@ -161,16 +163,13 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	}
 
 	// SWEEP AND PRUNE ON Y-AXIS
-	currProgID = mComputeProgramIDContainer[P3_DETECT_PAIRS];
+	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
 	// Reset collision pair buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, GL_DYNAMIC_COPY);
 
-	int suff = sizeof(CollisionPairGpuPackage);
-
-	// Reset atomic counter
 	resetAtomicCounter();
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
@@ -207,14 +206,13 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	}
 
 	// SWEEP AND PRUNE ON Y-AXIS
-	currProgID = mComputeProgramIDContainer[P3_DETECT_PAIRS];
+	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
 	// Reset collision pair buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 2 * MAX_NUM_COLLIDERS * sizeof(glm::vec4), nullptr, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, GL_DYNAMIC_COPY);
 
-	// Reset atomic counter
 	resetAtomicCounter();
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
@@ -226,21 +224,48 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
 
-	//----------------- Debug for SAP -----------------//
-	GLint n = 0;
-	glGetIntegerv(GL_MAX_SUBROUTINES, &n);
-
+	// Copy back the result collision pair list
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
 	void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	memcpy(&mCollisionPairCpuData, pGpuMem, sizeof(CollisionPairGpuPackage));
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-	for (int i = 0; i < 20; ++i)
-	{
-		printf("%.03f\t%.03f\n", mCollisionPairCpuData.collisionPairs[i].x, mCollisionPairCpuData.collisionPairs[i].y);
-		fflush(stdout);
-	}
-	printf("\n");
+	//----------------- Debug for SAP -----------------//
+	//GLint n = 0;
+	//glGetIntegerv(GL_MAX_SUBROUTINES, &n);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
+	//void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//memcpy(&mCollisionPairCpuData, pGpuMem, sizeof(CollisionPairGpuPackage));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//for (int i = 0; i < 20; ++i)
+	//{
+	//	printf("%.03f, %.03f, %.03f, %.03f\n",
+	//		mCollisionPairCpuData.collisionPairs[i].x,
+	//		mCollisionPairCpuData.collisionPairs[i].y,
+	//		mCollisionPairCpuData.collisionPairs[i].z,
+	//		mCollisionPairCpuData.collisionPairs[i].w );
+	//	fflush(stdout);
+	//}
+	//printf("\n");
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	//void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//memcpy(&mAabbCpuData, pGpuMem, sizeof(AabbGpuPackage));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//for (int i = 0; i < 20; ++i)
+	//{
+	//	printf("%.03f, %.03f, %.03f, %.03f\n",
+	//		mAabbCpuData.minCoords[i].x,
+	//		mAabbCpuData.minCoords[i].y,
+	//		mAabbCpuData.minCoords[i].z,
+	//		mAabbCpuData.minCoords[i].w);
+	//	fflush(stdout);
+	//}
+	//printf("\n");
+
 	//-------------- End debug for SAP --------------//
 
 	// Reset and unbind
@@ -259,4 +284,18 @@ void P3OpenGLComputeBroadPhase::resetAtomicCounter()
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 	memset(pMappedBufferMemory, 0, sizeof(GLuint));
 	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+}
+
+GLuint P3OpenGLComputeBroadPhase::readAtomicCounter()
+{
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
+	GLuint *userCounter = (GLuint *)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+		0,
+		sizeof(GLuint),
+		GL_MAP_READ_BIT
+	);
+	GLuint theActualCounter = *userCounter;
+	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+	return theActualCounter;
 }

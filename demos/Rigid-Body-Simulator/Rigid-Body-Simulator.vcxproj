@@ -188,7 +188,8 @@
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp" />
     <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp" />
-    <None Include="..\..\resources\shaders\detectPairs.comp" />
+    <None Include="..\..\resources\shaders\sap.comp" />
+    <None Include="..\..\resources\shaders\evenOddSort.comp" />
     <None Include="..\..\resources\shaders\fs.frag" />
     <None Include="..\..\resources\shaders\ParticleBuffer.comp" />
     <None Include="..\..\resources\shaders\simplePhysicsPipeline.comp" />

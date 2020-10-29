@@ -37,8 +37,10 @@ void main()
 
 	if (colliderIdx >= currNumColliders)
 	{
-		minCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -1.0f);
-		maxCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -1.0f);
+		minCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -2.0f);
+		maxCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -2.0f);
+
+		return;
 	}
 
 	MeshCollider meshCollider = meshColliders[colliderIdx];
