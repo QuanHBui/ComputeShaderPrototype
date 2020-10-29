@@ -159,14 +159,16 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// if (run)
 	// 	printf("\n");
 
-
 	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
 	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
 	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
+	// bool run = false;
 	// for (int i = 0; i < boxColliders.size(); ++i)
 	// {
+	// 	run = true;
+
 	// 	printf("%.03f, %.03f, %.03f, %.03f\n",
 	// 		mAabbCpuData.minCoords[i].x,
 	// 		mAabbCpuData.minCoords[i].y,
@@ -174,7 +176,8 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// 		mAabbCpuData.minCoords[i].w);
 	// 	fflush(stdout);
 	// }
-	// printf("\n");
+	// if (run)
+	// 	printf("\n");
 
 
 
@@ -225,13 +228,16 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
+	// bool run = false;
 	// for (int i = 0; i < boxColliders.size(); ++i)
 	// {
+	// 	run = true;
+
 	// 	printf("%.03f, %.03f, %.03f, %.03f\n",
 	// 		mAabbCpuData.minCoords[i].x,
 	// 		mAabbCpuData.minCoords[i].y,
@@ -239,24 +245,25 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// 		mAabbCpuData.minCoords[i].w);
 	// 	fflush(stdout);
 	// }
-	// printf("\n");
+	// if (run)
+	// 	printf("\n");
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	memcpy(&mCollisionPairCpuData, pGpuMemTest, sizeof(CollisionPairGpuPackage));
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
+	// pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	// memcpy(&mCollisionPairCpuData, pGpuMemTest, sizeof(CollisionPairGpuPackage));
+	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-	bool run = false;
-	for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
-	{
-		run = true;
-		printf("%.03f, %.03f\n",
-			mCollisionPairCpuData.collisionPairs[i].x,
-			mCollisionPairCpuData.collisionPairs[i].y);
-		fflush(stdout);
-	}
-	if (run)
-		printf("\n");
+	// run = false;
+	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
+	// {
+	// 	run = true;
+	// 	printf("%.03f, %.03f\n",
+	// 		mCollisionPairCpuData.collisionPairs[i].x,
+	// 		mCollisionPairCpuData.collisionPairs[i].y);
+	// 	fflush(stdout);
+	// }
+	// if (run)
+	// 	printf("\n");
 
 
 
@@ -317,17 +324,17 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// GLint n = 0;
 	// glGetIntegerv(GL_MAX_SUBROUTINES, &n);
 
-	// bool run = false;
-	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
-	// {
-	// 	run = true;
-	// 	printf("%.03f, %.03f\n",
-	// 		mCollisionPairCpuData.collisionPairs[i].x,
-	// 		mCollisionPairCpuData.collisionPairs[i].y);
-	// 	fflush(stdout);
-	// }
-	// if (run)
-	// 	printf("\n");
+	bool run = false;
+	for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
+	{
+		run = true;
+		printf("%.03f, %.03f\n",
+			mCollisionPairCpuData.collisionPairs[i].x,
+			mCollisionPairCpuData.collisionPairs[i].y);
+		fflush(stdout);
+	}
+	if (run)
+		printf("\n");
 
 	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
 	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
