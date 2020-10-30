@@ -41,12 +41,12 @@ void sweepX(uint i, uint j)
 subroutine(sweep)
 void sweepY(uint i, uint j)
 {
-	// Look through the previous collsion pair buffer
+	// Look through the previous collision pair buffer
 	for (int collisionPairIdx = 0; collisionPairIdx < 2 * currNumColliders; ++collisionPairIdx)
 	{
 		if (((minCoords[i].w == localCollisionPairs[collisionPairIdx].x && minCoords[j].w == localCollisionPairs[collisionPairIdx].y) ||
-			(minCoords[j].w == localCollisionPairs[collisionPairIdx].x && minCoords[i].w == localCollisionPairs[collisionPairIdx].y)) &&
-			minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
+			 (minCoords[j].w == localCollisionPairs[collisionPairIdx].x && minCoords[i].w == localCollisionPairs[collisionPairIdx].y)) &&
+			  minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 			collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
@@ -64,8 +64,8 @@ void sweepZ(uint i, uint j)
 	{
 		// We don't sweep any AABB with w comp smaller than 1000.
 		if (((minCoords[i].w == localCollisionPairs[collisionPairIdx].x && minCoords[j].w == localCollisionPairs[collisionPairIdx].y) ||
-			(minCoords[j].w == localCollisionPairs[collisionPairIdx].x && minCoords[i].w == localCollisionPairs[collisionPairIdx].y)) &&
-			minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
+			 (minCoords[j].w == localCollisionPairs[collisionPairIdx].x && minCoords[i].w == localCollisionPairs[collisionPairIdx].y)) &&
+			  minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 			collisionPairs[availableIdx].x = minCoords[i].w;	// w comp stores object ID
@@ -105,7 +105,7 @@ void main()
 		; collisionPairCycle < collisionPairIdx + 2u
 		; ++collisionPairCycle )
 	{
-		if (collisionPairIdx >= 2 * MAX_NUM_COLLIDERS - 1u) break;
+		if (collisionPairIdx >= 2 * currNumColliders - 1u) break;
 
 		localCollisionPairs[collisionPairCycle] = collisionPairs[collisionPairCycle];	// TODO: Prob don't need to loop 2000 times every time
 

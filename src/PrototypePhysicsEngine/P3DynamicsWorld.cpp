@@ -122,12 +122,12 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 	// 	mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 
 	static float radians = 0.0f;
-
+	
 	for (int i = 0; i < 50; ++i)
 	{
-		mLinearTransformContainer[i].velocity.x  = 3.0f * cosf(2.5f * radians);
-		mLinearTransformContainer[i].velocity.y  = 3.0f * cosf(2.5f * radians);
-		mLinearTransformContainer[i].velocity.z  = 3.0f * cosf(2.5f * radians);
+		mLinearTransformContainer[i].velocity.x +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[i].velocity.y +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[i].velocity.z +=  dt * cosf(10.0f * radians);
 
 		mLinearTransformContainer[i].momentum    = mLinearTransformContainer[i].velocity * mLinearTransformContainer[i].mass;
 		mLinearTransformContainer[i].position   += mLinearTransformContainer[i].velocity * float(dt);
@@ -135,9 +135,9 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 
 	for (int j = 50; j < 100; ++j)
 	{
-		mLinearTransformContainer[j].velocity.x  = -3.0f * cosf(2.5f * radians);
-		mLinearTransformContainer[j].velocity.y  = -3.0f * cosf(2.5f * radians);
-		mLinearTransformContainer[j].velocity.z  = -3.0f * cosf(2.5f * radians);
+		mLinearTransformContainer[j].velocity.x +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[j].velocity.y +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[j].velocity.z +=  dt * cosf(10.0f * radians);
 
 		mLinearTransformContainer[j].momentum    = mLinearTransformContainer[j].velocity * mLinearTransformContainer[j].mass;
 		mLinearTransformContainer[j].position   += mLinearTransformContainer[j].velocity * float(dt);
@@ -149,7 +149,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
 		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 
-	radians += 0.005f;
+	radians += 1.0f;
 
 	return collisonPairsFromGpu;
 }
@@ -260,8 +260,10 @@ void P3DynamicsWorld::multipleBoxesDemo()
 {
 	glm::vec3 startingPosition;
 	float x, y, z;
+	float r, g, b;
 
 	x = y = z = 0.0f;
+	r = g = b = 0.0f;
 
 	// Spawn multiple boxes randomly in the world
 	for (int i = 0; i < 100; ++i)
@@ -270,7 +272,11 @@ void P3DynamicsWorld::multipleBoxesDemo()
 		y = randf() * 10.0f - 5.0f;
 		z = randf() * 10.0f - 5.0f;
 
-		addRigidBody(1, 2.0f * glm::vec3(x, y, z), glm::vec3(0.0f));
+		r = randf() *  5.0f - 2.5f;
+		g = randf() *  5.0f - 2.5f;
+		b = randf() *  5.0f - 2.5f;
+
+		addRigidBody(1, 2.0f * glm::vec3(x, y, z), glm::vec3(r, g, b));
 
 		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), 2.0f * glm::vec3(x, y, z));
 		mMeshColliderContainer.back().update(translateMatrix);

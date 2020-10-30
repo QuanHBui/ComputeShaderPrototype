@@ -262,15 +262,19 @@ void Application::renderFrame(float dt)
 	static float sideTurn = 0.0f;
 
 	if (moveForward)
-		mFlyCamera.movePosition(Camera::MovementSet::FORWARD, dt);
+		mFlyCamera.movePosition(Camera::MovementSet::FORWARD, 2.0f * dt);
 	if (moveBackward)
-		mFlyCamera.movePosition(Camera::MovementSet::BACKWARD, dt);
+		mFlyCamera.movePosition(Camera::MovementSet::BACKWARD, 2.0f * dt);
 	if (moveLeft)
-	{
-		mFlyCamera.moveView(-(++sideTurn), 0.0f);
+	{	
+		if (sideTurn > 0.0f) sideTurn = 0.0f;
+		mFlyCamera.moveView((sideTurn -= 4.0f) * 2.0f * dt, 0.0f);
 	}
 	if (moveRight)
-		mFlyCamera.moveView(++sideTurn, 0.0f);
+	{
+		if (sideTurn < 0.0f) sideTurn = 0.0f;
+		mFlyCamera.moveView((sideTurn += 4.0f) * 2.0f * dt, 0.0f);
+	}
 
 	renderSystem.setView(mFlyCamera.getViewMatrix());
 

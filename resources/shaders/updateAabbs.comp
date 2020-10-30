@@ -8,8 +8,8 @@ precision highp float;
 #define NUM_COLLIDER_VERT 8
 
 // source: https://www.khronos.org/opengl/wiki/Small_Float_Formats
-#define NEG_INF_32_BIT_FLOAT -3.4028237e38
-#define POS_INF_32_BIT_FLOAT 3.4028237e38
+#define NEG_INF_32_BIT_FLOAT -3.4028237e35
+#define POS_INF_32_BIT_FLOAT 3.4028237e35
 
 layout(local_size_x = MAX_NUM_COLLIDERS) in;
 
