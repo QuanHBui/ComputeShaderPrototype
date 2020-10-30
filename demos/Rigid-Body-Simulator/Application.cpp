@@ -69,7 +69,7 @@ void Application::initPhysicsWorld()
 	// renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
 
 	physicsWorld.multipleBoxesDemo();
-	renderSystem.registerMeshForBody(RenderSystem::Mesh::CUBE, 50u);
+	renderSystem.registerMeshForBody(RenderSystem::Mesh::CUBE, 100u);
 }
 
 void Application::initUI()
@@ -250,7 +250,7 @@ void Application::reset()
 	initPhysicsWorld();
 }
 
-void Application::renderFrame()
+void Application::renderFrame(float dt)
 {
 	// Get current frame buffer size.
 	int width, height;
@@ -258,6 +258,21 @@ void Application::renderFrame()
 
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
+
+	static float sideTurn = 0.0f;
+
+	if (moveForward)
+		mFlyCamera.movePosition(Camera::MovementSet::FORWARD, dt);
+	if (moveBackward)
+		mFlyCamera.movePosition(Camera::MovementSet::BACKWARD, dt);
+	if (moveLeft)
+	{
+		mFlyCamera.moveView(-(++sideTurn), 0.0f);
+	}
+	if (moveRight)
+		mFlyCamera.moveView(++sideTurn, 0.0f);
+
+	renderSystem.setView(mFlyCamera.getViewMatrix());
 
 	renderSystem.render(width, height, pModelMatrixContainer, collisionPairsFromGpu);
 

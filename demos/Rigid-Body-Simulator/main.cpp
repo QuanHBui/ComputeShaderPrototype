@@ -76,7 +76,7 @@ int main()
 			lastPhysicsTickTime += fixedPhysicsTickInterval;
 		}
 
-		pApplication->renderFrame();
+		pApplication->renderFrame(float(frameTimeInterval));
 	}
 
 	// Destroy application before deleting the current OpenGL context

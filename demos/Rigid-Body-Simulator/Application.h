@@ -41,7 +41,7 @@ public:
 
 	void reset();
 
-	void renderFrame();
+	void renderFrame(float);
 	void renderUI(double);
 
 	void shootBall();
@@ -69,8 +69,8 @@ private:
 
 	Camera mFlyCamera
 	{
-		glm::vec3{ 0.0f,  1.0f,  30.0f },
-		glm::vec3{ 0.0f, -0.1f,  -1.0f },
+		glm::vec3{ 0.0f,  2.0f,  45.0f },
+		glm::vec3{ 0.0f, -0.2f,  -1.0f },
 		glm::vec3{ 0.0f,  1.0f,   0.0f },
 		640.0f / 480.0f
 	};
