@@ -17,6 +17,8 @@
 
 int main()
 {
+	srand(time(NULL));
+
 	Application *pApplication = new Application();
 
 	WindowManager *pWindowManager = new WindowManager();
@@ -42,7 +44,7 @@ int main()
 	int numFrames = 0;
 
 	double lastPhysicsTickTime = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 120.0;
+	double fixedPhysicsTickInterval = 1.0 / 30.0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
 	while (!glfwWindowShouldClose(pWindowManager->getHandle()))

@@ -7,9 +7,15 @@
 
 #include "P3DynamicsWorld.h"
 
+#include <ctime>
 #include <iostream>
 
 #include "P3Simplex.h"
+
+float randf()
+{
+	return rand() / float(RAND_MAX);
+}
 
 void P3DynamicsWorld::init()
 {
@@ -17,7 +23,7 @@ void P3DynamicsWorld::init()
 }
 
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
-void P3DynamicsWorld::update(double dt)
+CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 {
 	// To define a plane, we need a normal and a point
 	glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
@@ -29,84 +35,113 @@ void P3DynamicsWorld::update(double dt)
 	// std::cout << collisonPairsFromGpu.collisionPairs[0].x << ", "
 	// 	<< collisonPairsFromGpu.collisionPairs[0].y << std::endl;
 
-	for (RigidBody const &rigidBody : mBodyContainer)
+	// for (RigidBody const &rigidBody : mBodyContainer)
+	// {
+	// 	LinearTransform &linearTransform = mLinearTransformContainer[rigidBody];
+
+	// 	glm::vec3 accumulateImpulse{ 0.0f };
+	// 	glm::vec3 sampleVelocity = linearTransform.velocity;
+	// 	glm::vec3 samplePosition = linearTransform.position;
+
+	// 	// Collision detection - broad phase + near phase
+	// 	bool hasCollided = false;
+	// 	if (rigidBody < 5u && getOccupancy() > 5u)
+	// 	{
+	// 		for (unsigned int i = 5u; i < getOccupancy(); ++i)
+	// 		{
+	// 			// A very very terrible broad phase
+	// 			if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
+	// 			{
+	// 				// A very very terrible narrow phase
+	// 				P3Simplex gjkSimplex;
+	// 				hasCollided = P3Gjk(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], gjkSimplex);
+
+	// 				// A very very terrible collision resolution
+	// 				if (hasCollided)
+	// 				{
+	// 					P3Epa(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], gjkSimplex);
+
+	// 					// Response impulse
+	// 					//accumulateImpulse += mLinearTransformContainer[i].momentum;
+	// 					//std::cout << "Collided!" << std::endl;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+
+	// 	// Apply forces - gravity most likely
+	// 	sampleVelocity.y -= 9.81f * dt;
+
+	// 	// Check for constraint and solve it
+	// 	// MULTIPLE ITERATIONS
+	// 	// NO BOUNCE!
+	// 	int iterations = 4;
+	// 	while (iterations--)
+	// 	{
+	// 		// Update position of rigid body after apply forces
+	// 		sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
+	// 		samplePosition += sampleVelocity * float(dt);
+
+	// 		// Express the constraint in term of position. This is a position constraint.
+	// 		if (samplePosition.y - (-3.0f) < 0.0f)
+	// 		{
+	// 			// We have to modify the accumulate velocity to solve this position constraint
+	// 			// How much in the y direction that we have to push the object, this y direction can be generalize
+	// 			//  to just the surface/plane normal.
+	// 			// THE IMPULSE CAN PUSH, BUT NOT PULL.
+	// 			float signedDistance = samplePosition.y - (-3.0f);
+
+	// 			samplePosition.y -= signedDistance;
+	// 			linearTransform.position = samplePosition;
+	// 			// Make current velocity zero
+	// 			accumulateImpulse += glm::abs(sampleVelocity.y) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
+	// 		}
+	// 	}
+
+	// 	// Apply the final impulse
+	// 	sampleVelocity = glm::vec3(linearTransform.velocity) + accumulateImpulse * linearTransform.inverseMass;
+	// 	sampleVelocity.y -= 9.81f * dt;
+	// 	sampleVelocityContainer.emplace_back(sampleVelocity);
+	// }
+
+	// std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
+	// for ( sampleVelocityContainerIter  = sampleVelocityContainer.begin()
+	// 	; sampleVelocityContainerIter != sampleVelocityContainer.end()
+	// 	; sampleVelocityContainerIter++)
+	// {
+	// 	size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
+	// 	mLinearTransformContainer[i].velocity  = *sampleVelocityContainerIter;
+	// 	mLinearTransformContainer[i].momentum  = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
+	// 	mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
+	// }
+
+	// for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
+	// 	mMeshColliderContainer[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
+
+	// for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
+	// 	mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
+
+	static float radians = 0.0f;
+
+	for (int i = 0; i < 25; ++i)
 	{
-		LinearTransform &linearTransform = mLinearTransformContainer[rigidBody];
+		mLinearTransformContainer[i].velocity.x  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
+		mLinearTransformContainer[i].velocity.y  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
+		mLinearTransformContainer[i].velocity.z  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
 
-		glm::vec3 accumulateImpulse{ 0.0f };
-		glm::vec3 sampleVelocity = linearTransform.velocity;
-		glm::vec3 samplePosition = linearTransform.position;
-
-		// Collision detection - broad phase + near phase
-		bool hasCollided = false;
-		if (rigidBody < 5u && getOccupancy() > 5u)
-		{
-			for (unsigned int i = 5u; i < getOccupancy(); ++i)
-			{
-				// A very very terrible broad phase
-				if (glm::length(mLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
-				{
-					// A very very terrible narrow phase
-					P3Simplex gjkSimplex;
-					hasCollided = P3Gjk(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], gjkSimplex);
-
-					// A very very terrible collision resolution
-					if (hasCollided)
-					{
-						P3Epa(mMeshColliderContainer[rigidBody], mMeshColliderContainer[i], gjkSimplex);
-
-						// Response impulse
-						//accumulateImpulse += mLinearTransformContainer[i].momentum;
-						//std::cout << "Collided!" << std::endl;
-					}
-				}
-			}
-		}
-
-		// Apply forces - gravity most likely
-		sampleVelocity.y -= 9.81f * dt;
-
-		// Check for constraint and solve it
-		// MULTIPLE ITERATIONS
-		// NO BOUNCE!
-		int iterations = 4;
-		while (iterations--)
-		{
-			// Update position of rigid body after apply forces
-			sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
-			samplePosition += sampleVelocity * float(dt);
-
-			// Express the constraint in term of position. This is a position constraint.
-			if (samplePosition.y - (-3.0f) < 0.0f)
-			{
-				// We have to modify the accumulate velocity to solve this position constraint
-				// How much in the y direction that we have to push the object, this y direction can be generalize
-				//  to just the surface/plane normal.
-				// THE IMPULSE CAN PUSH, BUT NOT PULL.
-				float signedDistance = samplePosition.y - (-3.0f);
-
-				samplePosition.y -= signedDistance;
-				linearTransform.position = samplePosition;
-				// Make current velocity zero
-				accumulateImpulse += glm::abs(sampleVelocity.y) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
-			}
-		}
-
-		// Apply the final impulse
-		sampleVelocity = glm::vec3(linearTransform.velocity) + accumulateImpulse * linearTransform.inverseMass;
-		sampleVelocity.y -= 9.81f * dt;
-		sampleVelocityContainer.emplace_back(sampleVelocity);
+		mLinearTransformContainer[i].momentum    = mLinearTransformContainer[i].velocity * mLinearTransformContainer[i].mass;
+		mLinearTransformContainer[i].position   += mLinearTransformContainer[i].velocity * float(dt);
 	}
 
-	std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
-	for ( sampleVelocityContainerIter  = sampleVelocityContainer.begin()
-		; sampleVelocityContainerIter != sampleVelocityContainer.end()
-		; sampleVelocityContainerIter++)
+	for (int j = 25; j < 50; ++j)
 	{
-		size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
-		mLinearTransformContainer[i].velocity  = *sampleVelocityContainerIter;
-		mLinearTransformContainer[i].momentum  = *sampleVelocityContainerIter * mLinearTransformContainer[i].mass;
-		mLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
+		mLinearTransformContainer[j].velocity.x  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
+		mLinearTransformContainer[j].velocity.y  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
+		mLinearTransformContainer[j].velocity.z  = (randf() - 0.5f) + 3.0f * cosf(2.0f * radians);
+
+		mLinearTransformContainer[j].velocity.x  = (randf() - 0.5f) - 3.0f * cosf(2.0f * radians);
+		mLinearTransformContainer[j].momentum    = mLinearTransformContainer[j].velocity * mLinearTransformContainer[j].mass;
+		mLinearTransformContainer[j].position   += mLinearTransformContainer[j].velocity * float(dt);
 	}
 
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
@@ -114,6 +149,10 @@ void P3DynamicsWorld::update(double dt)
 
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
 		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
+
+	radians += 0.01f;
+
+	return collisonPairsFromGpu;
 }
 
 // TODO: WIP
@@ -214,6 +253,29 @@ void P3DynamicsWorld::bowlingGameDemo()
 		mMeshColliderContainer.back().update(translateMatrix);
 
 		mBoxColliders.back().setInstanceVertices(vertices.data());
+		mBoxColliders.back().update(translateMatrix);
+	}
+}
+
+void P3DynamicsWorld::multipleBoxesDemo()
+{
+	glm::vec3 startingPosition;
+	float x, y, z;
+
+	x = y = z = 0.0f;
+
+	// Spawn 50 boxes randomly in the world
+	for (int i = 0; i < 50; ++i)
+	{
+		x = randf() * 8.0f - 4.0f;
+		y = randf() * 8.0f - 4.0f;
+		z = randf() * 8.0f - 4.0f;
+
+		addRigidBody(1, 2.0f * glm::vec3(x, y, z), glm::vec3(0.0f));
+
+		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), 2.0f * glm::vec3(x, y, z));
+		mMeshColliderContainer.back().update(translateMatrix);
+
 		mBoxColliders.back().update(translateMatrix);
 	}
 }

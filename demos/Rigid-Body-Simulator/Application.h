@@ -69,9 +69,9 @@ private:
 
 	Camera mFlyCamera
 	{
-		glm::vec3{ 0.f, 0.f, 5.f },
-		glm::vec3{ 0.f, 0.f, -1.f },
-		glm::vec3{ 0.f, 1.f, 0.f },
+		glm::vec3{ 0.0f,  1.0f,  30.0f },
+		glm::vec3{ 0.0f, -0.1f,  -1.0f },
+		glm::vec3{ 0.0f,  1.0f,   0.0f },
 		640.0f / 480.0f
 	};
 
@@ -90,6 +90,8 @@ private:
 	P3DynamicsWorld physicsWorld;
 
 	std::shared_ptr<MatrixContainer> pModelMatrixContainer = nullptr;
+
+	CollisionPairGpuPackage collisionPairsFromGpu;
 };
 
 #endif // APPLICATION_H

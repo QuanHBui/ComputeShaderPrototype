@@ -13,6 +13,8 @@
 using MatrixContainer = std::vector<glm::mat4>;
 using MatrixContainerConstIter = MatrixContainer::const_iterator;
 
+struct CollisionPairGpuPackage;
+
 // Stores all the renderable stuff and OpenGL bookkeepings
 class RenderSystem
 {
@@ -33,7 +35,7 @@ public:
 
 	void init();
 
-	void render(int, int, std::shared_ptr<MatrixContainer>);
+	void render(int, int, std::shared_ptr<MatrixContainer>, CollisionPairGpuPackage const &);
 	void renderDebug(std::vector<P3BoxCollider> const &);
 
 	void registerMeshForBody(Mesh const &, unsigned int = 1u);

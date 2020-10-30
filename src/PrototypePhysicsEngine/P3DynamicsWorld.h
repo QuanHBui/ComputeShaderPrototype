@@ -31,7 +31,8 @@ public:
 	P3DynamicsWorld(size_t maxCapacity) : mMaxCapacity(maxCapacity) {}	// Might want error checking here
 
 	void init();
-	void update(double dt);
+
+	CollisionPairGpuPackage const &update(double dt);
 
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
@@ -45,6 +46,7 @@ public:
 	void bowlingGameDemo();
 	void stackingSpheresDemo();
 	void stackingBoxesDemo();
+	void multipleBoxesDemo();
 
 	//----------------------- Some getters and setters -----------------------//
 	float getGravity() const { return mGravity; }

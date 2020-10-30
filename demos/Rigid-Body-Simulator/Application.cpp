@@ -64,8 +64,12 @@ void Application::initRenderSystem()
 void Application::initPhysicsWorld()
 {
 	physicsWorld.init();
-	physicsWorld.bowlingGameDemo();
-	renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
+
+	// physicsWorld.bowlingGameDemo();
+	// renderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
+
+	physicsWorld.multipleBoxesDemo();
+	renderSystem.registerMeshForBody(RenderSystem::Mesh::CUBE, 50u);
 }
 
 void Application::initUI()
@@ -255,7 +259,7 @@ void Application::renderFrame()
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
 
-	renderSystem.render(width, height, pModelMatrixContainer);
+	renderSystem.render(width, height, pModelMatrixContainer, collisionPairsFromGpu);
 
 	if (showDebug)
 		renderSystem.renderDebug(physicsWorld.getBoxColliders());
@@ -329,7 +333,7 @@ void Application::shootBall()
 
 void Application::update(float dt)
 {
-	physicsWorld.update(dt);
+	collisionPairsFromGpu = physicsWorld.update(dt);
 
 	physicsTickInterval = dt;
 

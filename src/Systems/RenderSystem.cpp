@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "../PrototypePhysicsEngine/BoundingVolume.h"
 #include "GLSL.h"
 #include "Program.h"
 #include "Shape.h"
@@ -16,7 +17,8 @@ void RenderSystem::init()
 	initDebug();
 }
 
-void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer> pModelMatrixContainer)
+void RenderSystem::render(int width, int height,
+	std::shared_ptr<MatrixContainer> pModelMatrixContainer, CollisionPairGpuPackage const &collisionPairs)
 {
 	glViewport(0, 0, width, height);
 
@@ -27,15 +29,31 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 
 	std::shared_ptr<Program> mpRenderProgram = mpProgramContainer[0];
 
+	collisionPairs;
+
 	// Bind render program
 	mpRenderProgram->bind();
 
+	int objectIdx = 0;
 	std::vector<Mesh>::const_iterator meshContainerIter = mMeshKeyContainer.begin();
 
 	for ( MatrixContainerConstIter it = pModelMatrixContainer->begin()
 		; it != pModelMatrixContainer->end()
 		; ++it )
 	{
+		unsigned int redOrNo = 0u;
+		// Check collision pair list if this mesh has collided
+		for (glm::vec4 const &collisonPair : collisionPairs.collisionPairs)
+		{
+			if (collisonPair.x < 0.0) break;
+
+			if (collisonPair.x == objectIdx || collisonPair.y == objectIdx)
+			{
+				redOrNo = 1u;
+			}
+		}
+
+		glUniform1ui(glGetUniformLocation(mpRenderProgram->getPID(), "redOrNo"), redOrNo);
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
 			1, GL_FALSE, glm::value_ptr(mProjection));
 		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
@@ -46,19 +64,21 @@ void RenderSystem::render(int width, int height, std::shared_ptr<MatrixContainer
 
 		++meshContainerIter;
 		if (meshContainerIter == mMeshKeyContainer.end())
-			meshContainerIter = mMeshKeyContainer.begin();
+			meshContainerIter  = mMeshKeyContainer.begin();
+
+		++objectIdx;
 	}
 
 	// Render the platform
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });
-	model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
-	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
-		1, GL_FALSE, glm::value_ptr(mProjection));
-	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
-		1, GL_FALSE, glm::value_ptr(mView));
-	glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
-		1, GL_FALSE, glm::value_ptr(model));
-	mpMeshContainer[QUAD]->draw(mpRenderProgram);
+	// glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });
+	// model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
+	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
+	// 	1, GL_FALSE, glm::value_ptr(mProjection));
+	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
+	// 	1, GL_FALSE, glm::value_ptr(mView));
+	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+	// 	1, GL_FALSE, glm::value_ptr(model));
+	// mpMeshContainer[QUAD]->draw(mpRenderProgram);
 
 	mpRenderProgram->unbind();
 }
@@ -161,6 +181,7 @@ void RenderSystem::initMeshes()
 		std::shared_ptr<Shape> pCubeMesh = std::make_shared<Shape>();
 		pCubeMesh->createShape(TOshapes[0]);
 		pCubeMesh->measure();
+		pCubeMesh->resize();
 		pCubeMesh->init();
 
 		mpMeshContainer.emplace_back(pCubeMesh);
