@@ -1,11 +1,9 @@
 #include "RenderSystem.h"
 
-#include <stdexcept>
+#include <iostream>
 
 #include "../PrototypePhysicsEngine/BoundingVolume.h"
 #include "GLSL.h"
-#include "Program.h"
-#include "Shape.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
@@ -18,25 +16,27 @@ void RenderSystem::init()
 }
 
 void RenderSystem::render(int width, int height,
-	MatrixContainer const &modelMatrixContainer, CollisionPairGpuPackage const &collisionPairs)
+	MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
 {
 	glViewport(0, 0, width, height);
 
 	// Clear framebuffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	float aspect = width / (float)height;
+	float aspect = width / float(height);
 
-	std::shared_ptr<Program> mpRenderProgram = mpProgramContainer[0];
+	Program const &renderProgram = mPrograms[0];
 
 	// Bind render program
-	mpRenderProgram->bind();
+	renderProgram.bind();
 
-	int objectIdx = 0;
-	std::vector<Mesh>::const_iterator meshContainerIter = mMeshKeyContainer.begin();
+	uint8_t objectIdx  = 0u;
+	uint8_t meshKeyIdx = 0u;
+	MeshKey shapeIdx   = QUAD;
 
-	for ( MatrixContainerConstIter it = modelMatrixContainer.begin()
-		; it != modelMatrixContainer.end()
+	// Iterate through the input composite model matrices
+	for ( MatrixContainerConstIter it = modelMatrices.begin()
+		; it != modelMatrices.end()
 		; ++it )
 	{
 		unsigned int redOrNo = 0u;
@@ -53,18 +53,17 @@ void RenderSystem::render(int width, int height,
 			}
 		}
 
-		glUniform1ui(glGetUniformLocation(mpRenderProgram->getPID(), "redOrNo"), redOrNo);
-		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
+		glUniform1ui(glGetUniformLocation(renderProgram.getPID(), "redOrNo"), redOrNo);
+		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "projection"),
 			1, GL_FALSE, glm::value_ptr(mProjection));
-		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
+		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "view"),
 			1, GL_FALSE, glm::value_ptr(mView));
-		glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "model"),
 			1, GL_FALSE, glm::value_ptr(*it));
-		mpMeshContainer[*meshContainerIter]->draw(mpRenderProgram);	// Reusing the loaded meshes
 
-		++meshContainerIter;
-		if (meshContainerIter == mMeshKeyContainer.end())
-			meshContainerIter  = mMeshKeyContainer.begin();
+		shapeIdx = mMeshKeys[meshKeyIdx++];
+
+		mMeshes[shapeIdx].draw(renderProgram); // Reusing the loaded meshes
 
 		++objectIdx;
 	}
@@ -72,15 +71,15 @@ void RenderSystem::render(int width, int height,
 	// Render the platform
 	// glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });
 	// model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
-	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "projection"),
+	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "projection"),
 	// 	1, GL_FALSE, glm::value_ptr(mProjection));
-	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "view"),
+	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "view"),
 	// 	1, GL_FALSE, glm::value_ptr(mView));
-	// glUniformMatrix4fv(glGetUniformLocation(mpRenderProgram->getPID(), "model"),
+	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "model"),
 	// 	1, GL_FALSE, glm::value_ptr(model));
-	// mpMeshContainer[QUAD]->draw(mpRenderProgram);
+	// mMeshes[QUAD].draw(renderProgram);
 
-	mpRenderProgram->unbind();
+	renderProgram.unbind();
 }
 
 void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
@@ -91,12 +90,12 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
 
 	// Bind render program
-	std::shared_ptr<Program> pDebugShaderProg = mpProgramContainer[ShaderProg::DEBUG];
-	pDebugShaderProg->bind();
+	Program const &debugShaderProg = mPrograms[ShaderProg::DEBUG];
+	debugShaderProg.bind();
 
-	glUniformMatrix4fv(glGetUniformLocation(pDebugShaderProg->getPID(), "projection"),
+	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "projection"),
 		1, GL_FALSE, glm::value_ptr(mProjection));
-	glUniformMatrix4fv(glGetUniformLocation(pDebugShaderProg->getPID(), "view"),
+	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "view"),
 		1, GL_FALSE, glm::value_ptr(mView));
 
 	// Iterate through all the box colliders and send the vertices info
@@ -111,20 +110,20 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	pDebugShaderProg->unbind();
+	debugShaderProg.unbind();
 }
 
-void RenderSystem::registerMeshForBody(Mesh const &shape, unsigned int quantity)
+void RenderSystem::registerMeshForBody(MeshKey const &shape, unsigned int quantity)
 {
+	assert(mNextMeshKeyIdx + 1u < num_mesh_keys && "Mesh keys at limit.");
+
 	for (unsigned int i = 0u; i < quantity; ++i)
-	{
-		mMeshKeyContainer.emplace_back(shape);
-	}
+		mMeshKeys[mNextMeshKeyIdx++] = shape;
 }
 
 void RenderSystem::reset()
 {
-	mMeshKeyContainer.clear();
+	mNextMeshKeyIdx = 0u;
 }
 
 void RenderSystem::initRenderPrograms()
@@ -137,17 +136,15 @@ void RenderSystem::initRenderPrograms()
 	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
 
-	std::shared_ptr<Program> mpRenderProgram = std::make_shared<Program>();
-	mpRenderProgram->setVerbose(true);
-	mpRenderProgram->setShaderNames(
+	Program &renderProgram = mPrograms[mNextProgIdx++];
+	renderProgram.setVerbose(true);
+	renderProgram.setShaderNames(
 		"../resources/shaders/vs.vert",
 		"../resources/shaders/fs.frag");
-	mpRenderProgram->init();
-	mpRenderProgram->addAttribute("vertPos");
-	mpRenderProgram->addAttribute("vertNor");
-	mpRenderProgram->addAttribute("vertTex");
-
-	mpProgramContainer.emplace_back(mpRenderProgram);
+	renderProgram.init();
+	renderProgram.addAttribute("vertPos");
+	renderProgram.addAttribute("vertNor");
+	renderProgram.addAttribute("vertTex");
 }
 
 void RenderSystem::initMeshes()
@@ -159,94 +156,78 @@ void RenderSystem::initMeshes()
 	bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/quad.obj");
 	if (!rc)
 	{
-		throw std::runtime_error(errStr);
+		std::cerr << errStr;
 	}
 	else
 	{
-		std::shared_ptr<Shape> pQuadMesh = std::make_shared<Shape>();
-		pQuadMesh->createShape(TOshapes[0]);
-		pQuadMesh->measure();
-		pQuadMesh->init();
-
-		mpMeshContainer.emplace_back(pQuadMesh);
+		Shape &quadMesh = mMeshes[mNextShapeIdx++];
+		quadMesh.createShape(TOshapes[0u]);
+		quadMesh.measure();
+		quadMesh.init();
 	}
 
 	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/cube.obj");
 	if (!rc)
 	{
-		throw std::runtime_error(errStr);
+		std::cerr << errStr;
 	}
 	else
 	{
-		size_t size = TOshapes.size();
-
-		std::shared_ptr<Shape> pCubeMesh = std::make_shared<Shape>();
-		pCubeMesh->createShape(TOshapes[0]);
-		pCubeMesh->measure();
-		pCubeMesh->resize();
-		pCubeMesh->init();
-
-		mpMeshContainer.emplace_back(pCubeMesh);
+		Shape &cubeMesh = mMeshes[mNextShapeIdx++];
+		cubeMesh.createShape(TOshapes[0u]);
+		cubeMesh.measure();
+		cubeMesh.resize();
+		cubeMesh.init();
 	}
 
 	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/sphere.obj");
 	if (!rc)
 	{
-		throw std::runtime_error(errStr);
+		std::cerr << errStr;
 	}
 	else
 	{
-		size_t size = TOshapes.size();
-
-		std::shared_ptr<Shape> pSphereMesh = std::make_shared<Shape>();
-		pSphereMesh->createShape(TOshapes[0]);
-		pSphereMesh->measure();
-		pSphereMesh->resize();
-		pSphereMesh->init();
-
-		mpMeshContainer.emplace_back(pSphereMesh);
+		Shape &sphereMesh = mMeshes[mNextShapeIdx++];
+		sphereMesh.createShape(TOshapes[0u]);
+		sphereMesh.measure();
+		sphereMesh.resize();
+		sphereMesh.init();
 	}
 
 	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/bowling_pin.obj");
 	if (!rc)
 	{
-		throw std::runtime_error(errStr);
+		std::cerr << errStr;
 	}
 	else
 	{
-		size_t size = TOshapes.size();
-
-		std::shared_ptr<Shape> pBowlPinMesh = std::make_shared<Shape>();
-		pBowlPinMesh->createShape(TOshapes[0]);
-		pBowlPinMesh->measure();
-		pBowlPinMesh->resize();
-		pBowlPinMesh->init();
-
-		mpMeshContainer.emplace_back(pBowlPinMesh);
+		Shape &bowlPinMesh = mMeshes[mNextShapeIdx++];
+		bowlPinMesh.createShape(TOshapes[0u]);
+		bowlPinMesh.measure();
+		bowlPinMesh.resize();
+		bowlPinMesh.init();
 	}
 }
 
 void RenderSystem::initDebug()
 {
-	glGenVertexArrays(1, &mDebugVao);
+	glGenVertexArrays(1u, &mDebugVao);
 	glBindVertexArray(mDebugVao);
 
-	glGenBuffers(1, &mDebugVbo);
+	glGenBuffers(1u, &mDebugVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0u, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+	glEnableVertexAttribArray(0u);
+	glVertexAttribPointer(0u, 4u, GL_FLOAT, GL_FALSE, 0u, nullptr);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
 	glBindVertexArray(0u);
 
-	std::shared_ptr<Program> pDebugRenderProgram = std::make_shared<Program>();
-	pDebugRenderProgram->setVerbose(true);
-	pDebugRenderProgram->setShaderNames(
+	Program &debugRenderProgram = mPrograms[mNextProgIdx++];
+	debugRenderProgram.setVerbose(true);
+	debugRenderProgram.setShaderNames(
 		"../resources/shaders/debug.vert",
 		"../resources/shaders/debug.frag");
-	pDebugRenderProgram->init();
-	pDebugRenderProgram->addAttribute("vertPos");
-
-	mpProgramContainer.emplace_back(pDebugRenderProgram);
+	debugRenderProgram.init();
+	debugRenderProgram.addAttribute("vertPos");
 }

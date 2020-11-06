@@ -29,21 +29,21 @@ int main()
 
 	pApplication->init();
 
-	double lastTime = glfwGetTime();	// In seconds
-	double lastFrameTime = lastTime;
-	double frameTimeInterval = 0.0;
+	double lastTime            = glfwGetTime();	// In seconds
+	double lastFrameTime       = lastTime;
+	double frameTimeInterval   = 0.0;
 	double UIFrameTimeInterval = frameTimeInterval;
-	int numFrames = 0;
+	int    numFrames           = 0;
 
-	double lastPhysicsTickTime = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 40.0;
+	double lastPhysicsTickTime      = lastTime;
+	double fixedPhysicsTickInterval = 1.0 / 10.0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
 	while (!glfwWindowShouldClose(pWindowManager->getHandle()))
 	{
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
-		frameTimeInterval = currentTime - lastFrameTime;
+		frameTimeInterval  = currentTime - lastFrameTime;
 
 		lastFrameTime = currentTime;
 		++numFrames;

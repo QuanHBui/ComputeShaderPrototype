@@ -33,8 +33,8 @@ public:
 	void setShaderNames(const std::string &, const std::string &);
 	virtual void init();
 
-	virtual void bind();
-	virtual void unbind();
+	virtual void bind() const;
+	virtual void unbind() const;
 
 	void addAttribute(const std::string &);
 	void addUniform(const std::string &);

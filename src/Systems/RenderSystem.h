@@ -4,13 +4,13 @@
 #define RENDER_SYSTEM_H
 
 #include <glad/glad.h>
-#include <memory>
-#include <vector>
 #include <glm/mat4x4.hpp>
 
 #include "../PrototypePhysicsEngine/P3Collider.h"
+#include "Shape.h"
+#include "Program.h"
 
-using MatrixContainer = std::vector<glm::mat4>;
+using MatrixContainer          = std::vector<glm::mat4>;
 using MatrixContainerConstIter = MatrixContainer::const_iterator;
 
 struct CollisionPairGpuPackage;
@@ -19,7 +19,7 @@ struct CollisionPairGpuPackage;
 class RenderSystem
 {
 public:
-	enum Mesh
+	enum MeshKey
 	{
 		QUAD = 0,
 		CUBE,
@@ -38,7 +38,7 @@ public:
 	void render(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
 	void renderDebug(std::vector<P3BoxCollider> const &);
 
-	void registerMeshForBody(Mesh const &, unsigned int = 1u);
+	void registerMeshForBody(MeshKey const &, unsigned int = 1u);
 	void setView(glm::mat4 const &view) { mView = view; }
 	void setProjection(glm::mat4 const &projection) { mProjection = projection; }
 
@@ -49,14 +49,22 @@ private:
 	void initMeshes();
 	void initDebug();
 
-	std::vector<std::shared_ptr<class Program>> mpProgramContainer;
-	std::vector<std::shared_ptr<class Shape>> mpMeshContainer;
-	std::vector<Mesh> mMeshKeyContainer;
-
 	glm::mat4 mView, mProjection;
 
 	//================ For debugging ================//
 	GLuint mDebugVao = 0u, mDebugVbo = 0u;
+	//================== Constants ==================//
+	static constexpr uint8_t num_shaders   = 2u;
+	static constexpr uint8_t num_shapes    = 4u;
+	static constexpr uint8_t num_mesh_keys = 100u;
+
+	Program mPrograms[num_shaders];
+	Shape   mMeshes[num_shapes];
+	MeshKey mMeshKeys[num_mesh_keys];
+
+	uint8_t mNextProgIdx    = 0u;
+	uint8_t mNextShapeIdx   = 0u;
+	uint8_t mNextMeshKeyIdx = 0u;
 };
 
 #endif // RENDER_SYSTEM_H

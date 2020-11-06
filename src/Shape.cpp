@@ -214,9 +214,10 @@ void Shape::init()
 	// Unbind the arrays
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	glBindVertexArray(0u);
 }
 
-void Shape::draw(shared_ptr<Program> const &prog, GLuint colorCollisionBufferID)
+void Shape::draw(Program const &prog, GLuint colorCollisionBufferID)
 {
 	int h_pos, h_nor, h_tex;
 	h_pos = h_nor = h_tex = -1;
@@ -224,14 +225,14 @@ void Shape::draw(shared_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 	CHECKED_GL_CALL(glBindVertexArray(vaoID));
 
 	// Bind position buffer
-	h_pos = prog->getAttribute("vertPos");
+	h_pos = prog.getAttribute("vertPos");
 	GLSL::enableVertexAttribArray(h_pos);
 
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, posBufID));
 	CHECKED_GL_CALL(glVertexAttribPointer(h_pos, 3, GL_FLOAT, GL_FALSE, 0, (const void *)0));
 
 	// Bind normal buffer
-	h_nor = prog->getAttribute("vertNor");
+	h_nor = prog.getAttribute("vertNor");
 	if (h_nor != -1 && norBufID != 0)
 	{
 		GLSL::enableVertexAttribArray(h_nor);
@@ -242,7 +243,7 @@ void Shape::draw(shared_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 	if (texBufID != 0)
 	{
 		// Bind texcoords buffer
-		h_tex = prog->getAttribute("vertTex");
+		h_tex = prog.getAttribute("vertTex");
 
 		if (h_tex != -1 && texBufID != 0)
 		{
@@ -252,7 +253,8 @@ void Shape::draw(shared_ptr<Program> const &prog, GLuint colorCollisionBufferID)
 		}
 	}
 
-	if (colorCollisionBufferID) {
+	if (colorCollisionBufferID)
+	{
 		GLSL::enableVertexAttribArray(2u);
 		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorCollisionBufferID));
 		CHECKED_GL_CALL(glVertexAttribPointer(2u, 4, GL_FLOAT, GL_FALSE, 0, (const void *)0));

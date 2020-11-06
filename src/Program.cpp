@@ -18,14 +18,16 @@ std::string readFileAsString(const std::string &fileName)
 	std::string result;
 	std::ifstream fileHandle(fileName);
 
-	if (fileHandle.is_open()) {
+	if (fileHandle.is_open())
+	{
 		fileHandle.seekg(0, std::ios::end);
 		result.reserve((size_t)fileHandle.tellg());
 		fileHandle.seekg(0, std::ios::beg);
 
 		result.assign((std::istreambuf_iterator<char>(fileHandle)), std::istreambuf_iterator<char>());
 	}
-	else {
+	else
+	{
 		throw std::runtime_error("Could not open file: " + fileName);
 	}
 
@@ -57,10 +59,10 @@ void Program::init()
 	// Compile vertex shader
 	CHECKED_GL_CALL(glCompileShader(vs));
 	CHECKED_GL_CALL(glGetShaderiv(vs, GL_COMPILE_STATUS, &success));
-	if (!success) {
-		if (isVerbose()) {
+	if (!success)
+	{
+		if (isVerbose())
 			GLSL::printShaderInfoLog(vs);
-		}
 
 		glDeleteShader(vs);
 		throw std::runtime_error("Error compiling vertex shader " + vShaderName);
@@ -69,10 +71,10 @@ void Program::init()
 	// Compile fragment shader
 	CHECKED_GL_CALL(glCompileShader(fs));
 	CHECKED_GL_CALL(glGetShaderiv(fs, GL_COMPILE_STATUS, &success));
-	if (!success) {
-		if (isVerbose()) {
+	if (!success)
+	{
+		if (isVerbose())
 			GLSL::printShaderInfoLog(fs);
-		}
 
 		glDeleteShader(fs);
 		throw std::runtime_error("Error compiling fragment shader " + fShaderName);
@@ -84,10 +86,10 @@ void Program::init()
 	CHECKED_GL_CALL(glAttachShader(pid, fs));
 	CHECKED_GL_CALL(glLinkProgram(pid));
 	CHECKED_GL_CALL(glGetProgramiv(pid, GL_LINK_STATUS, &success));
-	if (!success) {
-		if (isVerbose()) {
+	if (!success)
+	{
+		if (isVerbose())
 			GLSL::printProgramInfoLog(pid);
-		}
 
 		glDeleteProgram(pid);
 		pid = 0u;
@@ -110,12 +112,12 @@ void Program::init()
 	glDeleteShader(fs);
 }
 
-void Program::bind()
+void Program::bind() const
 {
 	CHECKED_GL_CALL(glUseProgram(pid));
 }
 
-void Program::unbind()
+void Program::unbind() const
 {
 	CHECKED_GL_CALL(glUseProgram(0));
 }

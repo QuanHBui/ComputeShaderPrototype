@@ -59,8 +59,8 @@ void Application::initRenderSystem()
 	mRenderSystem.init();
 
 	// Move camera a bit closer. This depends on which demo is showing.
-	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
-	mFlyCamera.updateViewMatrix();
+	//mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+	//mFlyCamera.updateViewMatrix();
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 	mRenderSystem.setProjection(mFlyCamera.getProjectionMatrix());
@@ -73,13 +73,13 @@ void Application::initPhysicsWorld()
 	// TODO: Switch system is good here.
 
 	// mPhysicsWorld.bowlingGameDemo();
-	// mRenderSystem.registerMeshForBody(RenderSystem::Mesh::BOWLING_PIN, 5u);
+	// mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
 
-	//mPhysicsWorld.multipleBoxesDemo();
-	//mRenderSystem.registerMeshForBody(RenderSystem::Mesh::CUBE, 100u);
+	mPhysicsWorld.multipleBoxesDemo();
+	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
 
-	mPhysicsWorld.controllableBoxDemo();
-	mRenderSystem.registerMeshForBody(RenderSystem::Mesh::CUBE, 2u);
+	//mPhysicsWorld.controllableBoxDemo();
+	//mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 3u);
 }
 
 void Application::initUI()
@@ -225,21 +225,21 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 	// Change camera position and view angle
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
-		static bool hasChanged = false;
+		//static bool hasChanged = false;
 		// Set position of the camera to be on the same z as the static box
-		mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
+		//mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
 		// Look at the static box. This will also update the view matrix
-		mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
+		//mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
 
 		// Small reminder that the front vector won't be changed.
 
-		if (hasChanged)
+		//if (hasChanged)
 		{
-			mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
-			mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
+			//mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+			//mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
 		}
 
-		hasChanged = !hasChanged;
+		//hasChanged = !hasChanged;
 	}
 }
 
@@ -272,7 +272,7 @@ void Application::mouseCallback(GLFWwindow *window, int button, int action, int 
 
 		mPhysicsWorld.addRigidBody(1, glm::vec3(cursorPosDeviceCoords.x, cursorPosDeviceCoords.y, -15.0f), glm::vec3(0.0f));
 
-		mRenderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::SPHERE, 1u);
 
 		allowToAdd = false;
 	}
@@ -328,7 +328,7 @@ void Application::renderFrame(float dt)
 		//mFlyCamera.movePosition(Camera::MovementSet::BACKWARD, 2.0f * dt);
 	}
 	if (moveLeft)
-	{	
+	{
 		//if (sideTurn > 0.0f) sideTurn = 0.0f;
 		//mFlyCamera.moveView((sideTurn -= 4.0f) * 2.0f * dt, 0.0f);
 	}
@@ -408,13 +408,14 @@ void Application::shootBall()
 		glm::vec3(mFlyCamera.getPosition() + 1.0f * mFlyCamera.getFront()),
 		glm::vec3(0.0f, 0.0f, -10.0f));
 
-	mRenderSystem.registerMeshForBody(RenderSystem::Mesh::SPHERE, 1u);
+	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::SPHERE, 1u);
 }
 
 void Application::update(float dt)
 {
-	glm::vec3 controlPosition{ 0.0f };
+	//glm::vec3 controlPosition{ 0.0f };
 
+	/*
 	// Get any inputs for kinematics object
 	if (moveForward)
 		controlPosition.z -= 5.0f * dt;
@@ -428,8 +429,10 @@ void Application::update(float dt)
 		controlPosition.y += 5.0f * dt;
 	if (moveDownward)
 		controlPosition.y -= 5.0f * dt;
+	*/
 
-	mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
+	//mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
+	mCollisionPairsFromGpu = mPhysicsWorld.update(dt);
 
 	mPhysicsTickInterval = dt;
 
@@ -440,11 +443,13 @@ void Application::update(float dt)
 	// Update the model matrix array
 	for (LinearTransform const &linearTransform : linearTransformContainer)
 	{
-		glm::mat4 transform = glm::translate(linearTransform.position);
+		glm::mat4 translation = glm::translate(linearTransform.position);
 
 		if (i >= mModelMatrixContainer.size())
-			mModelMatrixContainer.emplace_back(transform);
+			mModelMatrixContainer.push_back(translation);
 		else
-			mModelMatrixContainer[i++] = transform;
+			mModelMatrixContainer[i] = translation;
+
+		++i;
 	}
 }
