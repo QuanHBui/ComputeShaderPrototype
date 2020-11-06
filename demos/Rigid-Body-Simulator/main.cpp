@@ -27,15 +27,7 @@ int main()
 
 	pApplication->setWindowManager(pWindowManager);
 
-	try
-	{
-		pApplication->init();
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << e.what() << std::endl;
-		glfwSetWindowShouldClose(pWindowManager->getHandle(), GL_TRUE);
-	}
+	pApplication->init();
 
 	double lastTime = glfwGetTime();	// In seconds
 	double lastFrameTime = lastTime;
@@ -44,7 +36,7 @@ int main()
 	int numFrames = 0;
 
 	double lastPhysicsTickTime = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 60.0;
+	double fixedPhysicsTickInterval = 1.0 / 40.0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
 	while (!glfwWindowShouldClose(pWindowManager->getHandle()))

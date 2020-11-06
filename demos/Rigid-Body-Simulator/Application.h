@@ -76,7 +76,7 @@ private:
 	};
 
 	// Some info states
-	double physicsTickInterval = 0.0;
+	double mPhysicsTickInterval = 0.0;
 
 	// World extent
 	glm::vec2 mWorldExtentMin = glm::vec2{ 0.0f };
@@ -86,12 +86,12 @@ private:
 	float mCursorPosDeltaX = 0.0f, mCursorPosDeltaY = 0.0f;
 	bool mIsFirstCursorFocus = true;
 
-	RenderSystem renderSystem;
-	P3DynamicsWorld physicsWorld;
+	RenderSystem mRenderSystem;
+	P3DynamicsWorld mPhysicsWorld;
 
-	std::shared_ptr<MatrixContainer> pModelMatrixContainer = nullptr;
+	MatrixContainer mModelMatrixContainer;
 
-	CollisionPairGpuPackage collisionPairsFromGpu;
+	CollisionPairGpuPackage mCollisionPairsFromGpu;
 };
 
 #endif // APPLICATION_H

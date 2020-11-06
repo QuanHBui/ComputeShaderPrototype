@@ -30,9 +30,9 @@ void P3OpenGLComputeBroadPhase::reset()
 
 void P3OpenGLComputeBroadPhase::initShaderPrograms()
 {
-	mComputeProgramIDContainer[P3_UPDATE_AABBS] = createComputeProgram("../resources/shaders/updateAABBs.comp");
+	mComputeProgramIDContainer[P3_UPDATE_AABBS]  = createComputeProgram("../resources/shaders/updateAABBs.comp");
 	mComputeProgramIDContainer[P3_ODD_EVEN_SORT] = createComputeProgram("../resources/shaders/evenOddSort.comp");
-	mComputeProgramIDContainer[P3_SAP] = createComputeProgram("../resources/shaders/sap.comp");
+	mComputeProgramIDContainer[P3_SAP]           = createComputeProgram("../resources/shaders/sap.comp");
 	// mComputeProgramIDContainer[P3_ASSIGN_MORTON_CODES] = createComputeProgram("../resources/shaders/assignMortonCodes.comp");
 	// mComputeProgramIDContainer[P3_BUILD_PARALLEL_LINEAR_BVH] = createComputeProgram("../resources/shaders/buildParallelLinearBVH.comp");
 	// mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");

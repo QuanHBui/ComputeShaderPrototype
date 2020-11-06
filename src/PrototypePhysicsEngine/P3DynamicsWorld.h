@@ -33,6 +33,8 @@ public:
 	void init();
 
 	CollisionPairGpuPackage const &update(double dt);
+	CollisionPairGpuPackage const &updateAndResolve(double dt);
+	CollisionPairGpuPackage const &update(double dt, glm::vec3 const &);
 
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
@@ -47,6 +49,7 @@ public:
 	void stackingSpheresDemo();
 	void stackingBoxesDemo();
 	void multipleBoxesDemo();
+	void controllableBoxDemo();
 
 	//----------------------- Some getters and setters -----------------------//
 	float getGravity() const { return mGravity; }
@@ -83,6 +86,7 @@ private:
 
 	//------------ Data package optimized for the GPU (SoA) ------------//
 	LinearTransformGpuPackage mLinearTransformCpuData;
+	CollisionPairGpuPackage mCollisionPairCpuData;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/

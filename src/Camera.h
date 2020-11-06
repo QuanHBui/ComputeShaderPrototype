@@ -21,7 +21,13 @@ public:
 	enum class MovementSet { LEFT, RIGHT, FORWARD, BACKWARD };
 
 	Camera() {}
-	Camera(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, float);
+	Camera(glm::vec3 const &position, glm::vec3 const &front, glm::vec3 const &up, float viewportAspectRatio)
+		: position_(position), front_(glm::normalize(front)), up_(glm::normalize(up))
+	{
+		updateViewMatrix();
+		updateProjectionMatrix(viewportAspectRatio);
+	}
+
 	~Camera() {}
 
 	glm::vec3 getPosition() const { return position_; }
@@ -40,15 +46,24 @@ public:
 	void setSensitivityX(float sensitivityX) { sensitivityX_ = sensitivityX; }
 	void setSensitivityY(float sensitivityY) { sensitivityY_ = sensitivityY; }
 	void setMovementSpeed(float movementSpeed) { movementSpeed_ = movementSpeed; }
+	void lookAtPoint(glm::vec3 const &point) { viewMatrix_ = glm::lookAt(position_, point, up_); }
 
 	void moveView(float, float);
 	void zoomFieldOfView(double, float);
 	void movePosition(MovementSet const &, float deltaTime = 1.f);
 
-private:
-	void updateViewMatrix();
-	void updateProjectionMatrix(float);
+	void updateViewMatrix()
+	{
+		viewMatrix_ = glm::lookAt(position_, position_ + front_, up_);
+	}
 
+	void updateProjectionMatrix(float viewportAspectRatio)
+	{
+		// perspective(float fov, float aspect, float zNear, float zFar) -- parameter list of perspective
+		projectionMatrix_ = glm::perspective(glm::radians(fieldOfView_), viewportAspectRatio, 0.01f, 150.f);
+	}
+
+private:
 	float yaw_{ -90.f }, pitch_{ 0.f };		// In degrees, yaw is default at -90 degrees to make sure that camera looking at -x by default
 	float sensitivityX_{ 0.05f }, sensitivityY_{ 0.05f };
 	float movementSpeed_{ 2.5f };

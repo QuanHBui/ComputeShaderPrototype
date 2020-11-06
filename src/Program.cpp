@@ -1,3 +1,10 @@
+/**
+ * Implementation of Program object used to compile shader objects.
+ *
+ * @author: unknown. Assuming professors from Cal Poly Computer Science department.
+ * @author: Slightly modified by Quan Bui.
+ */
+
 #include "Program.h"
 
 #include <iostream>
@@ -23,14 +30,6 @@ std::string readFileAsString(const std::string &fileName)
 	}
 
 	return result;
-}
-
-Program::~Program()
-{
-	// Shader objects deletion should already be handled by deferred deletion
-	if (pid) {
-		glDeleteProgram(pid);
-	}
 }
 
 void Program::setShaderNames(const std::string &v, const std::string &f)

@@ -35,7 +35,7 @@ public:
 
 	void init();
 
-	void render(int, int, std::shared_ptr<MatrixContainer>, CollisionPairGpuPackage const &);
+	void render(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
 	void renderDebug(std::vector<P3BoxCollider> const &);
 
 	void registerMeshForBody(Mesh const &, unsigned int = 1u);
@@ -57,7 +57,6 @@ private:
 
 	//================ For debugging ================//
 	GLuint mDebugVao = 0u, mDebugVbo = 0u;
-
 };
 
 #endif // RENDER_SYSTEM_H

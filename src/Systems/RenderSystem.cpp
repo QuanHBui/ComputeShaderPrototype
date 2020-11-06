@@ -18,7 +18,7 @@ void RenderSystem::init()
 }
 
 void RenderSystem::render(int width, int height,
-	std::shared_ptr<MatrixContainer> pModelMatrixContainer, CollisionPairGpuPackage const &collisionPairs)
+	MatrixContainer const &modelMatrixContainer, CollisionPairGpuPackage const &collisionPairs)
 {
 	glViewport(0, 0, width, height);
 
@@ -29,16 +29,14 @@ void RenderSystem::render(int width, int height,
 
 	std::shared_ptr<Program> mpRenderProgram = mpProgramContainer[0];
 
-	collisionPairs;
-
 	// Bind render program
 	mpRenderProgram->bind();
 
 	int objectIdx = 0;
 	std::vector<Mesh>::const_iterator meshContainerIter = mMeshKeyContainer.begin();
 
-	for ( MatrixContainerConstIter it = pModelMatrixContainer->begin()
-		; it != pModelMatrixContainer->end()
+	for ( MatrixContainerConstIter it = modelMatrixContainer.begin()
+		; it != modelMatrixContainer.end()
 		; ++it )
 	{
 		unsigned int redOrNo = 0u;
@@ -50,6 +48,8 @@ void RenderSystem::render(int width, int height,
 			if (collisonPair.x == objectIdx || collisonPair.y == objectIdx)
 			{
 				redOrNo = 1u;
+
+				break;
 			}
 		}
 
@@ -110,6 +110,8 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	pDebugShaderProg->unbind();
 }
 
 void RenderSystem::registerMeshForBody(Mesh const &shape, unsigned int quantity)
@@ -130,7 +132,7 @@ void RenderSystem::initRenderPrograms()
 	GLSL::checkVersion();
 
 	// Set background color
-	glClearColor(.12f, .34f, .56f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
@@ -233,7 +235,7 @@ void RenderSystem::initDebug()
 	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0u, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
+	glVertexAttribPointer(0u, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
 	glBindVertexArray(0u);
