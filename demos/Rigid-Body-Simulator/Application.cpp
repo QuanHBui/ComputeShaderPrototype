@@ -59,8 +59,8 @@ void Application::initRenderSystem()
 	mRenderSystem.init();
 
 	// Move camera a bit closer. This depends on which demo is showing.
-	//mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
-	//mFlyCamera.updateViewMatrix();
+	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+	mFlyCamera.updateViewMatrix();
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 	mRenderSystem.setProjection(mFlyCamera.getProjectionMatrix());
@@ -75,11 +75,11 @@ void Application::initPhysicsWorld()
 	// mPhysicsWorld.bowlingGameDemo();
 	// mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
 
-	mPhysicsWorld.multipleBoxesDemo();
-	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
+	//mPhysicsWorld.multipleBoxesDemo();
+	//mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
 
-	//mPhysicsWorld.controllableBoxDemo();
-	//mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 3u);
+	mPhysicsWorld.controllableBoxDemo();
+	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
 }
 
 void Application::initUI()
@@ -133,7 +133,7 @@ void Application::calculateScale(float *scaleX, float *scaleY, uint32_t frameWid
 	*scaleY = (frameHeight - 1) / (mWorldExtentMin.y - mWorldExtentMax.y);
 }
 
-void Application::calculateShift(float* shiftX, float *shiftY, uint32_t frameWidth, uint32_t frameHeight)
+void Application::calculateShift(float *shiftX, float *shiftY, uint32_t frameWidth, uint32_t frameHeight)
 {
 	*shiftX = mWorldExtentMin.x * (1 - static_cast<int>(frameWidth))  / (mWorldExtentMax.x - mWorldExtentMin.x);
 	*shiftY = mWorldExtentMin.y * (1 - static_cast<int>(frameHeight)) / (mWorldExtentMax.y - mWorldExtentMin.y);
@@ -212,34 +212,34 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 		moveUpward = false;
 	}
 
-	if ((key == GLFW_KEY_E    && action == GLFW_PRESS) ||
-		(key == GLFW_KEY_DOWN && action == GLFW_PRESS))
+	if ((key == GLFW_KEY_E         && action == GLFW_PRESS) ||
+		(key == GLFW_KEY_PAGE_DOWN && action == GLFW_PRESS))
 	{
 		moveDownward = true;
 	}
-	if ((key == GLFW_KEY_E    && action == GLFW_RELEASE) ||
-		(key == GLFW_KEY_DOWN && action == GLFW_RELEASE))
+	if ((key == GLFW_KEY_E         && action == GLFW_RELEASE) ||
+		(key == GLFW_KEY_PAGE_DOWN && action == GLFW_RELEASE))
 	{
 		moveDownward = false;
 	}
 	// Change camera position and view angle
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
-		//static bool hasChanged = false;
+		static bool hasChanged = false;
 		// Set position of the camera to be on the same z as the static box
-		//mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
+		mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
 		// Look at the static box. This will also update the view matrix
-		//mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
+		mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
 
 		// Small reminder that the front vector won't be changed.
 
-		//if (hasChanged)
+		if (hasChanged)
 		{
-			//mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
-			//mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
+			mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+			mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
 		}
 
-		//hasChanged = !hasChanged;
+		hasChanged = !hasChanged;
 	}
 }
 
@@ -413,9 +413,8 @@ void Application::shootBall()
 
 void Application::update(float dt)
 {
-	//glm::vec3 controlPosition{ 0.0f };
+	glm::vec3 controlPosition{ 0.0f };
 
-	/*
 	// Get any inputs for kinematics object
 	if (moveForward)
 		controlPosition.z -= 5.0f * dt;
@@ -429,10 +428,9 @@ void Application::update(float dt)
 		controlPosition.y += 5.0f * dt;
 	if (moveDownward)
 		controlPosition.y -= 5.0f * dt;
-	*/
 
-	//mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
-	mCollisionPairsFromGpu = mPhysicsWorld.update(dt);
+	mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
+	//mCollisionPairsFromGpu = mPhysicsWorld.update(dt);
 
 	mPhysicsTickInterval = dt;
 

@@ -101,8 +101,8 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	// Iterate through all the box colliders and send the vertices info
 	for (P3BoxCollider const &boxCollider : boxColliders)
 	{
-		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec4), (const void *)boxCollider.mVertices, GL_DYNAMIC_DRAW));
-		CHECKED_GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 8));
+		glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec4), (const void *)boxCollider.mVertices, GL_DYNAMIC_DRAW);
+		CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, 8));
 	}
 
 	glBindVertexArray(0u);
@@ -133,8 +133,9 @@ void RenderSystem::initRenderPrograms()
 	// Set background color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	// Enabel z-buffer test
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	Program &renderProgram = mPrograms[mNextProgIdx++];
 	renderProgram.setVerbose(true);
@@ -211,6 +212,8 @@ void RenderSystem::initMeshes()
 
 void RenderSystem::initDebug()
 {
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
 	glGenVertexArrays(1u, &mDebugVao);
 	glBindVertexArray(mDebugVao);
 

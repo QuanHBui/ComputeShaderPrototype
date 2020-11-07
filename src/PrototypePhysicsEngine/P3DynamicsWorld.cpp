@@ -161,6 +161,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 	return mCollisionPairCpuData;
 }
 
+// Specifically for the controllable box demo
 CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 const &deltaP)
 {
 	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
@@ -170,6 +171,18 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 cons
 	mLinearTransformContainer[1].position += deltaP;
 	mMeshColliderContainer[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));
 	mBoxColliders[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));
+
+	float static angle = 0.0f;
+	// Box 3 is scaled non-uniformly and rotating.
+	glm::mat4 scale     = glm::scale(glm::mat4(1.0f), glm::vec3(5.0f, 1.0f, 1.0f));
+	glm::mat4 rotate    = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), mLinearTransformContainer[3].position);
+	glm::mat4 ctm       = translate * rotate * scale;
+	mMeshColliderContainer[3].update(ctm);
+	mBoxColliders[3].update(ctm);
+
+	angle += dt * 0.52f;
+	angle  = angle >= 6.28f ? 0.0f : angle; // This is so that we won't get floating point overflow.
 
 	return mCollisionPairCpuData;
 }
@@ -321,7 +334,8 @@ void P3DynamicsWorld::multipleBoxesDemo()
 
 void P3DynamicsWorld::controllableBoxDemo()
 {
-	addRigidBody(1.0f, glm::vec3(0.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// The static box
-	addRigidBody(1.0f, glm::vec3(0.0f, -2.0f, 7.0f), glm::vec3(0.0f));	// The kinematic box
-	addRigidBody(1.0f, glm::vec3(3.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// Another static box
+	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// The static box
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f));	// The kinematic box
+	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// Another static box
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// Static box with difference size and rotating
 }
