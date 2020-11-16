@@ -1,7 +1,7 @@
 #include "Shape.h"
 
 #ifndef NOMINMAX
-#define NOMINMAX		// Too many max macro the compiler got confused I guess -Quan Bui
+#define NOMINMAX // Too many max macro the compiler got confused I guess -Quan Bui
 #endif
 
 #include <iostream>
@@ -217,9 +217,70 @@ void Shape::init()
 	glBindVertexArray(0u);
 }
 
+// At this point, the only instanced buffer is the model matrix buffer.
+void Shape::initInstancedBuffers()
+{
+	glGenBuffers(1, &instanceMatrices);
+}
+
 void Shape::draw(Program const &prog, GLuint colorCollisionBufferID)
 {
-	int h_pos, h_nor, h_tex;
+	enableBasicAttributes(prog);
+
+	if (colorCollisionBufferID)
+	{
+		GLSL::enableVertexAttribArray(2u);
+		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorCollisionBufferID));
+		CHECKED_GL_CALL(glVertexAttribPointer(2u, 4, GL_FLOAT, GL_FALSE, 0, (const void *)0));
+	}
+
+	// Bind element buffer
+	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eleBufID));
+
+	// Draw
+	CHECKED_GL_CALL(glDrawElements(GL_TRIANGLES, (int)eleBuf.size(), GL_UNSIGNED_INT, (const void *)0));
+
+	// Disable and unbind
+	disableBasicAttributes();
+
+	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
+	CHECKED_GL_CALL(glBindVertexArray(0));
+}
+
+void Shape::drawInstanced(Program const &prog, GLsizei instanceCount, glm::mat4 const *pModel)
+{
+	if (!instanceCount) return;
+
+	enableBasicAttributes(prog);
+
+	// Enable vertex attribute for each instance's model matrix. To be safe, let's make it 6.
+	GLSL::enableVertexAttribArray(6);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, instanceMatrices);
+	// Update the content of instanced buffer
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * instanceCount, (const void *)pModel, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, instanceMatrices);
+
+	// Bind element buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eleBufID);
+
+	// Draw
+	glDrawElementsInstanced(GL_TRIANGLES, (int)eleBuf.size(), GL_UNSIGNED_INT, (const void *)0, instanceCount);
+
+	disableBasicAttributes();
+	GLSL::disableVertexAttribArray(6);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
+}
+
+void Shape::enableBasicAttributes(Program const &prog)
+{
 	h_pos = h_nor = h_tex = -1;
 
 	CHECKED_GL_CALL(glBindVertexArray(vaoID));
@@ -252,20 +313,10 @@ void Shape::draw(Program const &prog, GLuint colorCollisionBufferID)
 			CHECKED_GL_CALL(glVertexAttribPointer(h_tex, 2, GL_FLOAT, GL_FALSE, 0, (const void *)0));
 		}
 	}
+}
 
-	if (colorCollisionBufferID)
-	{
-		GLSL::enableVertexAttribArray(2u);
-		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorCollisionBufferID));
-		CHECKED_GL_CALL(glVertexAttribPointer(2u, 4, GL_FLOAT, GL_FALSE, 0, (const void *)0));
-	}
-
-	// Bind element buffer
-	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eleBufID));
-
-	// Draw
-	CHECKED_GL_CALL(glDrawElements(GL_TRIANGLES, (int)eleBuf.size(), GL_UNSIGNED_INT, (const void *)0));
-
+void Shape::disableBasicAttributes()
+{
 	// Disable and unbind
 	if (h_tex != -1)
 	{
@@ -276,8 +327,4 @@ void Shape::draw(Program const &prog, GLuint colorCollisionBufferID)
 		GLSL::disableVertexAttribArray(h_nor);
 	}
 	GLSL::disableVertexAttribArray(h_pos);
-	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-
-	CHECKED_GL_CALL(glBindVertexArray(0));
 }

@@ -340,7 +340,8 @@ void Application::renderFrame(float dt)
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
-	mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
+	//mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
+	mRenderSystem.renderInstanced(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
 
 	if (showDebug)
 		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders());

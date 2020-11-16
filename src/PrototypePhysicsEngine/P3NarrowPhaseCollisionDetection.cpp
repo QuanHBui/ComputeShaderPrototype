@@ -4,7 +4,7 @@
 
 #include "P3NarrowPhaseCollisionDetection.h"
 
-#include "../ComputeProgram.h"
+#include <glad/glad.h>
 
 #define EPSILON 0.000001f
 
@@ -195,8 +195,27 @@ bool pointInTriTest(glm::vec3 const &v0,
 	return false;
 }
 
-
-P3OpenGLComputeNarrowPhase::P3OpenGLComputeNarrowPhase()
+ 
+void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 {
-	computeProgramContainer[TRI_TRI_TEST] = createComputeProgram("../resources/shaders/triTriTest.glsl");
+	// BoxCollider and CollisionPair buffers should already on the GPU from broadphase already.
+	// Only need to allocate 1 buffer for the MTV's.
+	glGenBuffers(1u, mSsboIDs);
+}
+
+void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MTVS]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * boxCollidersSize, nullptr, GL_DYNAMIC_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mBoxCollidersID);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mCollisionPairsID);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[MTVS]);
+
+	GLuint currProgID = mComputeProgramIDs[SAT];
+	glUseProgram(currProgID);
+
+	// 2000 is the max num collision pairs in world.
+	glDispatchCompute(GLuint(2000u), GLuint(1u), GLuint(1u));
 }

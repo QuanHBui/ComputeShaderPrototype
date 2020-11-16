@@ -18,42 +18,54 @@
 #define MAX_NUM_OBJECTS 1000
 #endif
 
+enum class BoundingType: uint16_t
+{
+	box = 0,
+	sphere,
+	capsule,
+	convex_hull,
+	mesh
+};
+
 struct BoundingVolume
 {
-	enum BoundingPrimitives { BOX = 0, SPHERE };
-
 	BoundingVolume() {}
-	BoundingVolume(glm::vec3 position) : position_{position} {}
+	BoundingVolume(glm::vec3 position) : mPosition{position} {}
 	virtual ~BoundingVolume() {}
 
-	glm::vec3 position_{0.f};
+	glm::vec3 mPosition{0.f};
 };
 
 // This is not axis-aligned.
-struct BoundingBox : public BoundingVolume
+struct Box : public BoundingVolume
 {
-	BoundingBox() {}
+	Box() {}
 };
 
-struct BoundingSphere : public BoundingVolume
+struct Sphere : public BoundingVolume
 {
-	BoundingSphere() {}
-	BoundingSphere(float radius) : radius_{radius} {}
+	Sphere() {}
+	Sphere(float radius) : mRadius{radius} {}
 
-	float radius_{0.f};
+	float mRadius{0.f};
 };
 
-struct PillBox : public BoundingVolume
-{
-
-};
-
-struct Cylinder : public BoundingVolume
+struct Capsule : public BoundingVolume
 {
 
 };
 
-//------------------ Data pack for the GPU (SoA) --------------------//
+struct ConvexHull : public BoundingVolume
+{
+
+};
+
+struct Mesh : public BoundingVolume
+{
+
+};
+
+//------------------ Data packs for the GPU (SoA) --------------------//
 struct AabbGpuPackage
 {
 	glm::vec4 minCoords[MAX_NUM_OBJECTS];

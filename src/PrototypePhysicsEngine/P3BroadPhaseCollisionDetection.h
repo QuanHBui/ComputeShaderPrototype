@@ -24,8 +24,12 @@ public:
 	CollisionPairGpuPackage const &step(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
+	GLuint getBoxCollidersID() const { return mSsboIDContainer[P3_BOX_COLLIDERS]; };
+	GLuint getCollisionPairsID() const { return mSsboIDContainer[P3_COLLISION_PAIRS]; }
+
 	void reset();
 
+	// TODO: Deallocate all Gpu buffers and delete programs.
 	~P3OpenGLComputeBroadPhase() {}
 
 private:

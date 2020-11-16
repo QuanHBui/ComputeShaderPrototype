@@ -19,7 +19,7 @@ struct CollisionPairGpuPackage;
 class RenderSystem
 {
 public:
-	enum MeshKey
+	enum MeshKey: uint8_t
 	{
 		QUAD = 0,
 		CUBE,
@@ -27,15 +27,17 @@ public:
 		BOWLING_PIN
 	};
 
-	enum ShaderProg
+	enum ShaderProg: uint8_t
 	{
 		NORMAL = 0,
-		DEBUG
+		DEBUG,
+		NORMAL_INSTANCED
 	};
 
 	void init();
 
 	void render(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
+	void renderInstanced(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
 	void renderDebug(std::vector<P3BoxCollider> const &);
 
 	void registerMeshForBody(MeshKey const &, unsigned int = 1u);
@@ -54,7 +56,7 @@ private:
 	//================ For debugging ================//
 	GLuint mDebugVao = 0u, mDebugVbo = 0u;
 	//================== Constants ==================//
-	static constexpr uint8_t num_shaders   = 2u;
+	static constexpr uint8_t num_shaders   = 3u;
 	static constexpr uint8_t num_shapes    = 4u;
 	static constexpr uint8_t num_mesh_keys = 100u;
 
@@ -62,7 +64,6 @@ private:
 	Shape   mMeshes[num_shapes];
 	MeshKey mMeshKeys[num_mesh_keys];
 
-	uint8_t mNextProgIdx    = 0u;
 	uint8_t mNextShapeIdx   = 0u;
 	uint8_t mNextMeshKeyIdx = 0u;
 };

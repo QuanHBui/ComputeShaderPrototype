@@ -28,7 +28,7 @@ class P3DynamicsWorld
 {
 public:
 	P3DynamicsWorld() {}
-	P3DynamicsWorld(size_t maxCapacity) : mMaxCapacity(maxCapacity) {}	// Might want error checking here
+	P3DynamicsWorld(size_t maxCapacity) : mMaxCapacity(maxCapacity) {} // Might want error checking here
 
 	void init();
 
@@ -96,7 +96,7 @@ private:
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 	P3OpenGLComputeBroadPhase broadPhase;
-	//P3OpenGLComputeNarrowPhase narrowPhase;
+	P3OpenGLComputeNarrowPhase narrowPhase;
 	P3ConstraintSolver constraintSolver;	// Produces forces to make sure things don't phase past each other
 	P3Integrator integrator;				// Actually integrates the force vector and apply to linear transform
 };

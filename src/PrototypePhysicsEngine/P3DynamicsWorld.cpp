@@ -20,6 +20,7 @@ float randf()
 void P3DynamicsWorld::init()
 {
 	broadPhase.init();
+	narrowPhase.init(broadPhase.getBoxCollidersID(), broadPhase.getCollisionPairsID());
 }
 
 CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
@@ -165,8 +166,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 const &deltaP)
 {
 	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
-
-	// Assuming at this point, there are only 2 boxes in the world.
+	narrowPhase.step(mBoxColliders.size());
 	// 1st box is static, 2nd box is kinematic/controllable.
 	mLinearTransformContainer[1].position += deltaP;
 	mMeshColliderContainer[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));

@@ -82,6 +82,32 @@ void RenderSystem::render(int width, int height,
 	renderProgram.unbind();
 }
 
+void RenderSystem::renderInstanced(int width, int height,
+	MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
+{
+	glViewport(0, 0, width, height);
+
+	// Clear framebuffer.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	float aspect = width / float(height);
+
+	Program const &renderProgram = mPrograms[NORMAL_INSTANCED];
+
+	// Bind render program
+	renderProgram.bind();
+
+	glUniform1ui(glGetUniformLocation(renderProgram.getPID(), "redOrNo"), 0);
+	glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "projection"),
+		1, GL_FALSE, glm::value_ptr(mProjection));
+	glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "view"),
+		1, GL_FALSE, glm::value_ptr(mView));
+
+	mMeshes[CUBE].drawInstanced(renderProgram, modelMatrices.size() , modelMatrices.data());
+
+	renderProgram.unbind();
+}
+
 void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -137,7 +163,7 @@ void RenderSystem::initRenderPrograms()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	Program &renderProgram = mPrograms[mNextProgIdx++];
+	Program &renderProgram = mPrograms[NORMAL];
 	renderProgram.setVerbose(true);
 	renderProgram.setShaderNames(
 		"../resources/shaders/vs.vert",
@@ -146,6 +172,16 @@ void RenderSystem::initRenderPrograms()
 	renderProgram.addAttribute("vertPos");
 	renderProgram.addAttribute("vertNor");
 	renderProgram.addAttribute("vertTex");
+
+	Program &instanceProgram = mPrograms[NORMAL_INSTANCED];
+	instanceProgram.setVerbose(true);
+	instanceProgram.setShaderNames(
+		"../resources/shaders/vs_instanced.vert",
+		"../resources/shaders/fs.frag");
+	instanceProgram.init();
+	instanceProgram.addAttribute("vertPos");
+	instanceProgram.addAttribute("vertNor");
+	instanceProgram.addAttribute("vertTex");
 }
 
 void RenderSystem::initMeshes()
@@ -179,6 +215,7 @@ void RenderSystem::initMeshes()
 		cubeMesh.measure();
 		cubeMesh.resize();
 		cubeMesh.init();
+		cubeMesh.initInstancedBuffers();
 	}
 
 	rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, "../resources/models/sphere.obj");
@@ -226,7 +263,7 @@ void RenderSystem::initDebug()
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
 	glBindVertexArray(0u);
 
-	Program &debugRenderProgram = mPrograms[mNextProgIdx++];
+	Program &debugRenderProgram = mPrograms[DEBUG];
 	debugRenderProgram.setVerbose(true);
 	debugRenderProgram.setShaderNames(
 		"../resources/shaders/debug.vert",
