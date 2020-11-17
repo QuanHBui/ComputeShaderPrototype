@@ -14,6 +14,13 @@ struct BoxCollider
 	vec4 vertices[NUM_COLLIDER_VERTS];
 };
 
+struct Manifold
+{
+	vec4 pointCount; // Wasteful, but it's ok.
+	vec4 contactPoints;
+	vec4 contactNormal;
+};
+
 layout(std430, binding = 0) readonly buffer in_collider_data
 {
 	BoxCollider boxColliders[];
@@ -24,10 +31,18 @@ layout(std430, binding = 1) readonly buffer in_collision_pair_data
 	vec4 collisionPairs[2 * MAX_NUM_COLLIDERS];
 };
 
-layout(std430, binding = 2) writeonly buffer out_mtv_data
+layout(std430, binding = 2) writeonly buffer out_manifolds_data
 {
-	vec4 Mtvs[MAX_NUM_COLLIDERS];
+	Manifold manifolds[MAX_NUM_COLLIDERS];
 };
+
+layout(binding = 3) uniform atomic_uint nextAvailableIndx;
+
+// This function will create and append to the manifold buffer.
+void separatingAxisTest( )
+{
+
+}
 
 // We gonna work over projected axes for each collision pair.
 void main()

@@ -15,7 +15,7 @@ void P3OpenGLComputeBroadPhase::init()
 
 CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
 {
-	detectCollisionPairs(boxColliders);
+	//detectCollisionPairs(boxColliders);
 
 	return mCollisionPairCpuData;
 }

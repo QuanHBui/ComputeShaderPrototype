@@ -195,23 +195,27 @@ bool pointInTriTest(glm::vec3 const &v0,
 	return false;
 }
 
- 
+
 void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 {
 	// BoxCollider and CollisionPair buffers should already on the GPU from broadphase already.
-	// Only need to allocate 1 buffer for the MTV's.
-	glGenBuffers(1u, mSsboIDs);
+	// Only need to allocate 2 buffers: 1 for the manifolds, and 1 for the MTV's.
+	glGenBuffers(2u, mSsboIDs);
 }
 
 void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 {
+	atomicCounter.reset();
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MTVS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * boxCollidersSize, nullptr, GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mBoxCollidersID);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mCollisionPairsID);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[MTVS]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[MANIFOLDS]);
+
+	atomicCounter.bindTo(3u);
 
 	GLuint currProgID = mComputeProgramIDs[SAT];
 	glUseProgram(currProgID);

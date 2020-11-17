@@ -56,13 +56,14 @@ private:
 	//================ For debugging ================//
 	GLuint mDebugVao = 0u, mDebugVbo = 0u;
 	//================== Constants ==================//
-	static constexpr uint8_t num_shaders   = 3u;
-	static constexpr uint8_t num_shapes    = 4u;
-	static constexpr uint8_t num_mesh_keys = 100u;
+	static constexpr uint8_t shader_count    = 3u;
+	static constexpr uint8_t shape_count     = 4u;
+	static constexpr uint8_t mesh_key_count  = 100u;
+	static constexpr uint8_t max_mesh_count  = 100u;
 
-	Program mPrograms[num_shaders];
-	Shape   mMeshes[num_shapes];
-	MeshKey mMeshKeys[num_mesh_keys];
+	Program mPrograms[shader_count];
+	Shape   mMeshes[shape_count];
+	MeshKey mMeshKeys[mesh_key_count];
 
 	uint8_t mNextShapeIdx   = 0u;
 	uint8_t mNextMeshKeyIdx = 0u;

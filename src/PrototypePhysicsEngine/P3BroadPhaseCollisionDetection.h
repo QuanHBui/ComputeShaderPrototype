@@ -62,12 +62,11 @@ private:
 	};
 
 	//----------------------------- OpenGL bookkeeping ----------------------------//
-	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{ { 0u } };
-	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDContainer{ { 0u } };
+	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{ 0u };
+	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDContainer{ 0u };
 	GLuint mAtomicBufferID = 0u;
 
 	//--------------------------------- Debug ---------------------------------//
-	GLuint mAtomicCounterCpu = 0u;
 	AabbGpuPackage mAabbCpuData;
 	CollisionPairGpuPackage mCollisionPairCpuData;
 };

@@ -68,17 +68,6 @@ void RenderSystem::render(int width, int height,
 		++objectIdx;
 	}
 
-	// Render the platform
-	// glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{ 0.0f, -4.0f, -20.0f });
-	// model *= glm::scale(glm::mat4(1.0f), glm::vec3{ 5.0f, 1.0f, 20.0f });
-	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "projection"),
-	// 	1, GL_FALSE, glm::value_ptr(mProjection));
-	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "view"),
-	// 	1, GL_FALSE, glm::value_ptr(mView));
-	// glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "model"),
-	// 	1, GL_FALSE, glm::value_ptr(model));
-	// mMeshes[QUAD].draw(renderProgram);
-
 	renderProgram.unbind();
 }
 
@@ -116,7 +105,7 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
 
 	// Bind render program
-	Program const &debugShaderProg = mPrograms[ShaderProg::DEBUG];
+	Program const &debugShaderProg = mPrograms[DEBUG];
 	debugShaderProg.bind();
 
 	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "projection"),
@@ -124,12 +113,23 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "view"),
 		1, GL_FALSE, glm::value_ptr(mView));
 
-	// Iterate through all the box colliders and send the vertices info
+	// Iterate through all the box colliders and batch all the vertices
+	glm::vec4 batchedVertices[8 * max_mesh_count];
+	int colliderIdx = 0;
+
 	for (P3BoxCollider const &boxCollider : boxColliders)
 	{
-		glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(glm::vec4), (const void *)boxCollider.mVertices, GL_DYNAMIC_DRAW);
-		CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, 8));
+		for (int vertIdx = 0; vertIdx < 8; ++vertIdx)
+		{
+			batchedVertices[8 * colliderIdx + vertIdx] = boxCollider.mVertices[vertIdx];
+		}
+
+		++colliderIdx;
 	}
+
+	// Batch draw call
+	glBufferData(GL_ARRAY_BUFFER, 8 * boxColliders.size() * sizeof(glm::vec4), (const void *)batchedVertices, GL_DYNAMIC_DRAW);
+	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, 8 * boxColliders.size()));
 
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
@@ -141,7 +141,7 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 
 void RenderSystem::registerMeshForBody(MeshKey const &shape, unsigned int quantity)
 {
-	assert(mNextMeshKeyIdx + 1u < num_mesh_keys && "Mesh keys at limit.");
+	assert(mNextMeshKeyIdx + 1u < mesh_key_count && "Mesh keys at limit.");
 
 	for (unsigned int i = 0u; i < quantity; ++i)
 		mMeshKeys[mNextMeshKeyIdx++] = shape;
