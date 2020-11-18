@@ -102,6 +102,9 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Epa.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -135,6 +138,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Simplex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -72,12 +72,14 @@ public:
 			glDeleteProgram(mComputeProgramIDs[i]);
 
 		glDeleteBuffers(narrow_phase_ssbo_count, mSsboIDs);
+
+		atomicCounter.clear();
 	}
 
 private:
 	void initShaderPrograms()
 	{
-		mComputeProgramIDs[SAT] = createComputeProgram("../resources/shaders/SAT.comp");
+		mComputeProgramIDs[SAT] = createComputeProgram("../resources/shaders/sat.comp");
 	}
 
 	void initGpuBuffers();

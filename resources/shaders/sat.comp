@@ -3,15 +3,25 @@
 
 precision highp float;
 
-#define NUM_COLLIDER_VERTS 8u
-#define MAX_NUM_COLLIDERS 1000u
-#define MAX_NUM_PROJ_AXES 1000u
+#define COLLIDER_FACE_COUNT 6u
+#define COLLIDER_VERT_COUNT 8u
+#define MAX_COLLIDER_COUNT 1000u
+#define MAX_PROJ_AXIS_COUNT 1000u
 
-layout(local_size_x = MAX_NUM_PROJ_AXES) in;
+layout(local_size_x = MAX_PROJ_AXIS_COUNT) in;
+
+// Define quad faces. Iterate every 4 uint's
+const uint faces[COLLIDER_FACE_COUNT * 4u] = uint[COLLIDER_FACE_COUNT * 4u](
+	0u, 3u, 2u, 1u,   // front
+	0u, 4u, 7u, 3u,   // left
+	4u, 5u, 6u, 7u,   // back
+	5u, 1u, 2u, 6u,   // right
+	0u, 1u, 5u, 4u,   // top
+	3u, 7u, 6u, 2u ); // bottom
 
 struct BoxCollider
 {
-	vec4 vertices[NUM_COLLIDER_VERTS];
+	vec4 vertices[COLLIDER_VERT_COUNT];
 };
 
 struct Manifold
@@ -28,25 +38,123 @@ layout(std430, binding = 0) readonly buffer in_collider_data
 
 layout(std430, binding = 1) readonly buffer in_collision_pair_data
 {
-	vec4 collisionPairs[2 * MAX_NUM_COLLIDERS];
+	ivec4 collisionPairs[2 * MAX_COLLIDER_COUNT];
 };
 
 layout(std430, binding = 2) writeonly buffer out_manifolds_data
 {
-	Manifold manifolds[MAX_NUM_COLLIDERS];
+	Manifold manifolds[MAX_COLLIDER_COUNT];
 };
 
 layout(binding = 3) uniform atomic_uint nextAvailableIndx;
 
-// This function will create and append to the manifold buffer.
-void separatingAxisTest( )
+// Distance of point to plane
+float getDistance(vec3 point, vec3 planePoint, vec3 planeNormal)
 {
+	float d           = planeNormal.x * planePoint.x + planeNormal.y * planePoint.y + planeNormal.z * planePoint.z;
+	float numerator   = planeNormal.x * point.x + planeNormal.y * point.y + planeNormal.z * point.z + d;
+	float denominator = sqrt(planeNormal.x * planeNormal.x + planeNormal.y * planeNormal.y + planeNormal.z * planeNormal.z);
+	return numerator / denominator;
+}
 
+vec3 getSupport(BoxCollider box, vec3 direction)
+{
+	float projDist        = 0.0f;
+	float largestProjDist = 0.0f;
+	vec3 supportPoint     = vec3(0.0f);
+
+	// Iterate through all vertices of box. Dot product each of them with direction vector.
+	//  Return the vertex with largest dot product.
+	for (uint vertIdx = 0u; vertIdx < COLLIDER_VERT_COUNT; ++vertIdx)
+	{
+		projDist = dot(box.vertices[vertIdx].xyz, direction);
+
+		if (projDist > largestProjDist)
+		{
+			largestProjDist = projDist;
+			supportPoint    = box.vertices[vertIdx].xyz;
+		}
+	}
+
+	return supportPoint;
+}
+
+void getPlane(BoxCollider box, uint faceIdx, out vec3 planePoint, out vec3 planeNormal)
+{
+	// Calculate face normal - the vertices should all be CCW winded.
+	vec3 a = box.vertices[faces[faceIdx * 4u + 0u]].xyz;
+	vec3 b = box.vertices[faces[faceIdx * 4u + 1u]].xyz;
+	vec3 c = box.vertices[faces[faceIdx * 4u + 2u]].xyz;
+
+	planeNormal = normalize(cross(b - a, c - a));
+
+	// Plane point can be any vertex.
+	planePoint = a;
+}
+
+void queryFaceDirections(BoxCollider boxA, BoxCollider boxB, out float largestDist, out uint faceIdx)
+{
+	float dist        = 0.0f;
+	vec3 planePoint   = vec3(0.0f);
+	vec3 planeNormal  = vec3(0.0f);
+	vec3 supportPoint = vec3(0.0f);
+
+	// Reset
+	faceIdx     = 0u; // Potentially a bug here since 0 is a valid face index.
+	largestDist = 0.0f;
+
+	// Each face has 4 vertices
+	for (uint localFaceIdx = 0u; localFaceIdx < COLLIDER_FACE_COUNT; ++localFaceIdx)
+	{
+		// Expand face of boxA to plane
+		getPlane(boxA, localFaceIdx, planePoint, planeNormal);
+
+		// Get support point from boxB
+		supportPoint = getSupport(boxB, -planeNormal);
+
+		// Distance from support point to plane
+		dist = getDistance(supportPoint, planePoint, planeNormal);
+
+		if (dist > largestDist)
+		{
+			faceIdx     = localFaceIdx;
+			largestDist = dist;
+		}
+	}
+}
+
+void queryEdgeDirections(BoxCollider boxA, BoxCollider boxB, out float largestDist)
+{
+	// Iterate through all edges of A
+}
+
+// This function will create and append to the manifold buffer.
+// @source: http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
+void separatingAxisTest(uint collisionPairIdx)
+{
+	BoxCollider boxA = boxColliders[collisionPairs[collisionPairIdx].x];
+	BoxCollider boxB = boxColliders[collisionPairs[collisionPairIdx].y];
+
+	uint faceIdx      = 0u;
+	float largestDist = 0.0f;
+
+	queryFaceDirections(boxA, boxB, largestDist, faceIdx); // Look at faces of A
+	if (largestDist > 0.0f) return; // We have found a separating axis. No overlap.
+
+	queryFaceDirections(boxB, boxA, largestDist, faceIdx); // Look at faces of B
+	if (largestDist > 0.0f) return;
+
+	queryEdgeDirections(boxB, boxA, largestDist); // Look at edges of A and B
+	if (largestDist > 0.0f) return;
+
+	// If we get to here, there's no separating axis, the 2 boxes must overlap.
 }
 
 // We gonna work over projected axes for each collision pair.
 void main()
 {
 	uint collisionPairIdx = gl_WorkGroupID.x;
-	uint edgeIdx = gl_LocalInvocationIndex.x;
+
+	if (collisionPairs[collisionPairIdx].x >= 0)
+		separatingAxisTest(collisionPairIdx);
 }

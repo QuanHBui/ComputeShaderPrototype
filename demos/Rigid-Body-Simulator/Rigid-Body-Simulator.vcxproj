@@ -159,6 +159,7 @@
     <ClCompile Include="..\..\src\GLSL.cpp" />
     <ClCompile Include="..\..\src\OpenGLUtils.cpp" />
     <ClCompile Include="..\..\src\Program.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Collider.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
@@ -174,6 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Camera.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Collider.h" />

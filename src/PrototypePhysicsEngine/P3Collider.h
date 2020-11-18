@@ -89,15 +89,15 @@ struct P3BoxCollider
 
 	glm::vec4 mVertices[8] =
 	{
-		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
-		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
-		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
-		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f }, // 0
+		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f }, // 1
+		glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f }, // 2
+		glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f }, // 3
 
-		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
-		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
-		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
-		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+		glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f }, // 4
+		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f }, // 5
+		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f }, // 6
+		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }  // 7
 	};
 
 	glm::vec4 mInstanceVertices[8] =

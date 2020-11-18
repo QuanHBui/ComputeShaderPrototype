@@ -41,7 +41,7 @@ void RenderSystem::render(int width, int height,
 	{
 		unsigned int redOrNo = 0u;
 		// Check collision pair list if this mesh has collided
-		for (glm::vec4 const &collisonPair : collisionPairs.collisionPairs)
+		for (glm::ivec4 const &collisonPair : collisionPairs.collisionPairs)
 		{
 			if (collisonPair.x < 0.0) break;
 

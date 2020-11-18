@@ -27,6 +27,8 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 {
 	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
 
+	narrowPhase.step(mBoxColliders.size());
+
 	static float radians = 0.0f;
 
 	for (int i = 0; i < 50; ++i)
@@ -167,6 +169,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 cons
 {
 	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
 	narrowPhase.step(mBoxColliders.size());
+
 	// 1st box is static, 2nd box is kinematic/controllable.
 	mLinearTransformContainer[1].position += deltaP;
 	mMeshColliderContainer[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));

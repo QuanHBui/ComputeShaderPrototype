@@ -1,5 +1,6 @@
 #include "ComputeProgram.h"
 
+#include <iostream>
 #include <stdexcept>
 
 #include "GLSL.h"
@@ -22,6 +23,7 @@ GLuint createComputeProgram(std::string const &shaderName)
 	{
 		GLSL::printShaderInfoLog(computeShader);
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
+		std::cerr << "Error compiling compute shader " + shaderName + ". Shader object will be deleted.\n";
 		throw std::runtime_error("Error compiling compute shader " + shaderName + ". Shader object will be deleted.");
 	}
 
@@ -30,13 +32,21 @@ GLuint createComputeProgram(std::string const &shaderName)
 	CHECKED_GL_CALL(glLinkProgram(programID));
 
 	// Check for linking status
-	CHECKED_GL_CALL(glGetProgramiv(programID, GL_LINK_STATUS, &success));
+	glGetProgramiv(programID, GL_LINK_STATUS, &success);
 	if (!success)
 	{
+		GLchar programInfoCStr[1000];
+		GLsizei programInfoCStrLength = 0u;
+		glGetProgramInfoLog(
+			programID, 1000, &programInfoCStrLength, programInfoCStr );
+
+		std::cerr << programInfoCStr << '\n';
+
 		GLSL::printShaderInfoLog(computeShader);
 		CHECKED_GL_CALL(glDetachShader(programID, computeShader));
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
-		throw std::runtime_error("Error compiling compute shader " + shaderName + ". Shader object will be deleted.");
+		std::cerr << "Error linking compute shader " + shaderName + ". Shader object will be deleted.\n";
+		throw std::runtime_error("Error linking compute shader " + shaderName + ". Shader object will be deleted.");
 	}
 
 	// Detach and delete compute shader after linking

@@ -15,7 +15,7 @@ void P3OpenGLComputeBroadPhase::init()
 
 CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
 {
-	//detectCollisionPairs(boxColliders);
+	detectCollisionPairs(boxColliders);
 
 	return mCollisionPairCpuData;
 }
@@ -186,7 +186,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
 	// {
 	// 	run = true;
-	// 	printf("%.03f, %.03f\n",
+	// 	printf("%d, %d\n",
 	// 		mCollisionPairCpuData.collisionPairs[i].x,
 	// 		mCollisionPairCpuData.collisionPairs[i].y);
 	// 	fflush(stdout);
@@ -281,7 +281,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
 	// {
 	// 	run = true;
-	// 	printf("%.03f, %.03f\n",
+	// 	printf("%d, %d\n",
 	// 		mCollisionPairCpuData.collisionPairs[i].x,
 	// 		mCollisionPairCpuData.collisionPairs[i].y);
 	// 	fflush(stdout);

@@ -74,6 +74,6 @@ struct AabbGpuPackage
 
 struct CollisionPairGpuPackage
 {
-	glm::vec4 collisionPairs[2 * MAX_NUM_OBJECTS];
+	glm::ivec4 collisionPairs[2 * MAX_NUM_OBJECTS];
 };
 #endif // BOUNDING_VOLUME_H

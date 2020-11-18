@@ -177,7 +177,7 @@ void computeIntersectInterval(float projVert0, float projVert1, float projVert2,
 
 // Edge to edge test
 // Reference: Franlin Antonio's "Faster Line Segment Intersection"
-//				in Graphics Gem III pg 199-202
+//            in Graphics Gem III pg 199-202
 bool edgeEdgeTest(glm::vec3 const &v0, glm::vec3 const &u0, glm::vec3 const &u1)
 {
 	return false;
@@ -207,7 +207,7 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 {
 	atomicCounter.reset();
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MTVS]);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MANIFOLDS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * boxCollidersSize, nullptr, GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
 
@@ -220,6 +220,6 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 	GLuint currProgID = mComputeProgramIDs[SAT];
 	glUseProgram(currProgID);
 
-	// 2000 is the max num collision pairs in world.
+	// 2000 is the max number of collision pairs in world.
 	glDispatchCompute(GLuint(2000u), GLuint(1u), GLuint(1u));
 }
