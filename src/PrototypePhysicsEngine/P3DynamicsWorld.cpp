@@ -33,9 +33,9 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 
 	for (int i = 0; i < 50; ++i)
 	{
-		mLinearTransformContainer[i].velocity.x +=  dt * cosf(10.0f * radians);
-		mLinearTransformContainer[i].velocity.y +=  dt * cosf(10.0f * radians);
-		mLinearTransformContainer[i].velocity.z +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[i].velocity.x += dt * cosf(10.0f * radians);
+		mLinearTransformContainer[i].velocity.y += dt * cosf(10.0f * radians);
+		mLinearTransformContainer[i].velocity.z += dt * cosf(10.0f * radians);
 
 		mLinearTransformContainer[i].momentum    = mLinearTransformContainer[i].velocity * mLinearTransformContainer[i].mass;
 		mLinearTransformContainer[i].position   += mLinearTransformContainer[i].velocity * float(dt);
@@ -43,9 +43,9 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 
 	for (int j = 50; j < 100; ++j)
 	{
-		mLinearTransformContainer[j].velocity.x +=  dt * cosf(10.0f * radians);
-		mLinearTransformContainer[j].velocity.y +=  dt * cosf(10.0f * radians);
-		mLinearTransformContainer[j].velocity.z +=  dt * cosf(10.0f * radians);
+		mLinearTransformContainer[j].velocity.x += dt * cosf(10.0f * radians);
+		mLinearTransformContainer[j].velocity.y += dt * cosf(10.0f * radians);
+		mLinearTransformContainer[j].velocity.z += dt * cosf(10.0f * radians);
 
 		mLinearTransformContainer[j].momentum    = mLinearTransformContainer[j].velocity * mLinearTransformContainer[j].mass;
 		mLinearTransformContainer[j].position   += mLinearTransformContainer[j].velocity * float(dt);

@@ -40,7 +40,7 @@ void main()
 		// Try to unstick itself first
 		if (length(collision) <= combinedRadii * 0.5f) 
 		{
-			currVelocityMass.xyz = 
+			currVelocityMass.xyz = vec3(0.0f); // Huge TODO:
 		}
 		// This is a hit.
 		// Find the projection of the momentum of potential sphere onto the collision 

@@ -12,27 +12,7 @@
 #include <fstream>
 
 #include "GLSL.h"
-
-std::string readFileAsString(const std::string &fileName)
-{
-	std::string result;
-	std::ifstream fileHandle(fileName);
-
-	if (fileHandle.is_open())
-	{
-		fileHandle.seekg(0, std::ios::end);
-		result.reserve((size_t)fileHandle.tellg());
-		fileHandle.seekg(0, std::ios::beg);
-
-		result.assign((std::istreambuf_iterator<char>(fileHandle)), std::istreambuf_iterator<char>());
-	}
-	else
-	{
-		throw std::runtime_error("Could not open file: " + fileName);
-	}
-
-	return result;
-}
+#include "OpenGLUtils.h"
 
 void Program::setShaderNames(const std::string &v, const std::string &f)
 {

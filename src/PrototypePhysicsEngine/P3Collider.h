@@ -27,7 +27,7 @@ public:
 	{
 		for (unsigned int i = 0u; i < mVertices.size(); ++i)
 		{
-			mVertices[i] = model * mInstanceVertices[i];
+			mVertices[i]   = model * mInstanceVertices[i];
 			mVertices[i].w = 1.0f;
 		}
 	}
@@ -74,7 +74,7 @@ struct P3BoxCollider
 	{
 		for (unsigned int i = 0u; i < 8u; ++i)
 		{
-			mVertices[i] = model * mInstanceVertices[i];
+			mVertices[i]   = model * mInstanceVertices[i];
 			mVertices[i].w = 1.0f;
 		}
 	}

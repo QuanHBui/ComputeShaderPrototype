@@ -14,8 +14,6 @@
 #include <string>
 #include <glad/glad.h>
 
-std::string readFileAsString(const std::string &fileName);
-
 class Program
 {
 public:

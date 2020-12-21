@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "Camera.h"
-#include "Systems/RenderSystem.h"
+#include "RenderSystem.h"
 #include "PrototypePhysicsEngine/P3DynamicsWorld.h"
 #include "WindowManager.h"
 

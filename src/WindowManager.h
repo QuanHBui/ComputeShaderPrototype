@@ -20,7 +20,7 @@
 #define LAB471_WINDOW_H_INCLUDED
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 // This interface let's us write our own class that can be notified by input
 // events, such as key presses and mouse movement.

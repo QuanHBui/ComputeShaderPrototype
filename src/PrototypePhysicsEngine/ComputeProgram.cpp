@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "GLSL.h"
-#include "Program.h"
+#include "OpenGLUtils.h"
 
 GLuint createComputeProgram(std::string const &shaderName)
 {
@@ -37,8 +37,7 @@ GLuint createComputeProgram(std::string const &shaderName)
 	{
 		GLchar programInfoCStr[1000];
 		GLsizei programInfoCStrLength = 0u;
-		glGetProgramInfoLog(
-			programID, 1000, &programInfoCStrLength, programInfoCStr );
+		glGetProgramInfoLog(programID, 1000, &programInfoCStrLength, programInfoCStr);
 
 		std::cerr << programInfoCStr << '\n';
 

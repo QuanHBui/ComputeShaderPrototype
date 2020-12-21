@@ -27,8 +27,8 @@ GLuint AtomicCounter::get()
 {
 	bind();
 
-	GLuint *pCounter =
-		(GLuint *)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+	GLuint *pCounter = (GLuint *)glMapBufferRange(
+		GL_ATOMIC_COUNTER_BUFFER,
 		0,
 		sizeof(GLuint),
 		GL_MAP_READ_BIT
@@ -45,9 +45,12 @@ void AtomicCounter::reset()
 {
 	bind();
 
-	GLuint *pMappedBufferMemory =
-		(GLuint *)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+	GLuint *pMappedBufferMemory = (GLuint *)glMapBufferRange(
+		GL_ATOMIC_COUNTER_BUFFER,
+		0,
+		sizeof(GLuint),
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT
+	);
 	memset(pMappedBufferMemory, 0, sizeof(GLuint));
 	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 

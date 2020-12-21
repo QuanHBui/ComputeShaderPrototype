@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "../PrototypePhysicsEngine/BoundingVolume.h"
+#include "PrototypePhysicsEngine/BoundingVolume.h"
 #include "GLSL.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION

@@ -16,12 +16,6 @@
     <Filter Include="Source Files\PhysicsEngine">
       <UniqueIdentifier>{bd880a10-06c0-465d-a054-09a4f056d91d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Components">
-      <UniqueIdentifier>{aa3cd1f1-a772-42d1-9feb-3fb3b5113379}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Systems">
-      <UniqueIdentifier>{690182cf-168b-4c8f-b5cd-e1c6eeb94b28}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Ext">
       <UniqueIdentifier>{10ee0df2-6548-484d-8861-5a8e44f711c4}</UniqueIdentifier>
     </Filter>
@@ -30,13 +24,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ComputeProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\OpenGLUtils.cpp">
@@ -84,9 +72,6 @@
     <ClCompile Include="..\..\ext\imgui\examples\imgui_impl_opengl3.cpp">
       <Filter>Ext</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Systems\RenderSystem.cpp">
-      <Filter>Source Files\Systems</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\ext\tiny_obj_loader\tiny_obj_loader.cpp">
       <Filter>Ext</Filter>
     </ClCompile>
@@ -105,12 +90,18 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\RenderSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Systems\RenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h">
@@ -141,6 +132,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RenderSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -176,6 +173,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\..\resources\shaders\sap.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\sat.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

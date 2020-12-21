@@ -1,7 +1,6 @@
 /**
  * I guess inside this world we have physics enabled. Newton must be proud!
  * @author: Quan Bui
- * @version: 10/15/2020
  */
 
 #pragma once
@@ -65,7 +64,7 @@ public:
 	}
 
 	void setGravity(float gravity) { mGravity = gravity; }
-	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; }	// Need error checking
+	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; } // Need error checking
 
 	bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
 
@@ -97,8 +96,8 @@ private:
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 	P3OpenGLComputeBroadPhase broadPhase;
 	P3OpenGLComputeNarrowPhase narrowPhase;
-	P3ConstraintSolver constraintSolver;	// Produces forces to make sure things don't phase past each other
-	P3Integrator integrator;				// Actually integrates the force vector and apply to linear transform
+	P3ConstraintSolver constraintSolver; // Produces forces to make sure things don't phase past each other
+	P3Integrator integrator;             // Actually integrates the force vector and apply to linear transform
 };
 
 #endif // P3_DYNAMICS_WORLD_H

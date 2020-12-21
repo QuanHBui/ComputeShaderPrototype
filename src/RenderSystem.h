@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 #include <glm/mat4x4.hpp>
 
-#include "../PrototypePhysicsEngine/P3Collider.h"
+#include "PrototypePhysicsEngine/P3Collider.h"
 #include "Shape.h"
 #include "Program.h"
 

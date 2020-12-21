@@ -38,14 +38,15 @@ bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm
 
 struct BoundingVolume;
 
+// This contact manifold can be either face or edge feature.
 struct ContactManifold
 {
-
+	uint faceIdx;
+	float largestDist;
+	vec3 faceNormal;
 };
 
-
 void buildContactManifold(ContactManifold &, BoundingVolume *, BoundingVolume *);
-
 
 class P3OpenGLComputeNarrowPhase
 {

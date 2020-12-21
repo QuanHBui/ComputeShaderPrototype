@@ -7,11 +7,10 @@
 
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
-#include "ComputeProgram.h"
+#include "PrototypePhysicsEngine/ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
 #include "Shape.h"
-#include "stb_image.h"
 
 // Physics stuff
 #include "PrototypePhysicsEngine/P3DynamicsWorld.h"
@@ -49,6 +48,9 @@ Application::~Application()
 
 void Application::init()
 {
+	getComputeGroupInfo();
+	getUboInfo();
+
 	initRenderSystem();
 	initPhysicsWorld();
 	initUI();

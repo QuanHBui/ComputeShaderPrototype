@@ -7,4 +7,5 @@ class P3ConstraintSolver
 {
 
 };
+
 #endif // P3_CONSTRAINT_SOLVER
