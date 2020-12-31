@@ -189,6 +189,7 @@ bool edgeTriTest(glm::vec3 const &v0, glm::vec3 const &v1,
 	return false;
 }
 
+// TODO: Isn't this just barycentric coord test?
 bool pointInTriTest(glm::vec3 const &v0,
 	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
@@ -220,6 +221,5 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 	GLuint currProgID = mComputeProgramIDs[SAT];
 	glUseProgram(currProgID);
 
-	// 2000 is the max number of collision pairs in world.
-	glDispatchCompute(GLuint(2000u), GLuint(1u), GLuint(1u));
+	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
 }

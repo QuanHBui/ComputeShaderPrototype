@@ -4,8 +4,8 @@
  *
  * @author: Quan Bui
  * @version: 04/28/2020
- * @reference: 	Tomas Moller, "A Fast Triangle-Triangle Intersection Test"
- *				https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
+ * @reference: Tomas Moller, "A Fast Triangle-Triangle Intersection Test"
+ *			   https://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/pubs/tritri.pdf
  */
 
 #pragma once
@@ -41,9 +41,9 @@ struct BoundingVolume;
 // This contact manifold can be either face or edge feature.
 struct ContactManifold
 {
-	uint faceIdx;
+	uint16_t faceIdx;
 	float largestDist;
-	vec3 faceNormal;
+	glm::vec4 faceNormal;
 };
 
 void buildContactManifold(ContactManifold &, BoundingVolume *, BoundingVolume *);

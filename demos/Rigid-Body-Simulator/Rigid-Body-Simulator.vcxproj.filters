@@ -140,6 +140,12 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\WindowManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp">

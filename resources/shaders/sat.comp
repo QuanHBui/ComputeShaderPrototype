@@ -1,31 +1,38 @@
 #version 430
-#extension GL_ARB_shader_storage_buffer_object : require
 
 precision highp float;
 
-#define COLLIDER_EDGE_COUNT 12u
-#define COLLIDER_FACE_COUNT 6u
-#define COLLIDER_VERT_COUNT 8u
-#define MAX_COLLIDER_COUNT 1000u
-#define MAX_PROJ_AXIS_COUNT 1000u
+#define VERT_COUNT_PER_EDGE 2
+#define VERT_COUNT_PER_FACE 4
+#define COLLIDER_EDGE_COUNT 12
+#define COLLIDER_FACE_COUNT 6
+#define COLLIDER_VERT_COUNT 8
+#define MAX_CONTACT_POINT_COUNT 16
+#define MAX_COLLIDER_COUNT 1024
 
-layout(local_size_x = MAX_PROJ_AXIS_COUNT) in;
+layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
-// Define quad faces. Iterate every 4 uint's
-const uint faces[COLLIDER_FACE_COUNT * 4u] = uint[COLLIDER_FACE_COUNT * 4u](
-	0u, 3u, 2u, 1u,   // front
-	0u, 4u, 7u, 3u,   // left
-	4u, 5u, 6u, 7u,   // back
-	5u, 1u, 2u, 6u,   // right
-	0u, 1u, 5u, 4u,   // top
-	3u, 7u, 6u, 2u ); // bottom
+// The faces and edges must be pre-defined.
 
-// Define box edges. Iterate every 2 uint's. Direction of each edge is arbitrary.
-const uint edges[COLLIDER_EDGE_COUNT * 2u] = uint[COLLIDER_EDGE_COUNT * 2u](
-	0u, 1u,    1u, 5u,    4u, 7u,
-	0u, 3u,    2u, 6u,    7u, 6u,
-	3u, 2u,    6u, 5u,    4u, 0u,
-	2u, 1u,    4u, 5u,    3u, 7u );
+// Define quad faces. Iterate every 4 int's
+const int faces[COLLIDER_FACE_COUNT][VERT_COUNT_PER_FACE] =
+{
+	{ 0, 3, 2, 1 }, // front
+	{ 0, 4, 7, 3 }, // left
+	{ 4, 5, 6, 7 }, // back
+	{ 5, 1, 2, 6 }, // right
+	{ 0, 1, 5, 4 }, // top
+	{ 3, 7, 6, 2 }  // bottom
+};
+
+// Define box edges. Iterate every 2 int's. Direction of each edge is arbitrary.
+const int edges[COLLIDER_EDGE_COUNT][VERT_COUNT_PER_EDGE] =
+{
+	{ 0, 1 }, { 1, 5 }, { 4, 7 },
+	{ 0, 3 }, { 2, 6 }, { 7, 6 },
+	{ 3, 2 }, { 6, 5 }, { 4, 0 },
+	{ 2, 1 }, { 4, 5 }, { 3, 7 }
+};
 
 struct BoxCollider
 {
@@ -34,18 +41,18 @@ struct BoxCollider
 
 struct Manifold
 {
-	vec4 pointCount; // Wasteful, but it's ok.
-	vec4 contactPoints;
-	vec4 contactNormal;
+	vec4 contactPoints[MAX_CONTACT_POINT_COUNT]; // w stores contact point count.
+	vec4 contactNormal; // w stores the penetration depth.
 };
 
 struct FeatureQuery
 {
-	uint faceIdx;
+	int faceIdx;
 	float largestDist;
 	vec3 faceNormal;
 };
 
+/*-------------------------- Buffers ------------------------------*/
 layout(std430, binding = 0) readonly buffer in_collider_data
 {
 	BoxCollider boxColliders[];
@@ -53,23 +60,25 @@ layout(std430, binding = 0) readonly buffer in_collider_data
 
 layout(std430, binding = 1) readonly buffer in_collision_pair_data
 {
-	ivec4 collisionPairs[MAX_COLLIDER_COUNT * 2u];
+	ivec4 collisionPairs[MAX_COLLIDER_COUNT * 2];
 };
 
+// This is the out buffer that we are going to append to
 layout(std430, binding = 2) writeonly buffer out_manifolds_data
 {
 	Manifold manifolds[MAX_COLLIDER_COUNT];
 };
 
-layout(binding = 3) uniform atomic_uint nextAvailableIndx;
+layout(binding = 3) uniform atomic_uint nextAvailableIdx;
+/*-----------------------------------------------------------------*/
 
-// Distance of point to plane. TODO: Bro, this is just dot product man.
-float getDistance(vec3 point, vec3 planePoint, vec3 planeNormal)
+// Yes, when we go to a different work group this will be refilled again.
+shared vec3 colliderFaceNormals[MAX_COLLIDER_COUNT][COLLIDER_FACE_COUNT];
+
+// Signed distance of plane to an arbitrary point. Assume plane normal is already normalized.
+float getSignedDist(vec3 point, vec3 planePoint, vec3 planeNormal)
 {
-	float d           = planeNormal.x * planePoint.x + planeNormal.y * planePoint.y + planeNormal.z * planePoint.z;
-	float numerator   = planeNormal.x * point.x + planeNormal.y * point.y + planeNormal.z * point.z + d;
-	float denominator = sqrt(planeNormal.x * planeNormal.x + planeNormal.y * planeNormal.y + planeNormal.z * planeNormal.z);
-	return numerator / denominator;
+	return dot(planeNormal, point - planePoint);
 }
 
 vec3 getSupport(BoxCollider box, vec3 direction)
@@ -80,7 +89,7 @@ vec3 getSupport(BoxCollider box, vec3 direction)
 
 	// Iterate through all vertices of box. Dot product each of them with direction vector.
 	//  Return the vertex with largest dot product.
-	for (uint vertIdx = 0u; vertIdx < COLLIDER_VERT_COUNT; ++vertIdx)
+	for (int vertIdx = 0; vertIdx < COLLIDER_VERT_COUNT; ++vertIdx)
 	{
 		projDist = dot(box.vertices[vertIdx].xyz, direction);
 
@@ -94,46 +103,60 @@ vec3 getSupport(BoxCollider box, vec3 direction)
 	return supportPoint;
 }
 
-vec3 getFaceNormal(BoxCollider box, uint faceIdx)
+vec3 getFaceNormal(BoxCollider box, int faceIdx)
 {
 	// Calculate face normal - the vertices should all be CCW winded.
-	vec3 a = box.vertices[faces[faceIdx * 4u + 0u]].xyz;
-	vec3 b = box.vertices[faces[faceIdx * 4u + 1u]].xyz;
-	vec3 c = box.vertices[faces[faceIdx * 4u + 2u]].xyz;
+	vec3 a = box.vertices[faces[faceIdx][0]].xyz;
+	vec3 b = box.vertices[faces[faceIdx][1]].xyz;
+	vec3 c = box.vertices[faces[faceIdx][2]].xyz;
 
 	return normalize(cross(b - a, c - a));
 }
 
-void getPlane(BoxCollider box, uint faceIdx, out vec3 planePoint, out vec3 planeNormal)
+// 1 local invocation = 1 collider. We might have an issue when the local size
+//  is smaller than the MAX_COLLIDER_COUNT.
+void calculateFaceNormals()
 {
-	placeNormal = getFaceNormal(box, faceIdx);
+	uint boxIdx = gl_LocalInvocationID.x;
 
-	// Plane point can be any vertex.
-	planePoint = a;
+	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
+	{
+		colliderFaceNormals[boxIdx][faceIdx] = getFaceNormal(boxColliders[boxIdx], faceIdx);
+	}
 }
 
-void queryFaceDirections(BoxCollider boxA, BoxCollider boxB, out FeatureQuery faceQuery)
+void getPlane(int boxIdx, int faceIdx, out vec3 planePoint, out vec3 planeNormal)
 {
+	planeNormal = colliderFaceNormals[boxIdx][faceIdx];
+
+	// Plane point can be any vertex.
+	planePoint = boxColliders[boxIdx].vertices[faces[faceIdx][0]].xyz;
+}
+
+void queryFaceDirections(int boxAIdx, int boxBIdx, out FeatureQuery faceQuery)
+{
+	BoxCollider boxA  = boxColliders[boxAIdx];
+	BoxCollider boxB  = boxColliders[boxBIdx];
 	float dist        = 0.0f;
 	vec3 planePoint   = vec3(0.0f);
 	vec3 planeNormal  = vec3(0.0f);
 	vec3 supportPoint = vec3(0.0f);
 
 	// Initialize
-	faceQuery.faceIdx     = 0u; // Potentially a bug here since 0 is a valid face index.
+	faceQuery.faceIdx     = -1;
 	faceQuery.largestDist = -9999.9f;
 
 	// Each face has 4 vertices
-	for (uint localFaceIdx = 0u; localFaceIdx < COLLIDER_FACE_COUNT; ++localFaceIdx)
+	for (int localFaceIdx = 0; localFaceIdx < COLLIDER_FACE_COUNT; ++localFaceIdx)
 	{
 		// Expand face of boxA to plane
-		getPlane(boxA, localFaceIdx, planePoint, planeNormal);
+		getPlane(boxAIdx, localFaceIdx, planePoint, planeNormal);
 
 		// Get support point from boxB
 		supportPoint = getSupport(boxB, -planeNormal);
 
-		// Distance from support point to plane
-		dist = getDistance(supportPoint, planePoint, planeNormal);
+		// Get signed distance from support point to plane
+		dist = getSignedDist(supportPoint, planePoint, planeNormal);
 
 		if (dist > faceQuery.largestDist)
 		{
@@ -156,86 +179,175 @@ void queryEdgeDirections(BoxCollider boxA, BoxCollider boxB, out float largestDi
 	// Somehow we obtain the cross edge. In the case of the box, we can use edge 3 - 5.
 	// The point in the middle of the cross edge is the center of the box. If not, it's only
 	//  the direction of the box center from the current vertA that we care about.
-	vec3 centerA = boxA.vertices[3u].xyz + (boxA.vertices[3u].xyz - boxA.vertices[5u].xyz) * 0.5f;
+	vec3 centerA = boxA.vertices[3].xyz + (boxA.vertices[3].xyz - boxA.vertices[5].xyz) * 0.5f;
 
-	for (uint edgeIdxA = 0u; edgeIdxA < COLLIDER_EDGE_COUNT; ++edgeIdxA)
+	for (int edgeIdxA = 0; edgeIdxA < COLLIDER_EDGE_COUNT; ++edgeIdxA)
 	{
-		edgeA = boxA.vertices[edges[edgeIdxA * 2u]].xyz - boxA.vertices[edges[edgeIdxA * 2u + 1u]].xyz;
+		edgeA = boxA.vertices[edges[edgeIdxA][0]].xyz - boxA.vertices[edges[edgeIdxA][1]].xyz;
 
-		for (uint edgeIdxB = 0u; edgeIdxB < COLLIDER_EDGE_COUNT; ++edgeIdxB)
+		for (int edgeIdxB = 0; edgeIdxB < COLLIDER_EDGE_COUNT; ++edgeIdxB)
 		{
-			edgeB = boxB.vertices[edges[edgeIdxB * 2u]].xyz - boxB.vertices[edges[edgeIdxB * 2u + 1u]].xyz;
+			edgeB = boxB.vertices[edges[edgeIdxB][0]].xyz - boxB.vertices[edges[edgeIdxB][1]].xyz;
 
 			edgeNormal = cross(edgeA, edgeB);
 
 			// Check if the normal is in the wrong direction - compare to the center of box A
 			//  If so, flip the normal to make sure it's pointing outward from the box center.
-			if (dot(edgeNormal, boxA.vertices[edges[edgeIdxA * 2u]].xyz - centerA) < 0.0f)
+			if (dot(edgeNormal, boxA.vertices[edges[edgeIdxA][0]].xyz - centerA) < 0.0f)
 				edgeNormal *= -1.0f;
 
 			// With edgeNormal and a vertex from edgeA, we got a plane. We need to find the
 			//  distance from a vertex from edge B to said plane.
 			supportPointB = getSupport(boxB, -edgeNormal);
-			localDist     = getDistance(supportPointB, boxA.vertices[edges[edgeIdxA * 2u]].xyz, edgeNormal);
+			localDist     = getSignedDist(supportPointB, boxA.vertices[edges[edgeIdxA][0]].xyz, edgeNormal);
 
-			largestDist = localDist > largestDist ? localDist : largestDist;
+			largestDist   = localDist > largestDist ? localDist : largestDist;
 		}
 	}
 }
 
-// On a high level, we are clipping the incident face on the other convex hull
-//  against the side planes of the minimizing/reference face.
-//
-// So, we need to:
-//  (1) Identify the reference and incident faces
-//  (2) Use some polygon clipping algorithm to clip (cut off) the incident face
-//        against the planes to the sides of the reference face.
-//  (3) Finally, report/keep only the points/vertices that are below the
-//        reference face
-//
-// TODO: some namings might be confusing. In this function, we have 2 different
-//  "faceIdx" for example.
-void createFaceContact( FeatureQuery faceQueryA, BoxCollider boxA,
-						FeatureQuery faceQueryB, BoxCollider boxB )
+/**
+ * Now for the incident face. To find the most anti-parallel face
+ *  we simply iterate through all the faces, compute the dot product
+ *  of each face normal with the normal of the reference face. The
+ *  face with the smallest dot product is the incident face.
+ */
+vec3 getIncidentNormal(int incidentBoxIdx, vec3 referenceNormal)
+{
+	vec3 incidentNormal          = vec3(0.0f);
+	vec3 potentialIncidentNormal = vec3(0.0f);
+	float smallestDotProduct     = 9999.9f;
+	float localDotProduct        = 0.0f;
+
+	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
+	{
+		potentialIncidentNormal = colliderFaceNormals[incidentBoxIdx][faceIdx];
+		localDotProduct = dot(potentialIncidentNormal, referenceNormal);
+
+		if (localDotProduct < smallestDotProduct)
+		{
+			smallestDotProduct = localDotProduct;
+			incidentNormal     = potentialIncidentNormal;
+		}
+	}
+
+	return incidentNormal;
+}
+
+/**
+ * On a high level, we are clipping the incident face on the other convex hull
+ *  against the side planes of the minimizing/reference face.
+ *
+ * So, we need to:
+ *  (1) Identify the reference and incident faces
+ *  (2) Use some polygon clipping algorithm to clip (cut off) the incident face
+ *        against the planes to the sides of the reference face.
+ *  (3) Finally, report/keep only the points/vertices that are below the
+ *        reference face
+ *
+ * TODO: some namings might be confusing. In this function, we have 2 different
+ *  "faceIdx" for example.
+ */
+Manifold createFaceContact( FeatureQuery faceQueryA, int boxAIdx,
+							FeatureQuery faceQueryB, int boxBIdx )
 {
 	// Identify reference face and incident face. The closest face that got passed
 	//  into this function will be the reference face, and the most anti-parallel
 	//  face on the other box is the incident face.
 
-	vec3 referenceNormal     = vec3(0.0f);
-	float smallestDotProduct = 9999.9f;
-	float localDotProduct    = 0.0f;
+	vec3 referenceNormal = vec3(0.0f);
+	vec3 incidentNormal  = vec3(0.0f);
+	int referenceBoxIdx  = -1;
 
 	if (faceQueryA.largestDist < faceQueryB.largestDist)
 	{
 		// Reference face is from box A. Get normal from said face.
-		referenceNormal = getFaceNormal(boxA, faceQueryA.faceIdx);
+		referenceNormal = colliderFaceNormals[boxAIdx][faceQueryA.faceIdx];
+		referenceBoxIdx = boxAIdx;
 
-		// Now for the incident face. To find the most anti-parallel face
-		//  we simply iterate through all the faces, compute the dot product
-		//  of each face normal with the normal of the reference face. The
-		//  face with the smallest dot product is the incident face.
-		for (uint faceIdx = 0u; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
-		{
-			localDotProduct = dot(getFaceNormal(boxB, faceIdx), referenceNormal);
-
-			smallestDotProduct = localDotProduct < smallestDotProduct ?
-				localDotProduct : smallestDotProduct;
-		}
+		incidentNormal = getIncidentNormal(boxBIdx, referenceNormal);
 	}
 	else
 	{
 		// Reference face is from box B. Get normal.
-		referenceNormal = getFaceNormal(boxB, faceQueryB.faceIdx);
+		referenceNormal = colliderFaceNormals[boxBIdx][faceQueryB.faceIdx];
+		referenceBoxIdx = boxBIdx;
 
-		for (uint faceIdx = 0u; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
+		incidentNormal = getIncidentNormal(boxAIdx, referenceNormal);
+	}
+
+	// At this point, we know the incident and reference faces (more like their
+	//  normals). Now we have to clip the incident face against the side planes,
+	//  spanned from the side faces of the reference face. Bullet and Box2D engines
+	//  define the side faces of the reference face to be the faces that are
+	//  adjacent to the reference face.
+
+	// In our specific case, any face that is perpendicular to the reference face
+	//  is a side face. This potentially generates a lot of contact points. We store
+	//  them all then reduce them later.
+	vec3 planePoint       = vec3(0.0f);
+	vec3 planeNormal      = vec3(0.0f);
+	vec3 startVert        = vec3(0.0f);
+	vec3 endVert          = vec3(0.0f);
+	int startVertIdx      = -1;
+	int endVertIdx        = -1;
+	float startSignedDist = 0.0f;
+	float endSignedDist   = 0.0f;
+	float lerpRatio       = 0.0f;
+	Manifold manifold;
+	manifold.contactPoints[0].w = 0.0f; // Initialize the contact point count
+	int contactPointCount = 0;
+
+	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
+	{
+		getPlane(referenceBoxIdx, faceIdx, planePoint, planeNormal);
+		if (dot(referenceNormal, planeNormal) < 0.0001f)
 		{
-			localDotProduct = dot(getFaceNormal(boxA, faceIdx), referenceNormal);
+			startVertIdx = faces[faceIdx][0];
+			startVert    = vec3(boxColliders[referenceBoxIdx].vertices[startVertIdx]);
 
-			smallestDotProduct = localDotProduct < smallestDotProduct ?
-				localDotProduct : smallestDotProduct;
+			for (int vertIdx = 1; vertIdx < VERT_COUNT_PER_FACE; ++vertIdx)
+			{
+				if (contactPointCount >= MAX_CONTACT_POINT_COUNT) break;
+
+				endVertIdx = faces[faceIdx][vertIdx];
+				endVert = vec3(boxColliders[referenceBoxIdx].vertices[endVertIdx]);
+
+				startSignedDist = getSignedDist(startVert, planePoint, planeNormal);
+				endSignedDist   = getSignedDist(endVert, planePoint, planeNormal);
+
+				// If start on the positive side and end on the negative side, keep end and
+				//  lerp the intersection.
+				if (startSignedDist >= 0.0001f && endSignedDist < -0.0001f)
+				{
+					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
+
+					manifold.contactPoints[contactPointCount++] = vec4(endVert, 0.0f);
+					manifold.contactPoints[contactPointCount++] = vec4(mix(startVert, endVert, lerpRatio), 0.0f);
+				}
+				// Else if both start and end on the negative side, keep only the end.
+				else if (startSignedDist < -0.0001f && endSignedDist < -0.0001f)
+				{
+					manifold.contactPoints[contactPointCount++] = vec4(endVert, 0.0f);
+				}
+				// Else if the start on the negative side and end on the positive side,
+				//  lerp the intersection.
+				else if (startSignedDist < -0.0001f && endSignedDist >= 0.0001f)
+				{
+					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
+
+					manifold.contactPoints[contactPointCount++] = vec4(mix(startVert, endVert, lerpRatio), 0.0f);
+				}
+
+				// At this point, if none of the conditions above are met, then both start
+				//  and end on the positive side; we keep nothing.
+
+				startVert = endVert;
+			}
 		}
 	}
+
+	return manifold;
 }
 
 void createEdgeContact(float largestEdgeDist, BoxCollider boxA, BoxCollider boxB)
@@ -251,17 +363,19 @@ void createEdgeContact(float largestEdgeDist, BoxCollider boxA, BoxCollider boxB
 // @source: http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
 void separatingAxisTest(uint collisionPairIdx)
 {
-	BoxCollider boxA = boxColliders[collisionPairs[collisionPairIdx].x];
-	BoxCollider boxB = boxColliders[collisionPairs[collisionPairIdx].y];
+	int boxAIdx      = collisionPairs[collisionPairIdx].x;
+	int boxBIdx      = collisionPairs[collisionPairIdx].y;
+	BoxCollider boxA = boxColliders[boxAIdx];
+	BoxCollider boxB = boxColliders[boxBIdx];
 
 	FeatureQuery faceQueryA;
 
-	queryFaceDirections(boxA, boxB, faceQueryA); // Look at faces of A
-	if (faceQueryA.largestDist > 0.0f) return; // We have found a separating axis. No overlap.
+	queryFaceDirections(boxAIdx, boxBIdx, faceQueryA); // Look at faces of A
+	if (faceQueryA.largestDist > 0.0f) return;   // We have found a separating axis. No overlap.
 
 	FeatureQuery faceQueryB;
 
-	queryFaceDirections(boxB, boxA, faceQueryB); // Look at faces of B
+	queryFaceDirections(boxBIdx, boxAIdx, faceQueryB); // Look at faces of B
 	if (faceQueryB.largestDist > 0.0f) return;
 
 	float largestEdgeDist = 0.0f;
@@ -275,7 +389,7 @@ void separatingAxisTest(uint collisionPairIdx)
 	// Find the closest feature type
 	if (faceQueryA.largestDist > largestEdgeDist && faceQueryB.largestDist > largestEdgeDist)
 	{
-		createFaceContact(faceQueryA, boxA, faceQueryB, boxB);
+		createFaceContact(faceQueryA, boxAIdx, faceQueryB, boxBIdx);
 	}
 	else
 	{
@@ -283,10 +397,26 @@ void separatingAxisTest(uint collisionPairIdx)
 	}
 }
 
+void reduceContactPoints()
+{
+
+}
+
+// 1 global invocation = 1 collision pair
 void main()
 {
-	uint collisionPairIdx = gl_WorkGroupID.x;
+	uint collisionPairIdx = gl_GlobalInvocationID.x;
+
+	// Perhaps before the SAT, update the face normals first and put them into a
+	//  shared array.
+	calculateFaceNormals();
+
+	// Sync
+	barrier();
+	memoryBarrierShared();
 
 	if (collisionPairs[collisionPairIdx].x >= 0)
+	{
 		separatingAxisTest(collisionPairIdx);
+	}
 }

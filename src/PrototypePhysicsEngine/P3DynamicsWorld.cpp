@@ -204,6 +204,26 @@ void P3DynamicsWorld::addRigidBody()
 	// in the case of removing bodies.
 }
 
+glm::vec3 P3DynamicsWorld::castRay(glm::vec3 const &start, glm::vec3 const &direction)
+{
+	// Define where the plane of interaction will be
+	glm::vec3 planePoint{ 0.0f, 0.0f, -15.0f };
+	glm::vec3 planeNormal = start - planeNormal;
+
+	// Check if ray direction is perpendicular to plane normal
+	float dDotN = glm::dot(direction, planeNormal);
+
+	if (dDotN <= 0.0001f)
+		return glm::vec3{ 0.0f }; // Prob there's a better value to return
+
+	// Discard any t that is negative or close to 0.0f
+	// -15.0f is the signed distance from world origin.
+	float t = (-15.0f - glm::dot(start, planeNormal) / dDotN);
+
+	if (t > 0.0001f)
+		return direction * t + start;
+}
+
 void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::vec3 const &velocity)
 {
 	mBodyContainer.emplace_back(mUniqueID++);
@@ -337,8 +357,8 @@ void P3DynamicsWorld::multipleBoxesDemo()
 
 void P3DynamicsWorld::controllableBoxDemo()
 {
-	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// The static box
-	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f));	// The kinematic box
-	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// Another static box
-	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f));	// Static box with difference size and rotating
+	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // The static box
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f)); // The kinematic box
+	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with difference size and rotating
 }

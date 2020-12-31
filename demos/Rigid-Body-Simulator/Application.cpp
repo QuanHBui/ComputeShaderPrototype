@@ -373,7 +373,7 @@ void Application::renderUI(double dt)
 	}
 
 	// Display some text
-	dt = dt > 0.0001f ? dt : 0.001f;	// Prevent divided by 0
+	dt = dt > 0.0001f ? dt : 0.001f; // Prevent divided by 0
 	ImGui::Text("FPS: %.3f | Frame time: %.3f ms", 1.0f / dt, dt * 1000.0f);
 	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
 		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);

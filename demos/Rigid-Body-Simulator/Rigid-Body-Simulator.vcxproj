@@ -183,9 +183,11 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Simplex.h" />
     <ClInclude Include="..\..\src\RenderSystem.h" />
+    <ClInclude Include="..\..\src\WindowManager.h" />
     <ClInclude Include="Application.h" />
   </ItemGroup>
   <ItemGroup>

@@ -24,6 +24,7 @@ GLuint createComputeProgram(std::string const &shaderName)
 		GLSL::printShaderInfoLog(computeShader);
 		CHECKED_GL_CALL(glDeleteShader(computeShader));
 		std::cerr << "Error compiling compute shader " + shaderName + ". Shader object will be deleted.\n";
+
 		throw std::runtime_error("Error compiling compute shader " + shaderName + ". Shader object will be deleted.");
 	}
 

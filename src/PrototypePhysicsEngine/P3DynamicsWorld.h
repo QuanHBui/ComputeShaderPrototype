@@ -35,6 +35,8 @@ public:
 	CollisionPairGpuPackage const &updateAndResolve(double dt);
 	CollisionPairGpuPackage const &update(double dt, glm::vec3 const &);
 
+	glm::vec3 castRay(glm::vec3 const &, glm::vec3 const &);
+
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
 	void addRigidBody();
@@ -66,7 +68,7 @@ public:
 	void setGravity(float gravity) { mGravity = gravity; }
 	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; } // Need error checking
 
-	bool isFull() { return mBodyContainer.size() == mMaxCapacity; }
+	bool isFull() { return mBodyContainer.size() >= mMaxCapacity; }
 
 private:
 	//---------------- Constant physics quantities ----------------//
