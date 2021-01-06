@@ -69,6 +69,6 @@ void main()
 	}
 
 	// Store the results
-	minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx);	// Store the entity unique ID in the w comp
+	minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx); // Store the entity unique ID in the w comp
 	maxCoords[colliderIdx] = vec4(maxX, maxY, maxZ, colliderIdx);
 }
