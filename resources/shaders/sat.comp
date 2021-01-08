@@ -41,8 +41,8 @@ struct BoxCollider
 
 struct Manifold
 {
-	ivec4 contactBoxIndices[2];
-	vec4 contactPoints[MAX_CONTACT_POINT_COUNT]; // The first w stores contact point count.
+	ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+	vec4 contactPoints[MAX_CONTACT_POINT_COUNT];
 	vec4 contactNormal; // w stores the penetration depth.
 };
 
@@ -198,25 +198,25 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	// Somehow we obtain the cross edge. In the case of the box, we can use edge 3 - 5.
 	// The point in the middle of the cross edge is the center of the box. If not, it's only
 	//  the direction of the box center from the current vertA that we care about.
-	vec3 centerA = boxA.vertices[3].xyz + (boxA.vertices[3].xyz - boxA.vertices[5].xyz) * 0.5f;
+	vec3 centerA = 0.5f * (boxA.vertices[5].xyz + boxA.vertices[3].xyz);
 
 	for (int edgeIdxA = 0; edgeIdxA < COLLIDER_EDGE_COUNT; ++edgeIdxA)
 	{
 		startA = boxA.vertices[edges[edgeIdxA][0]].xyz;
 		endA   = boxA.vertices[edges[edgeIdxA][1]].xyz;
-		edgeA  = startA - endA;
+		edgeA  = endA - startA;
 
 		for (int edgeIdxB = 0; edgeIdxB < COLLIDER_EDGE_COUNT; ++edgeIdxB)
 		{
 			startB = boxB.vertices[edges[edgeIdxB][0]].xyz;
 			endB   = boxB.vertices[edges[edgeIdxB][1]].xyz;
-			edgeB  = startB - endB;
+			edgeB  = endB - startB;
 
-			edgeNormal = cross(edgeA, edgeB);
+			edgeNormal = normalize(cross(edgeA, edgeB));
 
 			// Check if the normal is in the wrong direction - compare to the center of box A
 			//  If so, flip the normal to make sure it's pointing outward from the box center.
-			if (dot(edgeNormal, boxA.vertices[edges[edgeIdxA][0]].xyz - centerA) < 0.0f)
+			if (dot(edgeNormal, startA - centerA) < 0.0f)
 				edgeNormal *= -1.0f;
 
 			// With edgeNormal and a vertex from edgeA, we got a plane. We need to find the
@@ -284,7 +284,7 @@ vec3 getIncidentNormal(int incidentBoxIdx, vec3 referenceNormal)
 Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 							FaceQuery faceQueryB, int boxBIdx )
 {
-	// Identify reference face and incident face. The closest face that got passed
+	// Identify reference and incident faces. The closest face that got passed
 	//  into this function will be the reference face, and the most anti-parallel
 	//  face on the other box is the incident face.
 
@@ -293,6 +293,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 	vec3 incidentNormal  = vec3(0.0f);
 	int referenceBoxIdx  = -1;
 	int incidentBoxIdx   = -1;
+	float incidentLargestDist = 0.0f;
 
 	if (faceQueryA.largestDist < faceQueryB.largestDist)
 	{
@@ -300,8 +301,9 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 		getPlane(boxAIdx, faceQueryA.faceIdx, referencePoint, referenceNormal);
 		referenceBoxIdx = boxAIdx;
 
-		incidentNormal = getIncidentNormal(boxBIdx, referenceNormal);
-		incidentBoxIdx = boxBIdx;
+		incidentNormal      = getIncidentNormal(boxBIdx, referenceNormal);
+		incidentBoxIdx      = boxBIdx;
+		incidentLargestDist = faceQueryB.largestDist;
 	}
 	else
 	{
@@ -309,8 +311,9 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 		getPlane(boxBIdx, faceQueryB.faceIdx, referencePoint, referenceNormal);
 		referenceBoxIdx = boxBIdx;
 
-		incidentNormal = getIncidentNormal(boxAIdx, referenceNormal);
-		incidentBoxIdx = boxAIdx;
+		incidentNormal      = getIncidentNormal(boxAIdx, referenceNormal);
+		incidentBoxIdx      = boxAIdx;
+		incidentLargestDist = faceQueryA.largestDist;
 	}
 
 	// At this point, we know the incident and reference faces (more like their
@@ -336,9 +339,8 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 	float startSignedDist   = 0.0f;
 	float endSignedDist     = 0.0f;
 	float lerpRatio         = 0.0f;
+	int contactPointCount   = 0;
 	Manifold manifold;
-	manifold.contactPoints[0].w = 0.0f; // Initialize the contact point count
-	int contactPointCount = 0;
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
@@ -402,6 +404,13 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 		}
 	}
 
+	// Set reference and incident box indices, contact point count, and contact normal.
+	//  The penetration depth is the largestDist of incident face.
+	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
+	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
+	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
+	manifold.contactNormal = vec4(referenceNormal, incidentLargestDist);
+
 	return manifold;
 }
 
@@ -416,7 +425,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
  *
  *  @reference: Real Time Collision Detection book by Christer Ericson
  */
-Manifold createEdgeContact(EdgeQuery edgeQuery, BoxCollider boxA, BoxCollider boxB)
+Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 {
 	Manifold manifold;
 
@@ -451,14 +460,17 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, BoxCollider boxA, BoxCollider bo
 		s = clamp((b - c) / squaredLengthEdgeA, 0.0f, 1.0f);
 	}
 
-	// TODO: Check for directions of edgeDirA and edgeDirB
 	vec3 closestPointA = edgeQuery.pointsA[0] + s * edgeQuery.edgeDirA;
 	vec3 closestPointB = edgeQuery.pointsB[0] + t * edgeQuery.edgeDirB;
 
 	// Choose the point in the middle of the two closest points above as the edge contact point
-	manifold.contactPoints[0] = vec4(0.5f * (closestPointB + closestPointA), 1.0f);
+	manifold.contactPoints[0] = vec4(0.5f * (closestPointB + closestPointA), 0.0f);
 
-	// TODO: Set the collider pair in the manifold and the contact normal.
+	// Set the collider pair indices, contact count, and the contact normal in the manifold
+	manifold.contactBoxIndicesAndContactCount.x = boxAIdx;
+	manifold.contactBoxIndicesAndContactCount.y = boxBIdx;
+	manifold.contactBoxIndicesAndContactCount.z = 1;
+	manifold.contactNormal = vec4(edgeQuery.edgeNormal, edgeQuery.largestDist);
 
 	return manifold;
 }
@@ -494,7 +506,6 @@ void separatingAxisTest(uint collisionPairIdx)
 	// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist
 	//  are all negative, so whichever is the least negative is the minimum penetration distance.
 	// Find the closest feature type
-	uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 	Manifold manifold;
 
 	if (faceQueryA.largestDist > edgeQuery.largestDist && faceQueryB.largestDist > edgeQuery.largestDist)
@@ -503,11 +514,12 @@ void separatingAxisTest(uint collisionPairIdx)
 	}
 	else
 	{
-		manifold = createEdgeContact(edgeQuery, boxA, boxB);
+		manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
 	}
 
 	reduceContactPoints(manifold);
 
+	uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 	manifolds[availableIdx] = manifold;
 }
 

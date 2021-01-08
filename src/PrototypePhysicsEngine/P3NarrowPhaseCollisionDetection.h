@@ -19,6 +19,9 @@
 #include "AtomicCounter.h"
 #include "ComputeProgram.h"
 
+#define MAX_CONTACT_POINT_COUNT 16
+#define MAX_COLLIDER_COUNT 1024
+
 constexpr uint16_t narrow_phase_compute_program_count = 1u;
 constexpr GLsizei  narrow_phase_ssbo_count            = 1u;
 
@@ -38,15 +41,15 @@ bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm
 
 struct BoundingVolume;
 
-// This contact manifold can be either face or edge feature.
-struct ContactManifold
+struct Manifold
 {
-	uint16_t faceIdx;
-	float largestDist;
-	glm::vec4 faceNormal;
+	glm::ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+	glm::vec4 contactPoints[MAX_CONTACT_POINT_COUNT];
+	glm::vec4 contactNormal; // w stores the penetration depth.
 };
 
-void buildContactManifold(ContactManifold &, BoundingVolume *, BoundingVolume *);
+
+void buildContactManifold(Manifold &, BoundingVolume *, BoundingVolume *);
 
 class P3OpenGLComputeNarrowPhase
 {

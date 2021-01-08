@@ -82,19 +82,6 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	//----------------- Debug for update AABBs -----------------//
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	// GLvoid *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mAabbCpuData, pGpuMem, sizeof(AabbGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// for (int i = 0; i < 5; ++i)
-	// {
-	// 	printf("%.03f\t%.03f\n", mAabbCpuData.minCoords[i].x, mAabbCpuData.maxCoords[i].x);
-	// 	fflush(stdout);
-	// }
-	//------------- End debug for Update AABBs -------------//
-
 	//================ End of update AABBs ================//
 
 	//================== Start of SAP ==================//
@@ -142,61 +129,6 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
-
-
-
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// bool run = false;
-	// for (int i = 0; i < boxColliders.size(); ++i)
-	// {
-	// 	run = true;
-
-	// 	printf("%.03f\t%.03f\t%.03f\t%.03f\n",
-	// 		mAabbCpuData.minCoords[i].x,
-	// 		mAabbCpuData.minCoords[i].y,
-	// 		mAabbCpuData.minCoords[i].z,
-	// 		mAabbCpuData.minCoords[i].w);
-	// }
-	// printf("\n");
-	// for (int i = 0; i < boxColliders.size(); ++i)
-	// {
-	// 	printf("%.03f\t%.03f\t%.03f\t%.03f\n",
-	// 		mAabbCpuData.maxCoords[i].x,
-	// 		mAabbCpuData.maxCoords[i].y,
-	// 		mAabbCpuData.maxCoords[i].z,
-	// 		mAabbCpuData.maxCoords[i].w);
-	// }
-	// if (run)
-	// {
-	// 	printf("=======================================\n");
-	// 	fflush(stdout);
-	// }
-
-
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mCollisionPairCpuData, pGpuMemTest, sizeof(CollisionPairGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// bool run = false;
-	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
-	// {
-	// 	run = true;
-	// 	printf("%d, %d\n",
-	// 		mCollisionPairCpuData.collisionPairs[i].x,
-	// 		mCollisionPairCpuData.collisionPairs[i].y);
-	// 	fflush(stdout);
-	// }
-	// if (run)
-	// 	printf("\n");
-
-
-
-
 	// SORT ON Y-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
 	glUseProgram(currProgID);
@@ -236,62 +168,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
-
-
-
-
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// bool run = false;
-	// for (int i = 0; i < boxColliders.size(); ++i)
-	// {
-	// 	run = true;
-
-	// 	printf("%.03f\t%.03f\t%.03f\t%.03f\n",
-	// 		mAabbCpuData.minCoords[i].x,
-	// 		mAabbCpuData.minCoords[i].y,
-	// 		mAabbCpuData.minCoords[i].z,
-	// 		mAabbCpuData.minCoords[i].w);
-	// }
-	// printf("\n");
-	// for (int i = 0; i < boxColliders.size(); ++i)
-	// {
-	// 	printf("%.03f\t%.03f\t%.03f\t%.03f\n",
-	// 		mAabbCpuData.maxCoords[i].x,
-	// 		mAabbCpuData.maxCoords[i].y,
-	// 		mAabbCpuData.maxCoords[i].z,
-	// 		mAabbCpuData.maxCoords[i].w);
-	// }
-	// if (run)
-	// {
-	// 	printf("=======================================\n");
-	// 	fflush(stdout);
-	// }
-
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mCollisionPairCpuData, pGpuMemTest, sizeof(CollisionPairGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// bool run = false;
-	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
-	// {
-	// 	run = true;
-	// 	printf("%d, %d\n",
-	// 		mCollisionPairCpuData.collisionPairs[i].x,
-	// 		mCollisionPairCpuData.collisionPairs[i].y);
-	// 	fflush(stdout);
-	// }
-	// if (run)
-	// 	printf("\n");
-
-
-
-
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 	// SORT ON Z-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
@@ -332,47 +209,13 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT || GL_ATOMIC_COUNTER_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 	// Copy back the result collision pair list
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
 	void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	memcpy(&mCollisionPairCpuData, pGpuMem, sizeof(CollisionPairGpuPackage));
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	//----------------- Debug for SAP -----------------//
-	// GLint n = 0;
-	// glGetIntegerv(GL_MAX_SUBROUTINES, &n);
-
-	// bool run = false;
-	// for (int i = 0; mCollisionPairCpuData.collisionPairs[i].x > -1; ++i)
-	// {
-	// 	run = true;
-	// 	printf("%.03f, %.03f\n",
-	// 		mCollisionPairCpuData.collisionPairs[i].x,
-	// 		mCollisionPairCpuData.collisionPairs[i].y);
-	// 	fflush(stdout);
-	// }
-	// if (run)
-	// 	printf("\n");
-
-	// glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
-	// void *pGpuMemTest = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	// memcpy(&mAabbCpuData, pGpuMemTest, sizeof(AabbGpuPackage));
-	// glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	// for (int i = 0; i < boxColliders.size(); ++i)
-	// {
-	// 	printf("%.03f, %.03f, %.03f, %.03f\n",
-	// 		mAabbCpuData.minCoords[i].x,
-	// 		mAabbCpuData.minCoords[i].y,
-	// 		mAabbCpuData.minCoords[i].z,
-	// 		mAabbCpuData.minCoords[i].w);
-	// 	fflush(stdout);
-	// }
-	// printf("\n");
-
-	//-------------- End debug for SAP --------------//
 
 	// Reset and unbind
 	resetAtomicCounter();

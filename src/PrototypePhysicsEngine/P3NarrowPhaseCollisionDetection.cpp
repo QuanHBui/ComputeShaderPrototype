@@ -209,7 +209,7 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 	atomicCounter.reset();
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MANIFOLDS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * boxCollidersSize, nullptr, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Manifold) * 1024, nullptr, GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mBoxCollidersID);
@@ -222,4 +222,5 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 	glUseProgram(currProgID);
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }

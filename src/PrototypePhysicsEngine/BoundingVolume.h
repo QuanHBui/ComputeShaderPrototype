@@ -15,7 +15,7 @@
 #include <glm/vec4.hpp>
 
 #ifndef MAX_NUM_OBJECTS
-#define MAX_NUM_OBJECTS 1000
+#define MAX_NUM_OBJECTS 1024
 #endif
 
 enum class BoundingType: uint16_t
