@@ -8,6 +8,8 @@
 #include <glm/mat4x4.hpp>
 #include <vector>
 
+constexpr int cBoxColliderVertCount = 8;
+
 /**
  * Reference: https://blog.winter.dev/2020/gjk-algorithm/
  */
@@ -72,7 +74,7 @@ struct P3BoxCollider
 {
 	void update(glm::mat4 const &model)
 	{
-		for (unsigned int i = 0u; i < 8u; ++i)
+		for (int i = 0; i < cBoxColliderVertCount; ++i)
 		{
 			mVertices[i]   = model * mInstanceVertices[i];
 			mVertices[i].w = 1.0f;
@@ -81,13 +83,13 @@ struct P3BoxCollider
 
 	void setInstanceVertices(glm::vec4 *vertices)
 	{
-		for (int i = 0; i < 8; ++i)
+		for (int i = 0; i < cBoxColliderVertCount; ++i)
 		{
 			mInstanceVertices[i] = vertices[i];
 		}
 	}
 
-	glm::vec4 mVertices[8] =
+	glm::vec4 mVertices[cBoxColliderVertCount] =
 	{
 		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f }, // 0
 		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f }, // 1
@@ -100,7 +102,7 @@ struct P3BoxCollider
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }  // 7
 	};
 
-	glm::vec4 mInstanceVertices[8] =
+	glm::vec4 mInstanceVertices[cBoxColliderVertCount] =
 	{
 		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
 		glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },

@@ -7,13 +7,14 @@
 #include <glm/mat4x4.hpp>
 
 #include "PrototypePhysicsEngine/P3Collider.h"
-#include "Shape.h"
 #include "Program.h"
+#include "Shape.h"
 
 using MatrixContainer          = std::vector<glm::mat4>;
 using MatrixContainerConstIter = MatrixContainer::const_iterator;
 
 struct CollisionPairGpuPackage;
+struct ManifoldGpuPackage;
 
 // Stores all the renderable stuff and OpenGL bookkeepings
 class RenderSystem
@@ -37,8 +38,8 @@ public:
 	void init();
 
 	void render(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
-	void renderInstanced(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
-	void renderDebug(std::vector<P3BoxCollider> const &);
+	void renderInstanced(int, int, MatrixContainer const &);
+	void renderDebug(std::vector<P3BoxCollider> const &, ManifoldGpuPackage const &);
 
 	void registerMeshForBody(MeshKey const &, unsigned int = 1u);
 	void setView(glm::mat4 const &view) { mView = view; }

@@ -23,11 +23,14 @@ void P3DynamicsWorld::init()
 	narrowPhase.init(broadPhase.getBoxCollidersID(), broadPhase.getCollisionPairsID());
 }
 
-CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
+void P3DynamicsWorld::update(
+	double dt,
+	CollisionPairGpuPackage &collisionPairGpuPackage,
+	ManifoldGpuPackage &manifoldGpuPackage )
 {
-	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
+	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
 
-	narrowPhase.step(mBoxColliders.size());
+	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
 
 	static float radians = 0.0f;
 
@@ -58,8 +61,6 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt)
 		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
 
 	radians += 1.0f;
-
-	return mCollisionPairCpuData;
 }
 
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
@@ -71,7 +72,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 
 	std::vector<glm::vec3> sampleVelocityContainer;
 
-	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
+	mCollisionPairCpuData = broadPhase.step(mBoxColliders);
 	std::cout << mCollisionPairCpuData.collisionPairs[0].x << ", "
 		<< mCollisionPairCpuData.collisionPairs[0].y << std::endl;
 
@@ -167,7 +168,7 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 // Specifically for the controllable box demo
 CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 const &deltaP)
 {
-	mCollisionPairCpuData = std::move(broadPhase.step(mBoxColliders));
+	mCollisionPairCpuData = broadPhase.step(mBoxColliders);
 	narrowPhase.step(mBoxColliders.size());
 
 	// 1st box is static, 2nd box is kinematic/controllable.

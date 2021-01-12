@@ -56,9 +56,9 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> const &boxColliders)
 {
 	// Pack data for GPU
-	std::vector<glm::vec4[8]> boxVertices(boxColliders.size());
+	std::vector<glm::vec4[cBoxColliderVertCount]> boxVertices(boxColliders.size());
 	for (unsigned int i = 0; i < boxVertices.size(); ++i)
-		for (unsigned int j = 0; j < 8; ++j)
+		for (unsigned int j = 0; j < cBoxColliderVertCount; ++j)
 			boxVertices[i][j] = boxColliders[i].mVertices[j];
 
 	// Bind mesh collider buffer

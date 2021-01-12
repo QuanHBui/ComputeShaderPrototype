@@ -70,12 +70,12 @@ bool WindowManager::init(int const width, int const height)
 
 	// Hide the cursor and capture it
 	//glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(windowHandle, cursor_callback);  // For cursor position change
+	//glfwSetCursorPosCallback(windowHandle, cursor_callback);  // For cursor position change
 
 	glfwSetKeyCallback(windowHandle, key_callback);
 	glfwSetMouseButtonCallback(windowHandle, mouse_callback); // For mouse buttons
 	glfwSetFramebufferSizeCallback(windowHandle, resize_callback);
-	glfwSetScrollCallback(windowHandle, scroll_callback);
+	//glfwSetScrollCallback(windowHandle, scroll_callback);
 
 	return true;
 }

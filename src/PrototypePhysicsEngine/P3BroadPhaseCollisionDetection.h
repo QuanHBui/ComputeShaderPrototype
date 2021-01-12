@@ -13,7 +13,17 @@
 #define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
 #define NUM_BROAD_PHASE_SSBOS 3
 
-struct Aabb;
+//------------------ Data packs for the GPU (SoA) --------------------//
+struct AabbGpuPackage
+{
+	glm::vec4 minCoords[MAX_NUM_OBJECTS];
+	glm::vec4 maxCoords[MAX_NUM_OBJECTS];
+};
+
+struct CollisionPairGpuPackage
+{
+	glm::ivec4 collisionPairs[2 * MAX_NUM_OBJECTS]{};
+};
 
 class P3OpenGLComputeBroadPhase
 {

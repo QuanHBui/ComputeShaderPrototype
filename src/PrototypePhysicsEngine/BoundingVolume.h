@@ -65,15 +65,4 @@ struct Mesh : public BoundingVolume
 
 };
 
-//------------------ Data packs for the GPU (SoA) --------------------//
-struct AabbGpuPackage
-{
-	glm::vec4 minCoords[MAX_NUM_OBJECTS];
-	glm::vec4 maxCoords[MAX_NUM_OBJECTS];
-};
-
-struct CollisionPairGpuPackage
-{
-	glm::ivec4 collisionPairs[2 * MAX_NUM_OBJECTS];
-};
 #endif // BOUNDING_VOLUME_H

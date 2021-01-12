@@ -184,5 +184,8 @@
     <None Include="..\..\resources\shaders\sat.comp">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\resources\shaders\debug.frag">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

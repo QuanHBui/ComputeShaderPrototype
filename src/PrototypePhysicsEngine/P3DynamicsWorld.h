@@ -31,7 +31,7 @@ public:
 
 	void init();
 
-	CollisionPairGpuPackage const &update(double dt);
+	void update(double dt, CollisionPairGpuPackage &, ManifoldGpuPackage &);
 	CollisionPairGpuPackage const &updateAndResolve(double dt);
 	CollisionPairGpuPackage const &update(double dt, glm::vec3 const &);
 
@@ -85,9 +85,10 @@ private:
 	std::vector<P3MeshCollider> mMeshColliderContainer;
 	std::vector<P3BoxCollider> mBoxColliders;
 
-	//------------ Data package optimized for the GPU (SoA) ------------//
+	//----------------- Data package optimized for the GPU -----------------//
 	LinearTransformGpuPackage mLinearTransformCpuData;
 	CollisionPairGpuPackage mCollisionPairCpuData;
+	ManifoldGpuPackage mManifoldCpuData;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/

@@ -32,7 +32,8 @@ static bool moveUpward   = false;
 static bool moveDownward = false;
 
 // imgui state(s)
-static bool showDebug  = true;
+static bool showHitBoxVerts = true;
+static bool showContactPts  = true;
 static bool allowToAdd = false;
 
 Application::~Application()
@@ -343,10 +344,10 @@ void Application::renderFrame(float dt)
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
 	//mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
-	mRenderSystem.renderInstanced(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
+	mRenderSystem.renderInstanced(width, height, mModelMatrixContainer);
 
-	if (showDebug)
-		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders());
+	if (showHitBoxVerts)
+		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mManifoldsFromGpu);
 }
 
 void Application::renderUI(double dt)
@@ -391,7 +392,8 @@ void Application::renderUI(double dt)
 	if (ImGui::Button("Quit"))
 		glfwSetWindowShouldClose(mpWindowManager->getHandle(), GL_TRUE);
 
-	ImGui::Checkbox("Show Debug", &showDebug);
+	ImGui::Checkbox("Show HitBox Verts", &showHitBoxVerts);
+	/*ImGui::Checkbox()*/
 
 	// Plot some values
 	//const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };
@@ -433,7 +435,7 @@ void Application::update(float dt)
 	// 	controlPosition.y -= 5.0f * dt;
 
 	// mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
-	mCollisionPairsFromGpu = mPhysicsWorld.update(dt);
+	mPhysicsWorld.update(dt, mCollisionPairsFromGpu, mManifoldsFromGpu);
 
 	mPhysicsTickInterval = dt;
 

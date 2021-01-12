@@ -19,8 +19,8 @@
 #include "AtomicCounter.h"
 #include "ComputeProgram.h"
 
-#define MAX_CONTACT_POINT_COUNT 16
-#define MAX_COLLIDER_COUNT 1024
+constexpr int cMaxContactPointCount = 16;
+constexpr int cMaxColliderCount = 1024;
 
 constexpr uint16_t narrow_phase_compute_program_count = 1u;
 constexpr GLsizei  narrow_phase_ssbo_count            = 1u;
@@ -43,11 +43,15 @@ struct BoundingVolume;
 
 struct Manifold
 {
-	glm::ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
-	glm::vec4 contactPoints[MAX_CONTACT_POINT_COUNT];
-	glm::vec4 contactNormal; // w stores the penetration depth.
+	glm::ivec4 contactBoxIndicesAndContactCount{}; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+	glm::vec4 contactPoints[cMaxContactPointCount]{};
+	glm::vec4 contactNormal{}; // w stores the penetration depth.
 };
 
+struct ManifoldGpuPackage
+{
+	Manifold manifolds[cMaxColliderCount]{};
+};
 
 void buildContactManifold(Manifold &, BoundingVolume *, BoundingVolume *);
 
@@ -67,7 +71,7 @@ public:
 		atomicCounter.init();
 	}
 
-	void step(uint16_t);
+	ManifoldGpuPackage const &step(uint16_t);
 	void reset();
 
 	~P3OpenGLComputeNarrowPhase()
@@ -107,6 +111,7 @@ private:
 	GLuint mSsboIDs[narrow_phase_ssbo_count];
 
 	AtomicCounter atomicCounter;
+	ManifoldGpuPackage mManifoldGpuPackage; // Stores the results from last physics tick
 };
 
 #endif // P3_NARROW_PHASE_COLLISION_DETECTION_H

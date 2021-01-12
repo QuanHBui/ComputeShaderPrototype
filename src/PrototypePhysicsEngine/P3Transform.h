@@ -37,9 +37,9 @@ struct LinearTransform
 //------------------ Data pack for the GPU (SoA) --------------------//
 struct LinearTransformGpuPackage
 {
-	glm::vec4 positions[MAX_NUM_OBJECTS];
-	glm::vec4 velocities[MAX_NUM_OBJECTS];
-	glm::vec4 masses[MAX_NUM_OBJECTS];
+	glm::vec4 positions[MAX_NUM_OBJECTS]{};
+	glm::vec4 velocities[MAX_NUM_OBJECTS]{};
+	glm::vec4 masses[MAX_NUM_OBJECTS]{};
 };
 
 struct LinearTransformDerivate

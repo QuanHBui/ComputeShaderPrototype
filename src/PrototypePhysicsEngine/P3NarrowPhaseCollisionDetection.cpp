@@ -204,13 +204,15 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 	glGenBuffers(2u, mSsboIDs);
 }
 
-void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
+ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 {
 	atomicCounter.reset();
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[MANIFOLDS]);
+
+	// At the moment, we don't feed the previous data from last physics tick. We still store them, and that
+	//  can be used for future optimization.
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Manifold) * 1024, nullptr, GL_DYNAMIC_COPY);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mBoxCollidersID);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mCollisionPairsID);
@@ -223,4 +225,14 @@ void P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	// Retrieve the results back from the GPU
+	void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	memcpy(&mManifoldGpuPackage, pGpuMem, sizeof(ManifoldGpuPackage));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	glUseProgram(0u);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
+
+	return mManifoldGpuPackage;
 }

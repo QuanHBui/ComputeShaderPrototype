@@ -92,6 +92,7 @@ private:
 	MatrixContainer mModelMatrixContainer;
 
 	CollisionPairGpuPackage mCollisionPairsFromGpu;
+	ManifoldGpuPackage mManifoldsFromGpu;
 };
 
 #endif // APPLICATION_H

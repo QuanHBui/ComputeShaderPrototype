@@ -2,8 +2,9 @@
 
 #include <iostream>
 
-#include "PrototypePhysicsEngine/BoundingVolume.h"
 #include "GLSL.h"
+#include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
@@ -71,8 +72,7 @@ void RenderSystem::render(int width, int height,
 	renderProgram.unbind();
 }
 
-void RenderSystem::renderInstanced(int width, int height,
-	MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
+void RenderSystem::renderInstanced(int width, int height, MatrixContainer const &modelMatrices)
 {
 	glViewport(0, 0, width, height);
 
@@ -97,10 +97,10 @@ void RenderSystem::renderInstanced(int width, int height,
 	renderProgram.unbind();
 }
 
-void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
+void RenderSystem::renderDebug(
+	std::vector<P3BoxCollider> const &boxColliders,
+	ManifoldGpuPackage const &manifoldGpuPackage )
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	glBindVertexArray(mDebugVao);
 	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
 
@@ -108,33 +108,62 @@ void RenderSystem::renderDebug(std::vector<P3BoxCollider> const &boxColliders)
 	Program const &debugShaderProg = mPrograms[DEBUG];
 	debugShaderProg.bind();
 
-	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "projection"),
+	GLuint progID = debugShaderProg.getPID();
+
+	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 1.0f, 0.0f);
+	glUniformMatrix4fv(glGetUniformLocation(progID, "projection"),
 		1, GL_FALSE, glm::value_ptr(mProjection));
-	glUniformMatrix4fv(glGetUniformLocation(debugShaderProg.getPID(), "view"),
+	glUniformMatrix4fv(glGetUniformLocation(progID, "view"),
 		1, GL_FALSE, glm::value_ptr(mView));
 
 	// Iterate through all the box colliders and batch all the vertices
-	glm::vec4 batchedVertices[8 * max_mesh_count];
+	glm::vec4 batchedVertices[cBoxColliderVertCount * max_mesh_count];
 	int colliderIdx = 0;
 
 	for (P3BoxCollider const &boxCollider : boxColliders)
 	{
-		for (int vertIdx = 0; vertIdx < 8; ++vertIdx)
+		for (int vertIdx = 0; vertIdx < cBoxColliderVertCount; ++vertIdx)
 		{
-			batchedVertices[8 * colliderIdx + vertIdx] = boxCollider.mVertices[vertIdx];
+			batchedVertices[cBoxColliderVertCount * colliderIdx + vertIdx] = boxCollider.mVertices[vertIdx];
 		}
 
 		++colliderIdx;
 	}
 
 	// Batch draw call
-	glBufferData(GL_ARRAY_BUFFER, 8 * boxColliders.size() * sizeof(glm::vec4), (const void *)batchedVertices, GL_DYNAMIC_DRAW);
-	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, 8 * boxColliders.size()));
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		cBoxColliderVertCount * boxColliders.size() * sizeof(glm::vec4),
+		(const void *)batchedVertices,
+		GL_DYNAMIC_DRAW
+	);
+	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, cBoxColliderVertCount * boxColliders.size()));
+
+	// The size is not correct, cMaxColliderCount is just a placeholder number.
+	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount];
+	int i = 0;
+	for (Manifold const &manifold : manifoldGpuPackage.manifolds)
+	{
+		if (manifold.contactBoxIndicesAndContactCount.z <= 0) break;
+
+		for (int j = 0; j < manifold.contactBoxIndicesAndContactCount.z; ++j)
+		{
+			batchedContactPoints[i++] = manifold.contactPoints[j];
+		}
+	}
+
+	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 0.0f, 0.0f);
+
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		i * sizeof(glm::vec4),
+		(const void *)batchedContactPoints,
+		GL_DYNAMIC_DRAW
+	);
+	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, i));
 
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	debugShaderProg.unbind();
 }

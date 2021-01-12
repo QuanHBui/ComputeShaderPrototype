@@ -193,6 +193,7 @@
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp" />
     <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp" />
+    <None Include="..\..\resources\shaders\debug.frag" />
     <None Include="..\..\resources\shaders\sap.comp" />
     <None Include="..\..\resources\shaders\evenOddSort.comp" />
     <None Include="..\..\resources\shaders\fs.frag" />
