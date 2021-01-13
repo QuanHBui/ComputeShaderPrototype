@@ -33,7 +33,7 @@ public:
 
 	void update(double dt, CollisionPairGpuPackage &, ManifoldGpuPackage &);
 	CollisionPairGpuPackage const &updateAndResolve(double dt);
-	CollisionPairGpuPackage const &update(double dt, glm::vec3 const &);
+	void update(double dt, glm::vec3 const &, CollisionPairGpuPackage &, ManifoldGpuPackage &);
 
 	glm::vec3 castRay(glm::vec3 const &, glm::vec3 const &);
 

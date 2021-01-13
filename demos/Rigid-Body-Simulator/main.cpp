@@ -36,10 +36,11 @@ int main()
 	int    numFrames           = 0;
 
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 30.0;
+	double fixedPhysicsTickInterval = 1.0 / 60.0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
-	while (!glfwWindowShouldClose(pWindowManager->getHandle()))
+	GLFWwindow *pCurrentGlfwWindow = pWindowManager->getHandle();
+	while (!glfwWindowShouldClose(pCurrentGlfwWindow))
 	{
 		// Measure fps and frame time
 		double currentTime = glfwGetTime();
@@ -47,6 +48,14 @@ int main()
 
 		lastFrameTime = currentTime;
 		++numFrames;
+
+		if (currentTime - lastPhysicsTickTime >= fixedPhysicsTickInterval)
+		{
+			pApplication->update(float(fixedPhysicsTickInterval));
+			lastPhysicsTickTime = currentTime;
+		}
+
+		pApplication->renderFrame(float(frameTimeInterval));
 
 		// Show updated FPS/Frame time on UI ever half a sec.
 		if (currentTime - lastTime >= 0.5)
@@ -59,16 +68,9 @@ int main()
 		pApplication->renderUI(UIFrameTimeInterval);
 
 		// Swap front and back buffers.
-		glfwSwapBuffers(pWindowManager->getHandle());
+		glfwSwapBuffers(pCurrentGlfwWindow);
 		// Poll for and process events.
 		glfwPollEvents();
-		if (currentTime - lastPhysicsTickTime >= fixedPhysicsTickInterval)
-		{
-			pApplication->update(float(fixedPhysicsTickInterval));
-			lastPhysicsTickTime += fixedPhysicsTickInterval;
-		}
-
-		pApplication->renderFrame(float(frameTimeInterval));
 	}
 
 	// Destroy application before deleting the current OpenGL context

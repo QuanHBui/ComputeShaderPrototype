@@ -29,7 +29,6 @@ void P3DynamicsWorld::update(
 	ManifoldGpuPackage &manifoldGpuPackage )
 {
 	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
-
 	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
 
 	static float radians = 0.0f;
@@ -166,10 +165,14 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 }
 
 // Specifically for the controllable box demo
-CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 const &deltaP)
+void P3DynamicsWorld::update(
+	double dt,
+	glm::vec3 const &deltaP,
+	CollisionPairGpuPackage &collisionPairGpuPackage,
+	ManifoldGpuPackage &manifoldGpuPackage )
 {
-	mCollisionPairCpuData = broadPhase.step(mBoxColliders);
-	narrowPhase.step(mBoxColliders.size());
+	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
+	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
 
 	// 1st box is static, 2nd box is kinematic/controllable.
 	mLinearTransformContainer[1].position += deltaP;
@@ -187,8 +190,6 @@ CollisionPairGpuPackage const &P3DynamicsWorld::update(double dt, glm::vec3 cons
 
 	angle += dt * 0.52f;
 	angle  = angle >= 6.28f ? 0.0f : angle; // This is so that we won't get floating point overflow.
-
-	return mCollisionPairCpuData;
 }
 
 // TODO: WIP
@@ -361,5 +362,5 @@ void P3DynamicsWorld::controllableBoxDemo()
 	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // The static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f)); // The kinematic box
 	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
-	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with difference size and rotating
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with different size and rotating
 }

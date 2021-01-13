@@ -78,11 +78,11 @@ void Application::initPhysicsWorld()
 	// mPhysicsWorld.bowlingGameDemo();
 	// mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
 
-	mPhysicsWorld.multipleBoxesDemo();
-	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
+	//mPhysicsWorld.multipleBoxesDemo();
+	//mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
 
-	// mPhysicsWorld.controllableBoxDemo();
-	// mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
+	mPhysicsWorld.controllableBoxDemo();
+	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
 }
 
 void Application::initUI()
@@ -296,7 +296,7 @@ void Application::cursorCallback(GLFWwindow *window, double xPos, double yPos)
 	//	mIsFirstCursorFocus = false;
 	//}
 	//mCursorPosDeltaX = static_cast<float>(xPos - mLastCursorPosX);
-	//mCursorPosDeltaY = static_cast<float>(mLastCursorPosY - yPos);	// Has to be reversed cuz math
+	//mCursorPosDeltaY = static_cast<float>(mLastCursorPosY - yPos); // Has to be reversed cuz math
 	//mFlyCamera.moveView(mCursorPosDeltaX, mCursorPosDeltaY);
 
 	//mLastCursorPosX = xPos;
@@ -343,8 +343,8 @@ void Application::renderFrame(float dt)
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
-	//mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
-	mRenderSystem.renderInstanced(width, height, mModelMatrixContainer);
+	mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
+	//mRenderSystem.renderInstanced(width, height, mModelMatrixContainer);
 
 	if (showHitBoxVerts)
 		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mManifoldsFromGpu);
@@ -418,24 +418,24 @@ void Application::shootBall()
 
 void Application::update(float dt)
 {
-	// glm::vec3 controlPosition{ 0.0f };
+	glm::vec3 controlPosition{ 0.0f };
 
-	// // Get any inputs for kinematics object
-	// if (moveForward)
-	// 	controlPosition.z -= 5.0f * dt;
-	// if (moveBackward)
-	// 	controlPosition.z += 5.0f * dt;
-	// if (moveLeft)
-	// 	controlPosition.x -= 5.0f * dt;
-	// if (moveRight)
-	// 	controlPosition.x += 5.0f * dt;
-	// if (moveUpward)
-	// 	controlPosition.y += 5.0f * dt;
-	// if (moveDownward)
-	// 	controlPosition.y -= 5.0f * dt;
+	// Get any inputs for kinematics object
+	if (moveForward)
+		controlPosition.z -= 5.0f * dt;
+	if (moveBackward)
+		controlPosition.z += 5.0f * dt;
+	if (moveLeft)
+		controlPosition.x -= 5.0f * dt;
+	if (moveRight)
+		controlPosition.x += 5.0f * dt;
+	if (moveUpward)
+		controlPosition.y += 5.0f * dt;
+	if (moveDownward)
+		controlPosition.y -= 5.0f * dt;
 
-	// mCollisionPairsFromGpu = mPhysicsWorld.update(dt, controlPosition);
-	mPhysicsWorld.update(dt, mCollisionPairsFromGpu, mManifoldsFromGpu);
+	mPhysicsWorld.update(dt, controlPosition, mCollisionPairsFromGpu, mManifoldsFromGpu);
+	//mPhysicsWorld.update(dt, mCollisionPairsFromGpu, mManifoldsFromGpu);
 
 	mPhysicsTickInterval = dt;
 

@@ -146,6 +146,9 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp">

@@ -54,12 +54,14 @@ void RenderSystem::render(int width, int height,
 			}
 		}
 
-		glUniform1ui(glGetUniformLocation(renderProgram.getPID(), "redOrNo"), redOrNo);
-		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "projection"),
+		GLuint progID = renderProgram.getPID();
+
+		glUniform1ui(glGetUniformLocation(progID, "redOrNo"), redOrNo);
+		glUniformMatrix4fv(glGetUniformLocation(progID, "projection"),
 			1, GL_FALSE, glm::value_ptr(mProjection));
-		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "view"),
+		glUniformMatrix4fv(glGetUniformLocation(progID, "view"),
 			1, GL_FALSE, glm::value_ptr(mView));
-		glUniformMatrix4fv(glGetUniformLocation(renderProgram.getPID(), "model"),
+		glUniformMatrix4fv(glGetUniformLocation(progID, "model"),
 			1, GL_FALSE, glm::value_ptr(*it));
 
 		shapeIdx = mMeshKeys[meshKeyIdx++];
@@ -141,18 +143,21 @@ void RenderSystem::renderDebug(
 
 	// The size is not correct, cMaxColliderCount is just a placeholder number.
 	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount];
-	int i = 0;
+	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount];
+	int i = 0, j = 0;
 	for (Manifold const &manifold : manifoldGpuPackage.manifolds)
 	{
 		if (manifold.contactBoxIndicesAndContactCount.z <= 0) break;
 
-		for (int j = 0; j < manifold.contactBoxIndicesAndContactCount.z; ++j)
+		for (int k = 0; k < manifold.contactBoxIndicesAndContactCount.z; ++k)
 		{
-			batchedContactPoints[i++] = manifold.contactPoints[j];
+			batchedContactPoints[i++]  = manifold.contactPoints[k];
+			batchedContactNormals[j++] = manifold.contactPoints[k];
+			batchedContactNormals[j++] = manifold.contactPoints[k] + manifold.contactNormal;
 		}
 	}
 
-	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 0.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 0.0f, 1.0f);
 
 	glBufferData(
 		GL_ARRAY_BUFFER,
@@ -161,6 +166,16 @@ void RenderSystem::renderDebug(
 		GL_DYNAMIC_DRAW
 	);
 	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, i));
+
+	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 1.0f, 1.0f);
+
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		j * sizeof(glm::vec4),
+		(const void *)batchedContactNormals,
+		GL_DYNAMIC_DRAW
+	);
+	CHECKED_GL_CALL(glDrawArrays(GL_LINES, 0, j));
 
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);

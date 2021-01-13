@@ -63,7 +63,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 
 	// Bind mesh collider buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_BOX_COLLIDERS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 8 * sizeof(glm::vec4) * boxColliders.size(),
+	glBufferData(GL_SHADER_STORAGE_BUFFER, cBoxColliderVertCount * sizeof(glm::vec4) * boxColliders.size(),
 		boxVertices.data(), GL_STATIC_READ);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
