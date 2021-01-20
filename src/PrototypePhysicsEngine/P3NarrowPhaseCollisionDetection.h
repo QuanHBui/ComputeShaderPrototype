@@ -107,11 +107,11 @@ private:
 	// Some Gpu buffers already created from the broad phase
 	GLuint mBoxCollidersID = 0u, mCollisionPairsID = 0u;
 
-	GLuint mComputeProgramIDs[narrow_phase_compute_program_count];
-	GLuint mSsboIDs[narrow_phase_ssbo_count];
+	GLuint mComputeProgramIDs[narrow_phase_compute_program_count]{};
+	GLuint mSsboIDs[narrow_phase_ssbo_count]{};
 
 	AtomicCounter atomicCounter;
-	ManifoldGpuPackage mManifoldGpuPackage; // Stores the results from last physics tick
+	ManifoldGpuPackage *mpManifoldGpuPackage; // Stores the results from last physics tick
 };
 
 #endif // P3_NARROW_PHASE_COLLISION_DETECTION_H

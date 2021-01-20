@@ -59,7 +59,9 @@ void Application::init()
 
 void Application::initRenderSystem()
 {
-	mRenderSystem.init();
+	int width, height;
+	glfwGetFramebufferSize(mpWindowManager->getHandle(), &width, &height);
+	mRenderSystem.init(width, height);
 
 	// Move camera a bit closer. This depends on which demo is showing.
 	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
@@ -229,18 +231,23 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
 		static bool hasChanged = false;
-		// Set position of the camera to be on the same z as the static box
-		mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
-		// Look at the static box. This will also update the view matrix
-		mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
 
-		// Small reminder that the front vector won't be changed.
-
-		if (hasChanged)
+		if (!hasChanged)
+		{
+			// Set position of the camera to be on the same z as the static box
+			mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
+			// Look at the static box
+			mFlyCamera.setLookAt(glm::vec3(0.0f, -2.0f, 5.0f));
+		}
+		else
 		{
 			mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
-			mFlyCamera.lookAtPoint(glm::vec3(0.0f, -2.0f, 5.0f));
+			mFlyCamera.setLookAt(glm::vec3(0.0f, -2.0f, 5.0f));
 		}
+
+		mFlyCamera.updateFront();
+		mFlyCamera.updateRight();
+		mFlyCamera.updateViewMatrix();
 
 		hasChanged = !hasChanged;
 	}
@@ -320,7 +327,7 @@ void Application::renderFrame(float dt)
 	// Prevent assertion when minimize the window
 	if (!width && !height) return;
 
-	static float sideTurn = 0.0f;
+	//static float sideTurn = 0.0f;
 
 	if (moveForward)
 	{
@@ -343,8 +350,8 @@ void Application::renderFrame(float dt)
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
-	mRenderSystem.render(width, height, mModelMatrixContainer, mCollisionPairsFromGpu);
-	//mRenderSystem.renderInstanced(width, height, mModelMatrixContainer);
+	mRenderSystem.render(mModelMatrixContainer, mCollisionPairsFromGpu);
+	//mRenderSystem.renderInstanced(mModelMatrixContainer);
 
 	if (showHitBoxVerts)
 		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mManifoldsFromGpu);
@@ -421,14 +428,18 @@ void Application::update(float dt)
 	glm::vec3 controlPosition{ 0.0f };
 
 	// Get any inputs for kinematics object
+	// Use info from the camera for x-z plane movement
+	glm::vec3 cameraRight = mFlyCamera.getRight();
+	glm::vec3 cameraFront = mFlyCamera.getFront();
+
 	if (moveForward)
-		controlPosition.z -= 5.0f * dt;
+		controlPosition += 5.0f * dt * glm::vec3(cameraFront.x, 0.0f, cameraFront.z);
 	if (moveBackward)
-		controlPosition.z += 5.0f * dt;
+		controlPosition -= 5.0f * dt * glm::vec3(cameraFront.x, 0.0f, cameraFront.z);
 	if (moveLeft)
-		controlPosition.x -= 5.0f * dt;
+		controlPosition -= 5.0f * dt * cameraRight;
 	if (moveRight)
-		controlPosition.x += 5.0f * dt;
+		controlPosition += 5.0f * dt * cameraRight;
 	if (moveUpward)
 		controlPosition.y += 5.0f * dt;
 	if (moveDownward)

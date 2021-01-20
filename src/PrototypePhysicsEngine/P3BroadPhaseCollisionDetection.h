@@ -16,13 +16,18 @@
 //------------------ Data packs for the GPU (SoA) --------------------//
 struct AabbGpuPackage
 {
-	glm::vec4 minCoords[MAX_NUM_OBJECTS];
-	glm::vec4 maxCoords[MAX_NUM_OBJECTS];
+	glm::vec4 minCoords[cMaxObjectCount]{};
+	glm::vec4 maxCoords[cMaxObjectCount]{};
 };
 
 struct CollisionPairGpuPackage
 {
-	glm::ivec4 collisionPairs[2 * MAX_NUM_OBJECTS]{};
+	glm::ivec4 collisionPairs[2 * cMaxObjectCount]{};
+};
+
+struct BoxColliderGpuPackage
+{
+	glm::vec4 boxColliders[cMaxObjectCount][cBoxColliderVertCount]{};
 };
 
 class P3OpenGLComputeBroadPhase
@@ -34,8 +39,8 @@ public:
 	CollisionPairGpuPackage const &step(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
-	GLuint getBoxCollidersID() const { return mSsboIDContainer[P3_BOX_COLLIDERS]; };
-	GLuint getCollisionPairsID() const { return mSsboIDContainer[P3_COLLISION_PAIRS]; }
+	GLuint getBoxCollidersID() const { return mSsboIDs[P3_BOX_COLLIDERS]; };
+	GLuint getCollisionPairsID() const { return mSsboIDs[P3_COLLISION_PAIRS]; }
 
 	void reset();
 
@@ -44,7 +49,7 @@ public:
 
 private:
 	void initShaderPrograms();
-	void initGpuBuffers();
+	GLuint initGpuBuffers();
 
 	void buildBvhTreeOnGpu();
 	void detectCollisionPairs(std::vector<P3BoxCollider> const &);
@@ -72,13 +77,17 @@ private:
 	};
 
 	//----------------------------- OpenGL bookkeeping ----------------------------//
-	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{ 0u };
-	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDContainer{ 0u };
+	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{};
+	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDs{};
 	GLuint mAtomicBufferID = 0u;
 
-	//--------------------------------- Debug ---------------------------------//
+	GLuint mDispatchIndirectBufferID = 0;
+	DispatchIndirectCommand mDispatchIndirectCommand{ 1, 1, 1 };
+
+	//--------------------------------- CPU data ---------------------------------//
 	AabbGpuPackage mAabbCpuData;
-	CollisionPairGpuPackage mCollisionPairCpuData;
+	BoxColliderGpuPackage *mpBoxColliderCpuData     = nullptr;  // Data streaming to GPU
+	CollisionPairGpuPackage *mpCollisionPairCpuData = nullptr;
 };
 
 #endif // P3_BROAD_PHASE_COLLISION_DETECTION_H

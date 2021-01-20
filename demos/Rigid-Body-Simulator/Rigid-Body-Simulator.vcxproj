@@ -174,8 +174,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\Buffer.h" />
+    <ClInclude Include="..\..\src\Buffer.h" />
     <ClInclude Include="..\..\src\Camera.h" />
+    <ClInclude Include="..\..\src\Program.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.h" />

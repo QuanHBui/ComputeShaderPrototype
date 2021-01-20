@@ -35,10 +35,10 @@ public:
 		NORMAL_INSTANCED
 	};
 
-	void init();
+	void init(int, int);
 
-	void render(int, int, MatrixContainer const &, CollisionPairGpuPackage const &);
-	void renderInstanced(int, int, MatrixContainer const &);
+	void render(MatrixContainer const &, CollisionPairGpuPackage const &);
+	void renderInstanced(MatrixContainer const &);
 	void renderDebug(std::vector<P3BoxCollider> const &, ManifoldGpuPackage const &);
 
 	void registerMeshForBody(MeshKey const &, unsigned int = 1u);
@@ -48,7 +48,7 @@ public:
 	void reset();
 
 private:
-	void initRenderPrograms();
+	void initRenderPrograms(int, int);
 	void initMeshes();
 	void initDebug();
 

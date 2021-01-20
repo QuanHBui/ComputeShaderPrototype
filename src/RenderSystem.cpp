@@ -9,22 +9,17 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
-void RenderSystem::init()
+void RenderSystem::init(int width, int height)
 {
-	initRenderPrograms();
+	initRenderPrograms(width, height);
 	initMeshes();
 	initDebug();
 }
 
-void RenderSystem::render(int width, int height,
-	MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
+void RenderSystem::render(MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
 {
-	glViewport(0, 0, width, height);
-
 	// Clear framebuffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	float aspect = width / float(height);
 
 	Program const &renderProgram = mPrograms[0];
 
@@ -74,14 +69,10 @@ void RenderSystem::render(int width, int height,
 	renderProgram.unbind();
 }
 
-void RenderSystem::renderInstanced(int width, int height, MatrixContainer const &modelMatrices)
+void RenderSystem::renderInstanced(MatrixContainer const &modelMatrices)
 {
-	glViewport(0, 0, width, height);
-
 	// Clear framebuffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	float aspect = width / float(height);
 
 	Program const &renderProgram = mPrograms[NORMAL_INSTANCED];
 
@@ -104,7 +95,7 @@ void RenderSystem::renderDebug(
 	ManifoldGpuPackage const &manifoldGpuPackage )
 {
 	glBindVertexArray(mDebugVao);
-	glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo);
+	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo));
 
 	// Bind render program
 	Program const &debugShaderProg = mPrograms[DEBUG];
@@ -196,9 +187,11 @@ void RenderSystem::reset()
 	mNextMeshKeyIdx = 0u;
 }
 
-void RenderSystem::initRenderPrograms()
+void RenderSystem::initRenderPrograms(int width, int height)
 {
 	GLSL::checkVersion();
+
+	glViewport(0, 0, width, height);
 
 	// Set background color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

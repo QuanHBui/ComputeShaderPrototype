@@ -112,9 +112,11 @@ void main()
 	}
 
 	barrier(); //=============================================================
+	memoryBarrier();
 
 	uint currObjectIdx = gl_LocalInvocationID.x;
 
+	// Still loop through pretty much all objects in the world
 	for (uint nextObjectIdx = currObjectIdx + 1u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
 		sweepAxis(currObjectIdx, nextObjectIdx); // Collision pair buffer got updated.
 

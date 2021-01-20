@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#ifndef MAX_NUM_OBJECTS
+#ifndef cMaxObjectCount
 #define MAX_NUM_OBJECTS 1000
 #endif
 
@@ -37,9 +37,9 @@ struct LinearTransform
 //------------------ Data pack for the GPU (SoA) --------------------//
 struct LinearTransformGpuPackage
 {
-	glm::vec4 positions[MAX_NUM_OBJECTS]{};
-	glm::vec4 velocities[MAX_NUM_OBJECTS]{};
-	glm::vec4 masses[MAX_NUM_OBJECTS]{};
+	glm::vec4 positions[cMaxObjectCount]{};
+	glm::vec4 velocities[cMaxObjectCount]{};
+	glm::vec4 masses[cMaxObjectCount]{};
 };
 
 struct LinearTransformDerivate

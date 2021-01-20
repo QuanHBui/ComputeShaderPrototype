@@ -224,6 +224,8 @@ glm::vec3 P3DynamicsWorld::castRay(glm::vec3 const &start, glm::vec3 const &dire
 
 	if (t > 0.0001f)
 		return direction * t + start;
+
+	return glm::vec3(0.0f);
 }
 
 void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::vec3 const &velocity)

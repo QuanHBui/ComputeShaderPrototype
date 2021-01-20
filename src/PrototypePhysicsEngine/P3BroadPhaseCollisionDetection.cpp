@@ -17,7 +17,7 @@ CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3Box
 {
 	detectCollisionPairs(boxColliders);
 
-	return mCollisionPairCpuData;
+	return *mpCollisionPairCpuData;
 }
 
 /**
@@ -38,14 +38,48 @@ void P3OpenGLComputeBroadPhase::initShaderPrograms()
 	// mComputeProgramIDContainer[P3_SORT_LEAF_NODES] = createComputeProgram("../resources/shaders/sortLeafNodes.comp");
 }
 
-void P3OpenGLComputeBroadPhase::initGpuBuffers()
+GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 {
-	CHECKED_GL_CALL(glGenBuffers(NUM_BROAD_PHASE_SSBOS, mSsboIDContainer.data()));
+	glGenBuffers(NUM_BROAD_PHASE_SSBOS, mSsboIDs.data());
+
+	GLbitfield mapFlags = GL_MAP_WRITE_BIT
+						| GL_MAP_PERSISTENT_BIT // Keep being mapped while drawing/computing
+						| GL_MAP_COHERENT_BIT;  // Writes are automatically visible to GPU
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[P3_BOX_COLLIDERS]);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(BoxColliderGpuPackage), nullptr, mapFlags);
+
+	// Keep it mapped until end of program
+	mpBoxColliderCpuData = static_cast<BoxColliderGpuPackage *>(glMapBufferRange(
+		GL_SHADER_STORAGE_BUFFER,
+		0,
+		sizeof(BoxColliderGpuPackage),
+		mapFlags ));
+
+	mapFlags = GL_MAP_READ_BIT
+			 | GL_MAP_PERSISTENT_BIT
+			 | GL_MAP_COHERENT_BIT;
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[P3_COLLISION_PAIRS]);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, mapFlags);
+
+	mpCollisionPairCpuData = static_cast<CollisionPairGpuPackage *>(glMapBufferRange(
+		GL_SHADER_STORAGE_BUFFER,
+		0,
+		sizeof(CollisionPairGpuPackage),
+		mapFlags));
 
 	glGenBuffers(1, &mAtomicBufferID);
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
 	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+	glGenBuffers(1, &mDispatchIndirectBufferID);
+	glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, mDispatchIndirectBufferID);
+	glBufferStorage(GL_DISPATCH_INDIRECT_BUFFER, sizeof(DispatchIndirectCommand), &mDispatchIndirectCommand,
+		mapFlags);
+
+	return mDispatchIndirectBufferID;
 }
 
 void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
@@ -56,21 +90,19 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> const &boxColliders)
 {
 	// Pack data for GPU
-	std::vector<glm::vec4[cBoxColliderVertCount]> boxVertices(boxColliders.size());
-	for (unsigned int i = 0; i < boxVertices.size(); ++i)
+	for (unsigned int i = 0; i < boxColliders.size(); ++i)
+	{
 		for (unsigned int j = 0; j < cBoxColliderVertCount; ++j)
-			boxVertices[i][j] = boxColliders[i].mVertices[j];
+		{
+			mpBoxColliderCpuData->boxColliders[i][j] = boxColliders[i].mVertices[j];
+		}
+	}
 
-	// Bind mesh collider buffer
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_BOX_COLLIDERS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, cBoxColliderVertCount * sizeof(glm::vec4) * boxColliders.size(),
-		boxVertices.data(), GL_STATIC_READ);
-
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_AABBS]);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[P3_AABBS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AabbGpuPackage), nullptr, GL_DYNAMIC_COPY);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mSsboIDContainer[P3_BOX_COLLIDERS]);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mSsboIDContainer[P3_AABBS]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mSsboIDs[P3_BOX_COLLIDERS]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mSsboIDs[P3_AABBS]);
 
 	//================== Start of update AABBs ==================//
 	GLuint currProgID = mComputeProgramIDContainer[P3_UPDATE_AABBS];
@@ -79,7 +111,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	GLuint uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
 
-	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
+	glDispatchComputeIndirect(0);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	//================ End of update AABBs ================//
@@ -101,12 +133,12 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	{
 		//--------------------------- Dispatch and synchronize ---------------------------//
 		// -1 for even, 1 for odd; we start processing the odd pair first
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, 1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, 1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, -1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, -1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -114,11 +146,8 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, GL_DYNAMIC_COPY);
-
 	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0u, mAtomicBufferID);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDContainer[P3_COLLISION_PAIRS]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[P3_COLLISION_PAIRS]);
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
@@ -126,7 +155,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepX");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
+	glDispatchComputeIndirect(0);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 	// SORT ON Y-AXIS
@@ -146,12 +175,12 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	{
 		//--------------------------- Dispatch and synchronize ---------------------------//
 		// -1 for even, 1 for odd; we start processing the odd pair first
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, 1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, 1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, -1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, -1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -167,7 +196,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepY");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
+	glDispatchComputeIndirect(0);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 	// SORT ON Z-AXIS
@@ -187,12 +216,12 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	{
 		//--------------------------- Dispatch and synchronize ---------------------------//
 		// -1 for even, 1 for odd; we start processing the odd pair first
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, 1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, 1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		CHECKED_GL_CALL(glUniform1i(uniformIdx, -1));
-		CHECKED_GL_CALL(glDispatchCompute(GLuint(1), GLuint(1), GLuint(1)));
+		glUniform1i(uniformIdx, -1);
+		glDispatchComputeIndirect(0);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -208,14 +237,8 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepZ");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	glDispatchCompute(GLuint(1), GLuint(1), GLuint(1));
+	glDispatchComputeIndirect(0);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
-
-	// Copy back the result collision pair list
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDContainer[P3_COLLISION_PAIRS]);
-	void *pGpuMem = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	memcpy(&mCollisionPairCpuData, pGpuMem, sizeof(CollisionPairGpuPackage));
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	// Reset and unbind
 	resetAtomicCounter();
