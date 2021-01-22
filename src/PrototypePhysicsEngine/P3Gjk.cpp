@@ -12,7 +12,7 @@ bool checkLine(P3Simplex &gjkSimplex, glm::vec3 &direction)
 	SupportPoint supB = gjkSimplex[1];
 
 	glm::vec3 ab = supB - supA;
-	glm::vec3 ao = -supA.mMinkowskiDiffPoint;	// From 'a' to origin
+	glm::vec3 ao = -supA.mMinkowskiDiffPoint; // From 'a' to origin
 
 	// If origin is in ao, we keep support point b and a, then
 	//  we choose another support point in the direction that

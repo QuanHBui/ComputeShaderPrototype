@@ -3,9 +3,23 @@
 void AtomicCounter::init()
 {
 	glGenBuffers(1, &mAtomicBufferID);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
-	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+	GLbitfield mapFlags = GL_MAP_READ_BIT
+						| GL_MAP_WRITE_BIT
+						| GL_MAP_PERSISTENT_BIT
+						| GL_MAP_COHERENT_BIT;
+
+	bind();
+	glBufferStorage(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, mapFlags);
+
+	mpAtomicCounter = static_cast<GLuint *>(glMapBufferRange(
+		GL_ATOMIC_COUNTER_BUFFER,
+		0,
+		sizeof(GLuint),
+		mapFlags
+	));
+
+	unbind();
 }
 
 void AtomicCounter::bind()
@@ -25,39 +39,16 @@ void AtomicCounter::unbind()
 
 GLuint AtomicCounter::get()
 {
-	bind();
-
-	GLuint *pCounter = (GLuint *)glMapBufferRange(
-		GL_ATOMIC_COUNTER_BUFFER,
-		0,
-		sizeof(GLuint),
-		GL_MAP_READ_BIT
-	);
-	GLuint counter = *pCounter;
-	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-
-	unbind();
-
-	return counter;
+	return *mpAtomicCounter;
 }
 
 void AtomicCounter::reset()
 {
-	bind();
-
-	GLuint *pMappedBufferMemory = (GLuint *)glMapBufferRange(
-		GL_ATOMIC_COUNTER_BUFFER,
-		0,
-		sizeof(GLuint),
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT
-	);
-	memset(pMappedBufferMemory, 0, sizeof(GLuint));
-	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-
-	unbind();
+	*mpAtomicCounter = 0u;
 }
 
 void AtomicCounter::clear()
 {
+	glUnmapBuffer(mAtomicBufferID);
 	glDeleteBuffers(1, &mAtomicBufferID);
 }

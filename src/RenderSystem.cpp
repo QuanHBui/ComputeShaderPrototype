@@ -136,6 +136,7 @@ void RenderSystem::renderDebug(
 	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount];
 	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount];
 	int i = 0, j = 0;
+
 	for (Manifold const &manifold : manifoldGpuPackage.manifolds)
 	{
 		if (manifold.contactBoxIndicesAndContactCount.z <= 0) break;
@@ -196,7 +197,7 @@ void RenderSystem::initRenderPrograms(int width, int height)
 	// Set background color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

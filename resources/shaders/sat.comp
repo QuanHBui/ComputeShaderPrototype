@@ -92,6 +92,11 @@ float getSignedDist(vec3 point, vec3 planePoint, vec3 planeNormal)
 	return dot(planeNormal, point - planePoint);
 }
 
+vec3 projectPointOntoPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
+{
+	return point + getSignedDist(point, planePoint, planeNormal) * planeNormal;
+}
+
 vec3 getSupport(BoxCollider box, vec3 direction)
 {
 	float projDist        = 0.0f;
@@ -144,6 +149,12 @@ void getPlane(int boxIdx, int faceIdx, out vec3 planePoint, out vec3 planeNormal
 	planePoint = boxColliders[boxIdx].vertices[faces[faceIdx][0]].xyz;
 }
 
+/**
+ * Build a plane for each face & find the support point in the opposite normal
+ *  direction on the other hull. Once support point is found, the distance
+ *  between it and the plane is the separation/penetration for this axis.
+ *  Keep track of the largest distance.
+ */
 FaceQuery queryFaceDirections(int boxAIdx, int boxBIdx)
 {
 	BoxCollider boxA  = boxColliders[boxAIdx];
@@ -180,6 +191,15 @@ FaceQuery queryFaceDirections(int boxAIdx, int boxBIdx)
 	return faceQuery;
 }
 
+/**
+ * We consider all the possible edge pairs. For each edge pair do:
+ *  (1) Get the cross product between the two witness edges to get the possible
+ *        separating axis
+ *  (2) Build a plane through the edge of Hull A with normal of cross product
+ *  (3) Ensure a consistent normal orientation pointing away from A
+ *  (4) Check the distance between the support point in the opposite normal
+ *        direction
+ */
 EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 {
 	vec3 startA = vec3(0.0f);
@@ -334,6 +354,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 	vec3 startVert          = vec3(0.0f);
 	vec3 endVert            = vec3(0.0f);
 	vec3 lerpIntersectPoint = vec3(0.0f);
+	vec3 projPointOntoRefPlane = vec3(0.0f);
 	int startVertIdx        = -1;
 	int endVertIdx          = -1;
 	float startSignedDist   = 0.0f;
@@ -366,7 +387,8 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 				{
 					if (getSignedDist(endVert, referencePoint, referenceNormal) < -0.0001f)
 					{
-						manifold.contactPoints[contactPointCount++] = vec4(endVert, 0.0f);
+						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePoint, referenceNormal);
+						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
 					}
 
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
@@ -374,14 +396,16 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 
 					if (getSignedDist(lerpIntersectPoint, referencePoint, referenceNormal) < -0.0001f)
 					{
-						manifold.contactPoints[contactPointCount++] = vec4(lerpIntersectPoint, 0.0f);
+						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePoint, referenceNormal);
+						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
 				// Else if both start and end on the negative side, keep only the end.
 				else if ( startSignedDist < -0.0001f && endSignedDist < -0.0001f
 						  && getSignedDist(endVert, referencePoint, referenceNormal) < -0.0001f )
 				{
-					manifold.contactPoints[contactPointCount++] = vec4(endVert, 0.0f);
+					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePoint, referenceNormal);
+					manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
 				}
 				// Else if the start on the negative side and end on the positive side,
 				//  lerp the intersection.
@@ -392,7 +416,8 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 
 					if (getSignedDist(lerpIntersectPoint, referencePoint, referenceNormal) < -0.0001f)
 					{
-						manifold.contactPoints[contactPointCount++] = vec4(lerpIntersectPoint, 0.0f);
+						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePoint, referenceNormal);
+						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
 

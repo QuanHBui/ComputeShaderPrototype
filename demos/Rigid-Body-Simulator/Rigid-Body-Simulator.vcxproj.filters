@@ -36,16 +36,10 @@
     <ClCompile Include="..\..\src\WindowManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.cpp">
-      <Filter>Source Files\PhysicsEngine</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp">
-      <Filter>Source Files\PhysicsEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\ext\glad\src\glad.c">
@@ -99,6 +93,18 @@
     <ClCompile Include="Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="P3Sat.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -150,6 +156,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Program.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3CpuBroadPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

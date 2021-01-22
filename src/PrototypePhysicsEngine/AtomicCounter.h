@@ -21,6 +21,7 @@ public:
 
 private:
 	GLuint mAtomicBufferID = 0u;
+	GLuint *mpAtomicCounter = nullptr;
 };
 
 #endif
