@@ -14,7 +14,11 @@ public:
 	void bindTo(GLuint);
 	void unbind();
 
+	// Since this is created with coherent bit, no need to sync
 	GLuint get();
+
+	void lock();
+	void wait();
 
 	void reset();
 	void clear();
@@ -22,6 +26,7 @@ public:
 private:
 	GLuint mAtomicBufferID = 0u;
 	GLuint *mpAtomicCounter = nullptr;
+	GLsync mSync;
 };
 
 #endif

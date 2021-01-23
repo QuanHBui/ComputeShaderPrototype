@@ -67,10 +67,10 @@ GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 		sizeof(CollisionPairGpuPackage),
 		mapFlags
 	));
+
 	glGenBuffers(1, &mDispatchIndirectBufferID);
 	glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, mDispatchIndirectBufferID);
-	glBufferStorage(GL_DISPATCH_INDIRECT_BUFFER, sizeof(DispatchIndirectCommand), &mDispatchIndirectCommand,
-		mapFlags);
+	glBufferStorage(GL_DISPATCH_INDIRECT_BUFFER, sizeof(DispatchIndirectCommand), &mDispatchIndirectCommand, 0);
 
 	return mDispatchIndirectBufferID;
 }
@@ -149,7 +149,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Y-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
@@ -181,13 +181,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
-	GLuint stuff = mAtomicCounter.get();
-	printf("Before: %d\n", stuff);
-
 	mAtomicCounter.reset();
-	
-	stuff = mAtomicCounter.get();
-	printf("After: %d\n\n", stuff);
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
@@ -196,7 +190,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Z-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
@@ -229,7 +223,6 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUseProgram(currProgID);
 
 	mAtomicCounter.reset();
-	printf("Before dispatch on z-axis: %d\n", mAtomicCounter.get());
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
@@ -238,7 +231,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// Reset and unbind
 	mAtomicCounter.reset();

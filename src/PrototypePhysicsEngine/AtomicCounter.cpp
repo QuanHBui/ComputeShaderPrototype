@@ -1,5 +1,7 @@
 #include "AtomicCounter.h"
 
+#include <cassert>
+
 void AtomicCounter::init()
 {
 	glGenBuffers(1, &mAtomicBufferID);
@@ -42,8 +44,33 @@ GLuint AtomicCounter::get()
 	return *mpAtomicCounter;
 }
 
+void AtomicCounter::lock()
+{
+	// Delete any existing sync object
+	if (mSync)
+		glDeleteSync(mSync);
+
+	mSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+}
+
+// Force sync function, the client/host would wait until the server/device done using
+//  the buffer to update/modify.
+void AtomicCounter::wait()
+{
+	assert(mSync);
+
+	GLenum waitReturnStatus = GL_UNSIGNALED;
+
+	while (waitReturnStatus != GL_ALREADY_SIGNALED && waitReturnStatus != GL_CONDITION_SATISFIED)
+	{
+		waitReturnStatus = glClientWaitSync(mSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1);
+	}
+}
+
 void AtomicCounter::reset()
 {
+	lock();
+	wait();
 	*mpAtomicCounter = 0u;
 }
 
