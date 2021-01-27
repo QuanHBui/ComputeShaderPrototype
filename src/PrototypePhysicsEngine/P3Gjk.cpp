@@ -1,7 +1,6 @@
+#include "P3Gjk.h"
+
 #include "P3Collider.h"
-
-#include <glm/glm.hpp>
-
 #include "P3Simplex.h"
 
 #define SAME_DIRECTION(a, b) glm::dot(a, b) > 0.0001f

@@ -10,26 +10,10 @@
 #include "BoundingVolume.h"
 #include "ComputeProgram.h"
 #include "P3Collider.h"
+#include "P3BroadPhaseCommon.h"
 
-#define NUM_BROAD_PHASE_COMPUTE_PROGRAMS 5
-#define NUM_BROAD_PHASE_SSBOS 3
-
-//------------------ Data packs for the GPU (SoA) --------------------//
-struct AabbGpuPackage
-{
-	glm::vec4 minCoords[cMaxObjectCount]{};
-	glm::vec4 maxCoords[cMaxObjectCount]{};
-};
-
-struct CollisionPairGpuPackage
-{
-	glm::ivec4 collisionPairs[2 * cMaxObjectCount]{};
-};
-
-struct BoxColliderGpuPackage
-{
-	glm::vec4 boxColliders[cMaxObjectCount][cBoxColliderVertCount]{};
-};
+constexpr int cBroadPhaseComputeProgramCount = 5;
+constexpr GLsizei cBroadPhaseSsboCount = 3;
 
 class P3OpenGLComputeBroadPhase
 {
@@ -78,8 +62,8 @@ private:
 	};
 
 	//----------------------------- OpenGL bookkeeping ----------------------------//
-	std::array<GLuint, NUM_BROAD_PHASE_COMPUTE_PROGRAMS> mComputeProgramIDContainer{};
-	std::array<GLuint, NUM_BROAD_PHASE_SSBOS> mSsboIDs{};
+	std::array<GLuint, cBroadPhaseComputeProgramCount> mComputeProgramIDContainer{};
+	std::array<GLuint, cBroadPhaseSsboCount> mSsboIDs{};
 
 	GLuint mDispatchIndirectBufferID = 0;
 	DispatchIndirectCommand mDispatchIndirectCommand{ 1, 1, 1 };

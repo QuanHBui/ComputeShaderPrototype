@@ -1,6 +1,6 @@
 #include "P3OpenGLComputeNarrowPhase.h"
 
-#include <glad/glad.h>
+#include "P3NarrowPhaseCommon.h"
 
 void P3OpenGLComputeNarrowPhase::init(GLuint boxCollidersID, GLuint collisionPairsID)
 {
@@ -38,8 +38,6 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 
 ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 {
-	mAtomicCounter.reset();
-
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, mBoxCollidersID);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, mCollisionPairsID);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[MANIFOLDS]);
@@ -50,8 +48,10 @@ ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxColliders
 	glUseProgram(currProgID);
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
+	mAtomicCounter.lock();
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+	mAtomicCounter.reset();
 	glUseProgram(0u);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
 

@@ -44,9 +44,10 @@ GLuint AtomicCounter::get()
 	return *mpAtomicCounter;
 }
 
+// Should be used to insert a fence into the command stream. Be careful where to put it.
 void AtomicCounter::lock()
 {
-	// Delete any existing sync object
+	// Delete any existing sync object. Do we really need to do this?
 	if (mSync)
 		glDeleteSync(mSync);
 
@@ -69,7 +70,6 @@ void AtomicCounter::wait()
 
 void AtomicCounter::reset()
 {
-	lock();
 	wait();
 	*mpAtomicCounter = 0u;
 }

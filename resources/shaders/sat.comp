@@ -2,6 +2,7 @@
 
 precision highp float;
 
+// Properties of the collider should be more configurable
 #define VERT_COUNT_PER_EDGE 2
 #define VERT_COUNT_PER_FACE 4
 #define COLLIDER_EDGE_COUNT 12
@@ -56,8 +57,8 @@ struct FaceQuery
 struct EdgeQuery
 {
 	float largestDist;
-	vec3 pointsA[2];
-	vec3 pointsB[2];
+	vec3 pointsA[VERT_COUNT_PER_EDGE];
+	vec3 pointsB[VERT_COUNT_PER_EDGE];
 	vec3 edgeDirA;
 	vec3 edgeDirB;
 	vec3 edgeNormal; // This edge normal points away from edgeA.
@@ -157,8 +158,6 @@ void getPlane(int boxIdx, int faceIdx, out vec3 planePoint, out vec3 planeNormal
  */
 FaceQuery queryFaceDirections(int boxAIdx, int boxBIdx)
 {
-	BoxCollider boxA  = boxColliders[boxAIdx];
-	BoxCollider boxB  = boxColliders[boxBIdx];
 	float dist        = 0.0f;
 	vec3 planePoint   = vec3(0.0f);
 	vec3 planeNormal  = vec3(0.0f);
@@ -176,7 +175,7 @@ FaceQuery queryFaceDirections(int boxAIdx, int boxBIdx)
 		getPlane(boxAIdx, localFaceIdx, planePoint, planeNormal);
 
 		// Get support point from boxB
-		supportPoint = getSupport(boxB, -planeNormal);
+		supportPoint = getSupport(boxColliders[boxBIdx], -planeNormal);
 
 		// Get signed distance from support point to plane
 		dist = getSignedDist(supportPoint, planePoint, planeNormal);
@@ -275,7 +274,7 @@ vec3 getIncidentNormal(int incidentBoxIdx, vec3 referenceNormal)
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
 		potentialIncidentNormal = colliderFaceNormals[incidentBoxIdx][faceIdx];
-		localDotProduct = dot(potentialIncidentNormal, referenceNormal);
+		localDotProduct         = dot(potentialIncidentNormal, referenceNormal);
 
 		if (localDotProduct < smallestDotProduct)
 		{

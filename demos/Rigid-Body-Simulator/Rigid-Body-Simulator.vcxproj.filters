@@ -102,7 +102,7 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
-    <ClCompile Include="P3Sat.cpp">
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -171,6 +171,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Epa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Gjk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

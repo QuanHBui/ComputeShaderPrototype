@@ -4,31 +4,16 @@
 #define P3_OPENGL_COMPUTE_NARROW_PHASE_H
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 
 #include "AtomicCounter.h"
 #include "ComputeProgram.h"
+#include "P3Common.h"
 
-constexpr int cMaxContactPointCount = 16;
-constexpr int cMaxColliderCount = 1024;
 constexpr uint16_t cNarrowPhaseComputeProgramCount = 1u;
 constexpr GLsizei cNarrowPhaseSsboCount = 1u;
 
 struct BoundingVolume;
-
-struct Manifold
-{
-	glm::ivec4 contactBoxIndicesAndContactCount{}; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
-	glm::vec4 contactPoints[cMaxContactPointCount]{};
-	glm::vec4 contactNormal{}; // w stores the penetration depth.
-};
-
-struct ManifoldGpuPackage
-{
-	Manifold manifolds[cMaxColliderCount]{};
-};
-
-void buildContactManifold(Manifold &, BoundingVolume *, BoundingVolume *);
+struct ManifoldGpuPackage;
 
 class P3OpenGLComputeNarrowPhase
 {

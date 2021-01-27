@@ -18,6 +18,7 @@
 #include "P3ConstraintSolver.h"
 #include "P3Integrator.h"
 #include "P3NarrowPhaseCollisionDetection.h"
+#include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;

@@ -168,12 +168,12 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Epa.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Gjk.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp" />
     <ClCompile Include="..\..\src\RenderSystem.cpp" />
     <ClCompile Include="..\..\src\Shape.cpp" />
     <ClCompile Include="..\..\src\WindowManager.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="P3Sat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Buffer.h" />
@@ -183,13 +183,18 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\BoundingVolume.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCollisionDetection.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3BroadPhaseCommon.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Collider.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Common.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3CpuBroadPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Epa.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Gjk.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCommon.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sat.h" />

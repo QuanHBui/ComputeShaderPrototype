@@ -1,5 +1,6 @@
-#include "P3Collider.h"
+#include "P3Epa.h"
 
+#include "P3Collider.h"
 #include "P3Simplex.h"
 
 /**
@@ -90,7 +91,5 @@ void P3Epa(P3Collider const &colliderA, P3Collider const &colliderB, P3Simplex &
 	//while (true)
 	{
 		// Find the facet closest to origin
-
-
 	}
 }

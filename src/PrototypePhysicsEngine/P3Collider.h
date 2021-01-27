@@ -8,13 +8,7 @@
 #include <glm/mat4x4.hpp>
 #include <vector>
 
-constexpr int cBoxColliderVertCount = 8;
-
-/**
- * Reference: https://blog.winter.dev/2020/gjk-algorithm/
- */
-
-class P3Simplex;
+#include "P3Common.h"
 
 class P3Collider
 {
@@ -115,8 +109,5 @@ struct P3BoxCollider
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
 	};
 };
-
-bool P3Gjk(P3Collider const &, P3Collider const &, P3Simplex &);
-void P3Epa(P3Collider const &, P3Collider const &, P3Simplex &);
 
 #endif // P3_COLLIDER_H

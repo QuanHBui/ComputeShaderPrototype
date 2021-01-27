@@ -38,7 +38,7 @@ GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 {
 	mAtomicCounter.init();
 
-	glGenBuffers(NUM_BROAD_PHASE_SSBOS, mSsboIDs.data());
+	glGenBuffers(cBroadPhaseSsboCount, mSsboIDs.data());
 
 	GLbitfield mapFlags = GL_MAP_WRITE_BIT
 						| GL_MAP_PERSISTENT_BIT // Keep being mapped while drawing/computing
@@ -87,6 +87,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	{
 		for (unsigned int j = 0; j < cBoxColliderVertCount; ++j)
 		{
+			// This buffer is being persistently mapped. TODO: No sync or triple buffering being used yet.
 			mpBoxColliderCpuData->boxColliders[i][j] = boxColliders[i].mVertices[j];
 		}
 	}
@@ -149,6 +150,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
+	mAtomicCounter.lock();
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Y-AXIS
@@ -190,6 +192,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
+	mAtomicCounter.lock();
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Z-AXIS
@@ -231,6 +234,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
+	mAtomicCounter.lock();
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// Reset and unbind

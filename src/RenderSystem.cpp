@@ -4,6 +4,7 @@
 
 #include "GLSL.h"
 #include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
+#include "PrototypePhysicsEngine/P3NarrowPhaseCommon.h"
 #include "PrototypePhysicsEngine/P3NarrowPhaseCollisionDetection.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
