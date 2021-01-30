@@ -29,8 +29,8 @@ void Program::init()
 	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// Read shader sources
-	std::string vShaderString = readFileAsString(vShaderName);
-	std::string fShaderString = readFileAsString(fShaderName);
+	std::string vShaderString = oglutils::readFileAsString(vShaderName);
+	std::string fShaderString = oglutils::readFileAsString(fShaderName);
 	const char *vshader = vShaderString.c_str();
 	const char *fshader = fShaderString.c_str();
 	CHECKED_GL_CALL(glShaderSource(vs, 1, &vshader, NULL));

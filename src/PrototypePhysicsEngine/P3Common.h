@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 
+constexpr int cBoxColliderFaceCount = 6;
 constexpr int cBoxColliderVertCount = 8;
 constexpr int cMaxContactPointCount = 16;
 constexpr int cMaxColliderCount = 1024;

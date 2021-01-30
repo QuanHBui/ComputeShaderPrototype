@@ -36,7 +36,7 @@ int main()
 	int    numFrames           = 0;
 
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 60.0;
+	double fixedPhysicsTickInterval = 1.0 / 144.0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
 	GLFWwindow *pCurrentGlfwWindow = pWindowManager->getHandle();

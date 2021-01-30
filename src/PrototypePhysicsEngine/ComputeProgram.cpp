@@ -9,7 +9,7 @@
 GLuint createComputeProgram(std::string const &shaderName)
 {
 	// Load the compute shader
-	std::string shaderString = readFileAsString(shaderName);
+	std::string shaderString = oglutils::readFileAsString(shaderName);
 	const char *shader = shaderString.c_str();
 	GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(computeShader, 1, &shader, nullptr);

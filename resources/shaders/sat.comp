@@ -1,7 +1,5 @@
 #version 430
 
-precision highp float;
-
 // Properties of the collider should be more configurable
 #define VERT_COUNT_PER_EDGE 2
 #define VERT_COUNT_PER_FACE 4
@@ -78,14 +76,30 @@ layout(std430, binding = 1) readonly buffer in_collision_pair_data
 // This is the out buffer that we are going to append to
 layout(std430, binding = 2) writeonly buffer out_manifolds_data
 {
+	ivec4 misc;
 	Manifold manifolds[MAX_COLLIDER_COUNT];
 };
 
-layout(binding = 3) uniform atomic_uint nextAvailableIdx;
-/*-----------------------------------------------------------------*/
+layout(std430, binding = 3) writeonly buffer experimental_out_buffer
+{
+	// Pay attention to the memory layout (offsets in bytes): [0, 16]
+	ivec4 misc;
+	// [16 - sizeof(ivec4) * MAX_COLLIDER_COUNT] = [16 - 16 + 16 * 1024] = [16, 16,400]
+	ivec4 contactBoxIndicesAndContactCount[MAX_COLLIDER_COUNT]; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+	// [16,400 - 16,400 + sizeof(vec4) * MAX_CONTACT_POINT_COUNT * MAX_COLLIDER_COUNT] = [16,400 - 278,544]
+	vec4 contactPoints[MAX_COLLIDER_COUNT][MAX_CONTACT_POINT_COUNT];
+	// [278,544 - 278,544 + sizeof(vec4) * MAX_COLLIDER_COUNT] = [278,544 - 294,928]
+	vec4 contactNormal[MAX_COLLIDER_COUNT]; // w stores the penetration depth.
+} experimentalBuffer;
 
-// Yes, when we go to a different work group this will be refilled again.
-shared vec3 colliderFaceNormals[MAX_COLLIDER_COUNT][COLLIDER_FACE_COUNT];
+// This is not supposed to be exposed to the CPU side
+layout(std430, binding = 4) buffer global_buffer
+{
+	vec4 colliderFaceNormals[MAX_COLLIDER_COUNT][COLLIDER_FACE_COUNT];
+};
+
+layout(binding = 0) uniform atomic_uint nextAvailableIdx;
+/*-----------------------------------------------------------------*/
 
 // Signed distance of plane to an arbitrary point. Assume plane normal is already normalized.
 float getSignedDist(vec3 point, vec3 planePoint, vec3 planeNormal)
@@ -138,13 +152,13 @@ void calculateFaceNormals()
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
-		colliderFaceNormals[boxIdx][faceIdx] = getFaceNormal(boxColliders[boxIdx], faceIdx);
+		colliderFaceNormals[boxIdx][faceIdx] = vec4(getFaceNormal(boxColliders[boxIdx], faceIdx), 0.0f);
 	}
 }
 
 void getPlane(int boxIdx, int faceIdx, out vec3 planePoint, out vec3 planeNormal)
 {
-	planeNormal = colliderFaceNormals[boxIdx][faceIdx];
+	planeNormal = vec3(colliderFaceNormals[boxIdx][faceIdx]);
 
 	// Plane point can be any vertex.
 	planePoint = boxColliders[boxIdx].vertices[faces[faceIdx][0]].xyz;
@@ -273,7 +287,7 @@ vec3 getIncidentNormal(int incidentBoxIdx, vec3 referenceNormal)
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
-		potentialIncidentNormal = colliderFaceNormals[incidentBoxIdx][faceIdx];
+		potentialIncidentNormal = vec3(colliderFaceNormals[incidentBoxIdx][faceIdx]);
 		localDotProduct         = dot(potentialIncidentNormal, referenceNormal);
 
 		if (localDotProduct < smallestDotProduct)

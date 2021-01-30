@@ -5,6 +5,7 @@
   <PropertyGroup>
     <IncludePath>$(SolutionDir)ext\imgui;$(SolutionDir)ext\GLFW\include;$(SolutionDir)ext\glad\include;$(SolutionDir)ext;$(SolutionDir)src;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)(Configuration)\</OutDir>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup />
   <ItemGroup />

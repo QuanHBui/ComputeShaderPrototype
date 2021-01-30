@@ -1,7 +1,5 @@
 #version 430 core
 
-precision highp float;
-
 #define NUM_COLLIDER_VERTS 8u
 #define MAX_NUM_COLLIDERS 1024u
 

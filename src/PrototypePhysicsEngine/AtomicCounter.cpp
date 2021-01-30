@@ -41,6 +41,7 @@ void AtomicCounter::unbind()
 
 GLuint AtomicCounter::get()
 {
+	wait();
 	return *mpAtomicCounter;
 }
 

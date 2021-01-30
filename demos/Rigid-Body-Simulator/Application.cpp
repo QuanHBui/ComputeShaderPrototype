@@ -49,8 +49,12 @@ Application::~Application()
 
 void Application::init()
 {
-	getComputeGroupInfo();
-	getUboInfo();
+	std::cout << '\n';
+
+	oglutils::getComputeShaderInfo();
+	oglutils::getUboInfo();
+
+	std::cout << '\n';
 
 	initRenderSystem();
 	initPhysicsWorld();

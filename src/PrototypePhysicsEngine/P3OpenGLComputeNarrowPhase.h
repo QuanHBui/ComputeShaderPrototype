@@ -3,6 +3,7 @@
 #ifndef P3_OPENGL_COMPUTE_NARROW_PHASE_H
 #define P3_OPENGL_COMPUTE_NARROW_PHASE_H
 
+#include <unordered_map>
 #include <glad/glad.h>
 
 #include "AtomicCounter.h"
@@ -26,39 +27,35 @@ public:
 
 	~P3OpenGLComputeNarrowPhase()
 	{
-		for (uint16_t i = 0u; i < cNarrowPhaseComputeProgramCount; ++i)
-			glDeleteProgram(mComputeProgramIDs[i]);
-
-		glDeleteBuffers(cNarrowPhaseSsboCount, mSsboIDs);
-
 		mAtomicCounter.clear();
 	}
 
 private:
 	void initShaderPrograms()
 	{
-		mComputeProgramIDs[SAT] = createComputeProgram("../resources/shaders/sat.comp");
+		mComputeProgIDs[ComputeShader::SAT] = createComputeProgram("../resources/shaders/sat.comp");
 	}
 
 	void initGpuBuffers();
 
-	enum ComputeShader : uint8_t
+	enum class ComputeShader
 	{
-		SAT = 0,
+		SAT,
 		TRI_TRI_TEST
 	};
 
-	enum StorageShaderBuffer : uint8_t
+	enum class Buffer
 	{
-		MANIFOLDS = 0,
-		MTVS
+		GLOBAL,
+		EXPERIMENTAL,
+		BOX_COLLIDER,
+		COLLISION_PAIR,
+		MANIFOLD
 	};
 
-	// Some Gpu buffers already created from the broad phase
-	GLuint mBoxCollidersID = 0u, mCollisionPairsID = 0u;
-
 	GLuint mComputeProgramIDs[cNarrowPhaseComputeProgramCount]{};
-	GLuint mSsboIDs[cNarrowPhaseSsboCount]{};
+	std::unordered_map<ComputeShader, GLuint> mComputeProgIDs{};
+	std::unordered_map<Buffer, GLuint> mSsboIDs{};
 
 	AtomicCounter mAtomicCounter;
 	ManifoldGpuPackage *mpManifoldGpuPackage; // Stores the results from last physics tick

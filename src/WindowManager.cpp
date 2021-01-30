@@ -66,11 +66,11 @@ bool WindowManager::init(int const width, int const height)
 	std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 
 	// Set vsync
-	//glfwSwapInterval(1);
+	glfwSwapInterval(1);
 
 	// Hide the cursor and capture it
 	//glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	//glfwSetCursorPosCallback(windowHandle, cursor_callback);  // For cursor position change
+	//glfwSetCursorPosCallback(windowHandle, cursor_callback); // For cursor position change
 
 	glfwSetKeyCallback(windowHandle, key_callback);
 	glfwSetMouseButtonCallback(windowHandle, mouse_callback); // For mouse buttons

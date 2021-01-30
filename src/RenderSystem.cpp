@@ -1,6 +1,7 @@
 #include "RenderSystem.h"
 
 #include <iostream>
+#include <vector>
 
 #include "GLSL.h"
 #include "PrototypePhysicsEngine/P3BroadPhaseCollisionDetection.h"
@@ -104,6 +105,7 @@ void RenderSystem::renderDebug(
 
 	GLuint progID = debugShaderProg.getPID();
 
+	// Draw yellow dots - collider verts
 	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 1.0f, 0.0f);
 	glUniformMatrix4fv(glGetUniformLocation(progID, "projection"),
 		1, GL_FALSE, glm::value_ptr(mProjection));
@@ -136,39 +138,44 @@ void RenderSystem::renderDebug(
 	// The size is not correct, cMaxColliderCount is just a placeholder number.
 	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount];
 	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount];
-	int i = 0, j = 0;
+	int contactPointIdx = 0, contacNormalIdx = 0;
 
-	for (Manifold const &manifold : manifoldGpuPackage.manifolds)
+	for (int manifoldIdx = 0; manifoldIdx < manifoldGpuPackage.misc.x; ++manifoldIdx)
 	{
-		if (manifold.contactBoxIndicesAndContactCount.z <= 0) break;
+		Manifold const &manifold = manifoldGpuPackage.manifolds[manifoldIdx];
 
+		// Iterate through all the contact points of this manifold
 		for (int k = 0; k < manifold.contactBoxIndicesAndContactCount.z; ++k)
 		{
-			batchedContactPoints[i++]  = manifold.contactPoints[k];
-			batchedContactNormals[j++] = manifold.contactPoints[k];
-			batchedContactNormals[j++] = manifold.contactPoints[k] + manifold.contactNormal;
+			assert(k < cMaxContactPointCount); // Prob move this to the for loop evaluation later for better fail-safe.
+
+			batchedContactPoints[contactPointIdx++]  = manifold.contactPoints[k];
+			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k];
+			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k] + manifold.contactNormal;
 		}
 	}
 
+	// Draw purple dots - contact points
 	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 0.0f, 1.0f);
 
 	glBufferData(
 		GL_ARRAY_BUFFER,
-		i * sizeof(glm::vec4),
+		contactPointIdx * sizeof(glm::vec4),
 		(const void *)batchedContactPoints,
 		GL_DYNAMIC_DRAW
 	);
-	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, i));
+	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, contactPointIdx));
 
+	// Draw white lines - contact normals
 	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 1.0f, 1.0f);
 
 	glBufferData(
 		GL_ARRAY_BUFFER,
-		j * sizeof(glm::vec4),
+		contacNormalIdx * sizeof(glm::vec4),
 		(const void *)batchedContactNormals,
 		GL_DYNAMIC_DRAW
 	);
-	CHECKED_GL_CALL(glDrawArrays(GL_LINES, 0, j));
+	CHECKED_GL_CALL(glDrawArrays(GL_LINES, 0, contacNormalIdx));
 
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);

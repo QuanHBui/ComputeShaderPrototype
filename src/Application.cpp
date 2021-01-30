@@ -302,7 +302,7 @@ void Application::initCpuBuffers()
 
 void Application::initGpuBuffers()
 {
-	getComputeGroupInfo();
+	getComputeShaderInfo();
 	getUboInfo();
 	std::cout << '\n';
 
