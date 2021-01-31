@@ -50,27 +50,27 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 		0
 	);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::EXPERIMENTAL]);
-	glBufferStorage(
-		GL_SHADER_STORAGE_BUFFER,
-		sizeof(ManifoldPackage),
-		nullptr,
-		0
-	);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::EXPERIMENTAL]);
+	//glBufferStorage(
+	//	GL_SHADER_STORAGE_BUFFER,
+	//	sizeof(ManifoldPackage),
+	//	nullptr,
+	//	0
+	//);
 }
 
 ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
 {
+	GLuint currProgID = mComputeProgIDs[ComputeShader::SAT];
+	glUseProgram(currProgID);
+
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mSsboIDs[Buffer::BOX_COLLIDER]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mSsboIDs[Buffer::COLLISION_PAIR]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSsboIDs[Buffer::MANIFOLD]);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDs[Buffer::EXPERIMENTAL]);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDs[Buffer::EXPERIMENTAL]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mSsboIDs[Buffer::GLOBAL]);
 
 	mAtomicCounter.bindTo(0);
-
-	GLuint currProgID = mComputeProgIDs[ComputeShader::SAT];
-	glUseProgram(currProgID);
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
 	GLsync syncObj = oglutils::lock();

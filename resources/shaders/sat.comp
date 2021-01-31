@@ -80,18 +80,18 @@ layout(std430, binding = 2) writeonly buffer out_manifolds_data
 	Manifold manifolds[MAX_COLLIDER_COUNT];
 };
 
-layout(std430, binding = 3) writeonly buffer experimental_out_buffer
-{
-	// Pay attention to the memory layout (offsets in bytes): [0, 16]
-	ivec4 misc;
-	// [16 - sizeof(ivec4) * MAX_COLLIDER_COUNT] = [16 - 16 + 16 * 1024] = [16, 16,400]
-	ivec4 contactBoxIndicesAndContactCount[MAX_COLLIDER_COUNT]; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
-	// [16,400 - 16,400 + sizeof(vec4) * MAX_CONTACT_POINT_COUNT * MAX_COLLIDER_COUNT] = [16,400 - 278,544]
-	vec4 contactPoints[MAX_COLLIDER_COUNT][MAX_CONTACT_POINT_COUNT];
-	// [278,544 - 278,544 + sizeof(vec4) * MAX_COLLIDER_COUNT] = [278,544 - 294,928]
-	vec4 contactNormal[MAX_COLLIDER_COUNT]; // w stores the penetration depth.
-} experimentalBuffer;
-
+//layout(std430, binding = 3) writeonly buffer experimental_out_buffer
+//{
+//	// Pay attention to the memory layout (offsets in bytes): [0, 16]
+//	ivec4 misc;
+//	// [16 - sizeof(ivec4) * MAX_COLLIDER_COUNT] = [16 - 16 + 16 * 1024] = [16, 16,400]
+//	ivec4 contactBoxIndicesAndContactCount[MAX_COLLIDER_COUNT]; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+//	// [16,400 - 16,400 + sizeof(vec4) * MAX_CONTACT_POINT_COUNT * MAX_COLLIDER_COUNT] = [16,400 - 278,544]
+//	vec4 contactPoints[MAX_COLLIDER_COUNT][MAX_CONTACT_POINT_COUNT];
+//	// [278,544 - 278,544 + sizeof(vec4) * MAX_COLLIDER_COUNT] = [278,544 - 294,928]
+//	vec4 contactNormal[MAX_COLLIDER_COUNT]; // w stores the penetration depth.
+//} experimentalBuffer;
+//
 // This is not supposed to be exposed to the CPU side
 layout(std430, binding = 4) buffer global_buffer
 {
@@ -374,7 +374,17 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 	float endSignedDist     = 0.0f;
 	float lerpRatio         = 0.0f;
 	int contactPointCount   = 0;
+
 	Manifold manifold;
+
+	manifold.contactBoxIndicesAndContactCount = ivec4(0);
+
+	for (int i = 0; i < MAX_CONTACT_POINT_COUNT; ++i)
+	{
+		manifold.contactPoints[i] = vec4(0.0f);
+	}
+
+	manifold.contactNormal = vec4(0.0f);
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
@@ -447,6 +457,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
+
 	manifold.contactNormal = vec4(referenceNormal, incidentLargestDist);
 
 	return manifold;
@@ -466,6 +477,15 @@ Manifold createFaceContact( FaceQuery faceQueryA, int boxAIdx,
 Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 {
 	Manifold manifold;
+
+	manifold.contactBoxIndicesAndContactCount = ivec4(0);
+
+	for (int i = 0; i < MAX_CONTACT_POINT_COUNT; ++i)
+	{
+		manifold.contactPoints[i] = vec4(0.0f);
+	}
+
+	manifold.contactNormal = vec4(0.0f);
 
 	float s = 0, t = 0;
 
@@ -513,7 +533,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	return manifold;
 }
 
-void reduceContactPoints(out Manifold manifold)
+void reduceContactPoints(inout Manifold manifold)
 {
 
 }
@@ -555,8 +575,6 @@ void separatingAxisTest(uint collisionPairIdx)
 		manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
 	}
 
-	reduceContactPoints(manifold);
-
 	uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
 	manifolds[availableIdx] = manifold;
 }
@@ -572,7 +590,6 @@ void main()
 
 	// Sync
 	barrier();
-	memoryBarrierShared();
 
 	if (collisionPairs[collisionPairIdx].x >= 0)
 	{

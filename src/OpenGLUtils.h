@@ -31,5 +31,10 @@ inline void wait(GLsync syncObj)
 
 	glDeleteSync(syncObj);
 }
+
+inline void checkGLError()
+{
+	assert(glGetError() == GL_NO_ERROR);
+}
 }
 #endif // OPENGL_UTILS
