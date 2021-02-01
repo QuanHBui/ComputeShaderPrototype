@@ -10,23 +10,41 @@ class AtomicCounter
 public:
 	void init();
 
-	void bind();
-	void bindTo(GLuint);
-	void unbind();
+	void bind()
+	{
+		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBufferID);
+	}
+
+	void bindTo(GLuint bindIdx)
+	{
+		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, bindIdx, mAtomicBufferID);
+	}
+
+	void unbind()
+	{
+		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0u);
+	}
 
 	// Since this is created with coherent bit, no need to sync
-	GLuint get();
+	GLuint get()
+	{
+		return *mpAtomicCounter;
+	}
 
-	void lock();
-	void wait();
+	void reset()
+	{
+		*mpAtomicCounter = 0u;
+	}
 
-	void reset();
-	void clear();
+	void clear()
+	{
+		glUnmapBuffer(mAtomicBufferID);
+		glDeleteBuffers(1, &mAtomicBufferID);
+	}
 
 private:
 	GLuint mAtomicBufferID = 0u;
 	GLuint *mpAtomicCounter = nullptr;
-	GLsync mSync;
 };
 
 #endif

@@ -46,7 +46,6 @@ private:
 
 	enum class Buffer
 	{
-		GLOBAL,
 		EXPERIMENTAL,
 		BOX_COLLIDER,
 		COLLISION_PAIR,
@@ -58,7 +57,7 @@ private:
 	std::unordered_map<Buffer, GLuint> mSsboIDs{};
 
 	AtomicCounter mAtomicCounter;
-	ManifoldGpuPackage *mpManifoldGpuPackage; // Stores the results from last physics tick
+	ManifoldGpuPackage *mpManifoldPkg; // Stores the results from last physics tick
 };
 
 #endif // P3_OPENGL_COMPUTE_NARROW_PHASE_H

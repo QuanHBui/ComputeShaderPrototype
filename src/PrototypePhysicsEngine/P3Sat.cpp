@@ -88,7 +88,7 @@ glm::vec3 getSupport(BoxCollider box, glm::vec3 const &direction)
 	return supportPoint;
 }
 
-glm::vec3 getFaceNormal(BoxCollider box, int boxIdx, int faceIdx)
+glm::vec3 getFaceNormal(BoxCollider box, int faceIdx)
 {
 	glm::vec3 a{ box[cFaces[faceIdx][0]] };
 	glm::vec3 b{ box[cFaces[faceIdx][1]] };
@@ -97,19 +97,16 @@ glm::vec3 getFaceNormal(BoxCollider box, int boxIdx, int faceIdx)
 	return glm::normalize(glm::cross(b - a, c - a));
 }
 
-Plane getPlane( BoxColliderGpuPackage const &boxColliderPackage, int boxIdx,
-				ColliderFaceNormals const &colliderFaceNormals, int faceIdx )
+Plane getPlane(BoxCollider const &box, int faceIdx)
 {
 	Plane plane;
-	plane.point  = colliderFaceNormals[boxIdx][faceIdx];
-	plane.normal = boxColliderPackage[boxIdx][cFaces[faceIdx][0]];
+	plane.point = box[cFaces[faceIdx][0]];
+	plane.normal = getFaceNormal(box, faceIdx);
 
 	return plane;
 }
 
-FaceQuery queryFaceDirections( BoxColliderGpuPackage const &boxColliderPackage,
-							   int boxAIdx, int boxBIdx,
-							   ColliderFaceNormals const &colliderFaceNormals )
+FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 {
 	float dist = 0.0f;
 	Plane plane;
@@ -118,8 +115,13 @@ FaceQuery queryFaceDirections( BoxColliderGpuPackage const &boxColliderPackage,
 
 	for (int localFaceIdx = 0; localFaceIdx < cColliderFaceCount; ++localFaceIdx)
 	{
-		plane = getPlane(boxColliderPackage, boxAIdx, colliderFaceNormals, localFaceIdx);
-		supportPoint = getSupport(boxColliderPackage[boxBIdx], -plane.normal);
+		// Expand face of boxA to to a plane
+		plane = getPlane(boxA, localFaceIdx);
+
+		// Get support point from boxB
+		supportPoint = getSupport(boxB, -plane.normal);
+
+		// Get signed distance from support point to plane
 		dist = getSignedDist(supportPoint, plane);
 
 		if (dist > faceQuery.largestDist)
@@ -187,9 +189,7 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	return edgeQuery;
 }
 
-glm::vec3 getIncidentNormal( BoxColliderGpuPackage const &boxColliderPackage, int incidentBoxIdx,
-							 ColliderFaceNormals const &colliderFaceNormals,
-							 glm::vec3 const &referenceNormal )
+glm::vec3 getIncidentNormal(BoxCollider incidentBox, glm::vec3 const &referenceNormal)
 {
 	glm::vec3 incidentNormal{ 0.0f };
 	glm::vec3 potentialIncidentNormal{ 0.0f };
@@ -198,7 +198,7 @@ glm::vec3 getIncidentNormal( BoxColliderGpuPackage const &boxColliderPackage, in
 
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
-		potentialIncidentNormal = colliderFaceNormals[incidentBoxIdx][faceIdx];
+		potentialIncidentNormal = getFaceNormal(incidentBox, faceIdx);
 		localDotProduct         = glm::dot(potentialIncidentNormal, referenceNormal);
 	}
 
@@ -212,40 +212,41 @@ glm::vec3 getIncidentNormal( BoxColliderGpuPackage const &boxColliderPackage, in
 }
 
 Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQueryB,
-							BoxColliderGpuPackage const &boxColliderPackage,
-							int boxAIdx, int boxBIdx,
-							ColliderFaceNormals const &colliderFaceNormals )
+							BoxCollider boxA, BoxCollider boxB,
+							int boxAIdx, int boxBIdx )
 {
-	glm::vec3 referencePoint{ 0.0f };
-	glm::vec3 referenceNormal{ 0.0f };
 	glm::vec3 incidentNormal{ 0.0f };
 	int referenceBoxIdx = -1;
 	int incidentBoxIdx  = -1;
 	float incidentLargestDist = 0.0f;
 	Plane referencePlane;
+	BoxCollider incidentBox = nullptr;
+	BoxCollider referenceBox = nullptr;
 
 	if (faceQueryA.largestDist < faceQueryB.largestDist)
 	{
-		referencePlane  = getPlane(boxColliderPackage, boxAIdx, colliderFaceNormals, faceQueryA.faceIdx);
+		referencePlane  = getPlane(boxA, faceQueryA.faceIdx);
 		referenceBoxIdx = boxAIdx;
+		referenceBox    = boxA;
 
-		incidentNormal = getIncidentNormal(boxColliderPackage, boxBIdx, colliderFaceNormals, referenceNormal);
+		incidentNormal = getIncidentNormal(boxB, referencePlane.normal);
 		incidentBoxIdx = boxBIdx;
+		incidentBox    = boxB;
 		incidentLargestDist = faceQueryB.largestDist;
 	}
 	else
 	{
-		referencePlane  = getPlane(boxColliderPackage, boxBIdx, colliderFaceNormals, faceQueryB.faceIdx);
+		referencePlane  = getPlane(boxB, faceQueryB.faceIdx);
 		referenceBoxIdx = boxBIdx;
+		referenceBox    = boxB;
 
-		incidentNormal = getIncidentNormal(boxColliderPackage, boxAIdx, colliderFaceNormals, referenceNormal);
+		incidentNormal = getIncidentNormal(boxA, referencePlane.normal);
 		incidentBoxIdx = boxAIdx;
+		incidentBox    = boxA;
 		incidentLargestDist = faceQueryA.largestDist;
-
-		// THIS IS SO FREAKING DUMB! Gotta keep it PG.
 	}
 
-	BoxCollider incidentBox = boxColliderPackage[incidentBoxIdx];
+
 	Plane clipPlane;
 	glm::vec3 startVert{ 0.0f };
 	glm::vec3 endVert{ 0.0f };
@@ -261,8 +262,8 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
-		clipPlane = getPlane(boxColliderPackage, referenceBoxIdx, colliderFaceNormals, faceIdx);
-		if (glm::dot(referenceNormal, clipPlane.normal) < 0.0001f)
+		clipPlane = getPlane(referenceBox, faceIdx);
+		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) < 0.0001f)
 		{
 			startVertIdx = cFaces[faceIdx][0];
 			startVert    = incidentBox[startVertIdx];
@@ -320,7 +321,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-	manifold.contactNormal = glm::vec4(referenceNormal, incidentLargestDist);
+	manifold.contactNormal = glm::vec4(referencePlane.normal, incidentLargestDist);
 
 	return manifold;
 }
@@ -329,6 +330,7 @@ Manifold createEdgeContact( EdgeQuery edgeQuery,
 							BoxColliderGpuPackage const &boxColliderPackage, int boxAIdx, int boxBIdx)
 {
 	Manifold manifold;
+
 
 	float s = 0, t = 0;
 
@@ -374,13 +376,45 @@ Manifold createEdgeContact( EdgeQuery edgeQuery,
 }
 
 // The size of the collisionPairs buffer can be sent here for a more elegant solution.
-int P3Sat( BoxColliderGpuPackage const &boxColliders,
-		   CollisionPairGpuPackage const &collisionPairs,
-		   ManifoldGpuPackage const &manifolds )
+ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionPairGpuPackage const &collisionPairPkg)
 {
-	while (1)
+	ManifoldGpuPackage manifoldPkg;
+	int availableIdx = 0;
+
+	for (int collisionPairIdx = 0; collisionPairIdx < collisionPairPkg.misc.x; ++collisionPairIdx)
 	{
-		break;
+		int boxAIdx = collisionPairPkg[collisionPairIdx].x;
+		int boxBIdx = collisionPairPkg[collisionPairIdx].y;
+		BoxCollider boxA = boxColliderPkg[boxAIdx];
+		BoxCollider boxB = boxColliderPkg[boxBIdx];
+
+		// Look at faces of A
+		FaceQuery faceQueryA = queryFaceDirections(boxA, boxB);
+		if (faceQueryA.largestDist > 0.0f) continue; // We have found a separating axis. No overlap.
+
+		FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
+		if (faceQueryB.largestDist > 0.0f) continue;
+
+		EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
+		if (edgeQuery.largestDist > 0.0f) continue;
+
+		// If we get to here, there's no separating axis, the 2 boxes must overlap.
+		// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist
+		//  are all negative, so whichever is the least negative is the minimum penetration distance.
+		// Find the closest feature type
+		Manifold manifold;
+
+		if (faceQueryA.largestDist > edgeQuery.largestDist && faceQueryB.largestDist > edgeQuery.largestDist)
+		{
+			manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
+		}
+		else
+		{
+			manifold = createEdgeContact(edgeQuery, boxColliderPkg, boxAIdx, boxBIdx);
+		}
+
+		manifoldPkg.manifolds[availableIdx++] = manifold;
 	}
-	return 0;
+
+	return manifoldPkg;
 }

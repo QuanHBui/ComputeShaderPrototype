@@ -2,6 +2,7 @@
 
 #include "ComputeProgram.h"
 #include "GLSL.h"
+#include "OpenGLUtils.h"
 
 void P3OpenGLComputeBroadPhase::init()
 {
@@ -13,7 +14,7 @@ CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3Box
 {
 	detectCollisionPairs(boxColliders);
 
-	return *mpCollisionPairCpuData;
+	return *mpCollisionPairPkg;
 }
 
 /**
@@ -21,7 +22,10 @@ CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3Box
  */
 void P3OpenGLComputeBroadPhase::reset()
 {
-	mAtomicCounter.reset();
+	mAtomicCounter[0].reset();
+	mAtomicCounter[1].reset();
+	mAtomicCounter[2].reset();
+
 }
 
 void P3OpenGLComputeBroadPhase::initShaderPrograms()
@@ -36,7 +40,9 @@ void P3OpenGLComputeBroadPhase::initShaderPrograms()
 
 GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 {
-	mAtomicCounter.init();
+	mAtomicCounter[0].init();
+	mAtomicCounter[1].init();
+	mAtomicCounter[2].init();
 
 	glGenBuffers(cBroadPhaseSsboCount, mSsboIDs.data());
 
@@ -48,7 +54,7 @@ GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(BoxColliderGpuPackage), nullptr, mapFlags);
 
 	// Keep it mapped until end of program
-	mpBoxColliderCpuData = static_cast<BoxColliderGpuPackage *>(glMapBufferRange(
+	mpBoxColliderPkg = static_cast<BoxColliderGpuPackage *>(glMapBufferRange(
 		GL_SHADER_STORAGE_BUFFER,
 		0,
 		sizeof(BoxColliderGpuPackage),
@@ -61,7 +67,7 @@ GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[P3_COLLISION_PAIRS]);
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(CollisionPairGpuPackage), nullptr, mapFlags);
 
-	mpCollisionPairCpuData = static_cast<CollisionPairGpuPackage *>(glMapBufferRange(
+	mpCollisionPairPkg = static_cast<CollisionPairGpuPackage *>(glMapBufferRange(
 		GL_SHADER_STORAGE_BUFFER,
 		0,
 		sizeof(CollisionPairGpuPackage),
@@ -83,14 +89,16 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> const &boxColliders)
 {
 	// Pack data for GPU
-	for (unsigned int i = 0; i < boxColliders.size(); ++i)
+	for (int i = 0; i < boxColliders.size(); ++i)
 	{
-		for (unsigned int j = 0; j < cBoxColliderVertCount; ++j)
+		for (int j = 0; j < cBoxColliderVertCount; ++j)
 		{
-			// This buffer is being persistently mapped. TODO: No sync or triple buffering being used yet.
-			mpBoxColliderCpuData->boxColliders[i][j] = boxColliders[i].mVertices[j];
+			// This buffer is being persistently mapped.
+			mpBoxColliderPkg->boxColliders[i][j] = boxColliders[i].mVertices[j];
 		}
 	}
+
+	mpBoxColliderPkg->misc.x = boxColliders.size();
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[P3_AABBS]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AabbGpuPackage), nullptr, GL_DYNAMIC_COPY);
@@ -140,7 +148,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
-	mAtomicCounter.bindTo(0u);
+	mAtomicCounter[0].bindTo(0u);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, mSsboIDs[P3_COLLISION_PAIRS]);
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
@@ -150,8 +158,6 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	mAtomicCounter.lock();
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Y-AXIS
 	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
@@ -183,7 +189,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
-	mAtomicCounter.reset();
+	mAtomicCounter[1].bindTo(0u);
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
@@ -192,7 +198,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	mAtomicCounter.lock();
+
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// SORT ON Z-AXIS
@@ -225,7 +231,7 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	currProgID = mComputeProgramIDContainer[P3_SAP];
 	glUseProgram(currProgID);
 
-	mAtomicCounter.reset();
+	mAtomicCounter[2].bindTo(0u);
 
 	uniformIdx = glGetUniformLocation(currProgID, "currNumColliders");
 	glUniform1ui(uniformIdx, boxColliders.size());
@@ -234,11 +240,19 @@ void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	mAtomicCounter.lock();
+
+	GLsync syncObj = oglutils::lock(); // Inject the lock to make sure the bound buffers are done being used.
+
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+	// Use the fence to know when the command buffer is flused.
+	oglutils::wait(syncObj);
+	mpCollisionPairPkg->misc.x = mAtomicCounter[2].get(); // Only the 3rd atomic counter has the total count.
+
 	// Reset and unbind
-	mAtomicCounter.reset();
+	mAtomicCounter[0].reset();
+	mAtomicCounter[1].reset();
+	mAtomicCounter[2].reset();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0u, 0u);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1u, 0u);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);

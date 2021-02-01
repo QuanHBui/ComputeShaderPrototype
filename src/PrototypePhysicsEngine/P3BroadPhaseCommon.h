@@ -18,11 +18,15 @@ struct BoxColliderGpuPackage
 {
 	glm::vec4 const *operator[](int boxIdx) const { return boxColliders[boxIdx]; }
 
+	glm::ivec4 misc{};
 	glm::vec4 boxColliders[cMaxObjectCount][cBoxColliderVertCount]{};
 };
 
 struct CollisionPairGpuPackage
 {
+	glm::vec4 const &operator[](int boxIdx) const { return collisionPairs[boxIdx]; }
+
+	glm::ivec4 misc{};
 	glm::ivec4 collisionPairs[2 * cMaxObjectCount]{};
 };
 

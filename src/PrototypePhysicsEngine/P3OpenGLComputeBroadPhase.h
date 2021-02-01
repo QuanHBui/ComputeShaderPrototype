@@ -69,10 +69,10 @@ private:
 	DispatchIndirectCommand mDispatchIndirectCommand{ 1, 1, 1 };
 
 	//--------------------------------- CPU data ---------------------------------//
-	AtomicCounter mAtomicCounter;
+	AtomicCounter mAtomicCounter[3]; // Triple buffering let's go
 	AabbGpuPackage mAabbCpuData;
-	BoxColliderGpuPackage *mpBoxColliderCpuData = nullptr;  // Data streaming to GPU
-	CollisionPairGpuPackage *mpCollisionPairCpuData = nullptr;
+	BoxColliderGpuPackage *mpBoxColliderPkg = nullptr;  // Data streaming to GPU
+	CollisionPairGpuPackage *mpCollisionPairPkg = nullptr;
 };
 
 #endif // P3_OPENGL_COMPUTE_BROAD_PHASE_H
