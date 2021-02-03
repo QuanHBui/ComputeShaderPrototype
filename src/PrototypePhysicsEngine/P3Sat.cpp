@@ -269,7 +269,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
-		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) < cEpsilon)
+		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) <= cEpsilon)
 		{
 			startVertIdx = cFaces[faceIdx][0];
 			startVert    = incidentBox[startVertIdx];
@@ -286,7 +286,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 
 				if (startSignedDist > cEpsilon && endSignedDist < -cEpsilon)
 				{
-					if (getSignedDist(endVert, referencePlane) < -cEpsilon)
+					if (getSignedDist(endVert, referencePlane) <= -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
@@ -295,14 +295,14 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
 
-					if (getSignedDist(lerpIntersectPoint, referencePlane) < -cEpsilon)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
 				else if ( startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
-						  && getSignedDist(endVert, referencePlane) < -cEpsilon )
+						  && getSignedDist(endVert, referencePlane) <= -cEpsilon )
 				{
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 					manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
@@ -312,7 +312,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
 
-					if (getSignedDist(lerpIntersectPoint, referencePlane) < -cEpsilon)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);

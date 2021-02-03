@@ -152,9 +152,8 @@ vec3 getFaceNormal(BoxCollider box, int faceIdx)
 Plane getPlane(BoxCollider box, int faceIdx)
 {
 	Plane plane;
-	plane.normal = vec3(box.vertices[faceIdx]);
-	// Plane point can be any vertex.
-	plane.point = box.vertices[faces[faceIdx][0]].xyz;
+	plane.point = box.vertices[faces[faceIdx][0]].xyz; // Plane point can be any vertex.
+	plane.normal = getFaceNormal(box, faceIdx);
 
 	return plane;
 }
@@ -176,7 +175,6 @@ FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 	faceQuery.faceIdx     = -1;
 	faceQuery.largestDist = -FLT_MAX;
 
-	// Each face has 4 vertices
 	for (int localFaceIdx = 0; localFaceIdx < COLLIDER_FACE_COUNT; ++localFaceIdx)
 	{
 		// Expand face of boxA to a plane
@@ -187,6 +185,14 @@ FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 
 		// Get signed distance from support point to plane
 		dist = getSignedDist(supportPoint, plane);
+
+		uint debugIdx = atomicCounterIncrement(nextAvailableIdx);
+
+		manifolds[debugIdx].contactPoints[0] = vec4(plane.point,  -11.44f);
+		manifolds[debugIdx].contactPoints[1] = vec4(plane.normal, -11.44f);
+		manifolds[debugIdx].contactPoints[2] = vec4(supportPoint, -11.44f);
+		manifolds[debugIdx].contactNormal.x = -11.44f;
+		manifolds[debugIdx].contactNormal.y = dist;
 
 		// We have to be aware of the direction here, signed distance can be negative. We
 		//  care about the least negative/most positive signed distance.
@@ -554,11 +560,23 @@ void separatingAxisTest(uint collisionPairIdx)
 	BoxCollider boxA = boxColliders[boxAIdx];
 	BoxCollider boxB = boxColliders[boxBIdx];
 
+	uint debugIdx = atomicCounterIncrement(nextAvailableIdx);
+
 	FaceQuery faceQueryA = queryFaceDirections(boxA, boxB); // Look at faces of A
+
+	manifolds[debugIdx].contactNormal.x = boxA.vertices[0].x;
+	manifolds[debugIdx].contactNormal.z = -90.44f;
+
 	if (faceQueryA.largestDist > 0.0f) return; // We have found a separating axis. No overlap.
 
 	FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
+
+//	manifolds[debugIdx].contactNormal.y = faceQueryB.largestDist;
+	manifolds[debugIdx].contactNormal.y = -78.55f;
+
 	if (faceQueryB.largestDist > 0.0f) return;
+
+	manifolds[debugIdx].contactNormal.y = faceQueryB.largestDist;
 
 	EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
 	if (edgeQuery.largestDist > 0.0f) return;

@@ -25,7 +25,6 @@ void P3OpenGLComputeBroadPhase::reset()
 	mAtomicCounter[0].reset();
 	mAtomicCounter[1].reset();
 	mAtomicCounter[2].reset();
-
 }
 
 void P3OpenGLComputeBroadPhase::initShaderPrograms()

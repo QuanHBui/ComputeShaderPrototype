@@ -13,7 +13,7 @@
 #include "P3Simplex.h"
 #include "P3Sat.h"
 
-#define NARROW_PHASE_CPU
+//#define NARROW_PHASE_CPU
 
 float randf()
 {
