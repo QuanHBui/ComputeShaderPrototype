@@ -11,7 +11,7 @@
 
 struct SupportPoint
 {
-	glm::vec3 mMinkowskiDiffPoint{ 0.0f };	// The position of the Minkowski difference itself.
+	glm::vec3 mMinkowskiDiffPoint{ 0.0f }; // The position of the Minkowski difference itself.
 	glm::vec3 mColliderASupport{ 0.0f };
 	glm::vec3 mColliderBSupport{ 0.0f };
 

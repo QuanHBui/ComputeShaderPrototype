@@ -8,6 +8,8 @@
 #define COLLIDER_VERT_COUNT 8
 #define MAX_CONTACT_POINT_COUNT 16
 #define MAX_COLLIDER_COUNT 1024
+#define FLT_MAX 9999.9f
+#define EPSILON 0.0001f
 
 layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
@@ -71,6 +73,7 @@ struct EdgeQuery
 /*-------------------------- Buffers ------------------------------*/
 layout(std430, binding = 0) readonly buffer in_collider_data
 {
+	ivec4 colliderMisc;
 	BoxCollider boxColliders[];
 };
 
@@ -111,13 +114,13 @@ float getSignedDist(vec3 point, Plane plane)
 
 vec3 projectPointOntoPlane(vec3 point, Plane plane)
 {
-	return point + getSignedDist(point, plane) * plane.normal;
+	return point - getSignedDist(point, plane) * plane.normal;
 }
 
 vec3 getSupport(BoxCollider box, vec3 direction)
 {
 	float projDist        = 0.0f;
-	float largestProjDist = 0.0f;
+	float largestProjDist = -FLT_MAX;
 	vec3 supportPoint     = vec3(0.0f);
 
 	// Iterate through all vertices of box. Dot product each of them with direction vector.
@@ -171,7 +174,7 @@ FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 
 	// Initialize
 	faceQuery.faceIdx     = -1;
-	faceQuery.largestDist = -9999.9f;
+	faceQuery.largestDist = -FLT_MAX;
 
 	// Each face has 4 vertices
 	for (int localFaceIdx = 0; localFaceIdx < COLLIDER_FACE_COUNT; ++localFaceIdx)
@@ -185,6 +188,8 @@ FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 		// Get signed distance from support point to plane
 		dist = getSignedDist(supportPoint, plane);
 
+		// We have to be aware of the direction here, signed distance can be negative. We
+		//  care about the least negative/most positive signed distance.
 		if (dist > faceQuery.largestDist)
 		{
 			faceQuery.faceIdx     = localFaceIdx;
@@ -218,7 +223,7 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	Plane plane;
 	EdgeQuery edgeQuery;
 
-	edgeQuery.largestDist = -9999.9f; // TODO: Might want to standardize min/max extent
+	edgeQuery.largestDist = -FLT_MAX;
 
 	// Somehow we obtain the cross edge. In the case of the box, we can use edge 3 - 5.
 	// The point in the middle of the cross edge is the center of the box. If not, it's only
@@ -276,7 +281,7 @@ vec3 getIncidentNormal(BoxCollider incidentBox, vec3 referenceNormal)
 {
 	vec3 incidentNormal          = vec3(0.0f);
 	vec3 potentialIncidentNormal = vec3(0.0f);
-	float smallestDotProduct     = 9999.9f;
+	float smallestDotProduct     = FLT_MAX;
 	float localDotProduct        = 0.0f;
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
@@ -382,12 +387,12 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 		manifold.contactPoints[i] = vec4(0.0f);
 	}
 
-	manifold.contactNormal = vec4(0.0f);
+	manifold.contactNormal = vec4(-2.0f); // TODO: This is a debugging value.
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
-		if (abs(dot(referencePlane.normal, clipPlane.normal)) < 0.0001f) // Check if perpendicular
+		if (abs(dot(referencePlane.normal, clipPlane.normal)) < EPSILON) // Check if perpendicular
 		{
 			startVertIdx = faces[faceIdx][0];
 			startVert    = vec3(incidentBox.vertices[startVertIdx]);
@@ -483,7 +488,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 		manifold.contactPoints[i] = vec4(0.0f);
 	}
 
-	manifold.contactNormal = vec4(0.0f);
+	manifold.contactNormal = vec4(-3.0f); // TODO: This is a debugging value.
 
 	float s = 0, t = 0;
 

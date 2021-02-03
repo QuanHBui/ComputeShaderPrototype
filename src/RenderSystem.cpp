@@ -113,7 +113,7 @@ void RenderSystem::renderDebug(
 		1, GL_FALSE, glm::value_ptr(mView));
 
 	// Iterate through all the box colliders and batch all the vertices
-	glm::vec4 batchedVertices[cBoxColliderVertCount * max_mesh_count];
+	glm::vec4 batchedVertices[cBoxColliderVertCount * max_mesh_count]{};
 	int colliderIdx = 0;
 
 	for (P3BoxCollider const &boxCollider : boxColliders)
@@ -136,8 +136,8 @@ void RenderSystem::renderDebug(
 	CHECKED_GL_CALL(glDrawArrays(GL_POINTS, 0, cBoxColliderVertCount * boxColliders.size()));
 
 	// The size is not correct, cMaxColliderCount is just a placeholder number.
-	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount];
-	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount];
+	glm::vec4 batchedContactPoints[cMaxContactPointCount * cMaxColliderCount]{};
+	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount]{};
 	int contactPointIdx = 0, contacNormalIdx = 0;
 
 	for (int manifoldIdx = 0; manifoldIdx < manifoldGpuPackage.misc.x; ++manifoldIdx)
@@ -151,12 +151,15 @@ void RenderSystem::renderDebug(
 
 			batchedContactPoints[contactPointIdx++]  = manifold.contactPoints[k];
 			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k];
-			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k] + manifold.contactNormal;
+			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k]
+													 + glm::vec4(manifold.contactNormal.w * glm::vec3(manifold.contactNormal), 1.0f);
 		}
 	}
 
 	// Draw purple dots - contact points
 	glUniform3f(glGetUniformLocation(progID, "vertColor"), 1.0f, 0.0f, 1.0f);
+
+	glDisable(GL_DEPTH_TEST);
 
 	glBufferData(
 		GL_ARRAY_BUFFER,
@@ -176,6 +179,8 @@ void RenderSystem::renderDebug(
 		GL_DYNAMIC_DRAW
 	);
 	CHECKED_GL_CALL(glDrawArrays(GL_LINES, 0, contacNormalIdx));
+
+	glEnable(GL_DEPTH_TEST);
 
 	glBindVertexArray(0u);
 	glBindBuffer(GL_ARRAY_BUFFER, 0u);
@@ -205,7 +210,7 @@ void RenderSystem::initRenderPrograms(int width, int height)
 	// Set background color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

@@ -11,6 +11,9 @@
 #include <iostream>
 
 #include "P3Simplex.h"
+#include "P3Sat.h"
+
+#define NARROW_PHASE_CPU
 
 float randf()
 {
@@ -172,17 +175,36 @@ void P3DynamicsWorld::update(
 	ManifoldGpuPackage &manifoldGpuPackage )
 {
 	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
+
+#ifdef NARROW_PHASE_CPU
+	BoxColliderGpuPackage boxColliderPkg;
+	for (int i = 0; i < mBoxColliders.size(); ++i)
+	{
+		for (int j = 0; j < cBoxColliderVertCount; ++j)
+		{
+			boxColliderPkg.boxColliders[i][j] = mBoxColliders[i].mVertices[j];
+		}
+	}
+
+	manifoldGpuPackage = P3Sat(boxColliderPkg, collisionPairGpuPackage);
+#else
 	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
+#endif
 
 	// 1st box is static, 2nd box is kinematic/controllable.
 	mLinearTransformContainer[1].position += deltaP;
-	mMeshColliderContainer[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));
-	mBoxColliders[1].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position));
+
+	glm::mat4 extraTransforms = glm::rotate(glm::mat4(1.0f), 0.785f, glm::vec3(0.0f, 1.0f, 0.0f));
+	// TODO: This is extremely ad hoc, please fix!
+	glm::mat4 temp = glm::translate(glm::mat4(1.0f), mLinearTransformContainer[1].position) * extraTransforms;
+	mMeshColliderContainer[1].update(temp);
+	mBoxColliders[1].update(temp);
 
 	float static angle = 0.0f;
-	// Box 3 is scaled non-uniformly and rotating.
-	glm::mat4 scale     = glm::scale(glm::mat4(1.0f), glm::vec3(5.0f, 1.0f, 1.0f));
+	// Box 4 is scaled non-uniformly and rotating.
+	glm::mat4 scale     = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 1.0f, 1.0f));
 	glm::mat4 rotate    = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	rotate = glm::mat4(1.0f);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), mLinearTransformContainer[3].position);
 	glm::mat4 ctm       = translate * rotate * scale;
 	mMeshColliderContainer[3].update(ctm);
@@ -251,12 +273,36 @@ void P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::v
 	mAngularTransformContainer.emplace_back();
 }
 
+void P3DynamicsWorld::addRigidBody( float mass, glm::vec3 const &position, glm::vec3 const &velocity,
+									glm::mat4 const &extraTransforms )
+{
+	mBodyContainer.emplace_back(mUniqueID++);
+
+	mLinearTransformContainer.emplace_back();
+
+	LinearTransform &lastLinearTransform = mLinearTransformContainer.back();
+	lastLinearTransform.mass = mass;
+	lastLinearTransform.inverseMass = 1.0f / mass;
+	lastLinearTransform.position = position, mBodyContainer.back();
+	lastLinearTransform.velocity = velocity, mBodyContainer.back();
+	lastLinearTransform.momentum = mass * velocity, mBodyContainer.back();
+
+	mMeshColliderContainer.emplace_back();
+	mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), position) * extraTransforms);
+
+	// For Gpu collision detection
+	mBoxColliders.emplace_back();
+	mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), position) * extraTransforms);
+
+	mAngularTransformContainer.emplace_back();
+}
+
 // TODO: WIP
 void P3DynamicsWorld::addRigidBody(LinearTransform const &linearTransform, AngularTransform const &angularTransform)
 {
 	mBodyContainer.emplace_back(mUniqueID++);
 
-	mLinearTransformContainer.emplace_back(linearTransform);	// Copy constructor will be called here.
+	mLinearTransformContainer.emplace_back(linearTransform); // Copy constructor will be called here.
 
 	// Add to angular transform container
 	mAngularTransformContainer.emplace_back(angularTransform);
@@ -362,7 +408,8 @@ void P3DynamicsWorld::multipleBoxesDemo()
 void P3DynamicsWorld::controllableBoxDemo()
 {
 	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // The static box
-	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f)); // The kinematic box
+	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f),
+				 glm::rotate(glm::mat4(1.0f), 0.785f, glm::vec3(0.0f, 1.0f, 0.0f))); // The kinematic box
 	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with different size and rotating
 }

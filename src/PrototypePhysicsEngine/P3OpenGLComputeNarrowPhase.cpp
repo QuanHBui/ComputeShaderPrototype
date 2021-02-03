@@ -23,7 +23,7 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 	GLuint temp[] = { 0, 0, 0 };
 	glGenBuffers(2, temp);
 
-	mSsboIDs[Buffer::MANIFOLD] = temp[0];
+	mSsboIDs[Buffer::MANIFOLD]     = temp[0];
 	mSsboIDs[Buffer::EXPERIMENTAL] = temp[1];
 
 	GLbitfield mapFlags = GL_MAP_READ_BIT

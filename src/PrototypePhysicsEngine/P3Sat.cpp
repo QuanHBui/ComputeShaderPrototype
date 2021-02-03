@@ -1,6 +1,7 @@
 #include "P3Sat.h"
 
 #include <array>
+#include <limits>
 
 #include "P3BroadPhaseCommon.h"
 #include "P3NarrowPhaseCommon.h"
@@ -10,6 +11,7 @@ constexpr int cVertCountPerFace  =  4;
 constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
+constexpr int cEpsilon = 0.0001f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
 using ColliderFaceNormals = std::array<std::array<glm::vec3, cColliderFaceCount>, cMaxColliderCount>;
@@ -41,13 +43,13 @@ struct Plane
 struct FaceQuery
 {
 	int faceIdx{ -1 };
-	float largestDist{ -9999.9f };
+	float largestDist{ std::numeric_limits<float>::lowest() };
 	glm::vec3 faceNormal{ 0.0f };
 };
 
 struct EdgeQuery
 {
-	float largestDist{ -9999.9f };
+	float largestDist{ std::numeric_limits<float>::lowest() };
 	glm::vec3 pointsA[cVertCountPerEdge]{};
 	glm::vec3 pointsB[cVertCountPerEdge]{};
 	glm::vec3 edgeDirA{ 0.0f };
@@ -63,13 +65,13 @@ float getSignedDist(glm::vec3 const &point, Plane const &plane)
 // Assume planeNormal is normalized.
 glm::vec3 projectPointOntoPlane(glm::vec3 const &point, Plane const &plane)
 {
-	return point + getSignedDist(point, plane) * plane.normal;
+	return point - getSignedDist(point, plane) * plane.normal;
 }
 
 glm::vec3 getSupport(BoxCollider box, glm::vec3 const &direction)
 {
 	float projDist        = 0.0f;
-	float largestProjDist = 0.0f;
+	float largestProjDist = std::numeric_limits<float>::lowest();
 	glm::vec3 supportPoint{ 0.0f };
 	glm::vec3 vertPos{ 0.0f };
 
@@ -142,6 +144,7 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	glm::vec3 endB{ 0.0f };
 	glm::vec3 edgeA{ 0.0f };
 	glm::vec3 edgeB{ 0.0f };
+	glm::vec3 temp{ 0.0f };
 	glm::vec3 edgeNormal{ 0.0f };
 	glm::vec3 supportPointB{ 0.0f };
 	float localDist = 0.0f;
@@ -162,7 +165,10 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 			endB = boxB[cEdges[edgeIdxB][1]];
 			edgeB = endB - startB;
 
-			edgeNormal = glm::normalize(glm::cross(edgeA, edgeB));
+			// Make sure the 2 edges are not parallel
+			temp = glm::cross(edgeA, edgeB);
+			if (glm::length(temp) == 0.0f) continue;
+			edgeNormal = glm::normalize(temp);
 
 			if (glm::dot(edgeNormal, startA - centerA) < 0.0f)
 				edgeNormal *= -1.0f;
@@ -193,7 +199,7 @@ glm::vec3 getIncidentNormal(BoxCollider incidentBox, glm::vec3 const &referenceN
 {
 	glm::vec3 incidentNormal{ 0.0f };
 	glm::vec3 potentialIncidentNormal{ 0.0f };
-	float smallestDotProduct = 9999.9f;
+	float smallestDotProduct = std::numeric_limits<float>::max();
 	float localDotProduct    = 0.0f;
 
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
@@ -263,7 +269,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
-		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) < 0.0001f)
+		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) < cEpsilon)
 		{
 			startVertIdx = cFaces[faceIdx][0];
 			startVert    = incidentBox[startVertIdx];
@@ -278,9 +284,9 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 				startSignedDist = getSignedDist(startVert, clipPlane);
 				endSignedDist   = getSignedDist(endVert, clipPlane);
 
-				if (startSignedDist > 0.0001f && endSignedDist < -0.0001f)
+				if (startSignedDist > cEpsilon && endSignedDist < -cEpsilon)
 				{
-					if (getSignedDist(endVert, referencePlane) < -0.0001f)
+					if (getSignedDist(endVert, referencePlane) < -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
@@ -289,24 +295,24 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
 
-					if (getSignedDist(lerpIntersectPoint, referencePlane) < -0.0001f)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) < -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
-				else if ( startSignedDist < -0.0001f && endSignedDist < -0.0001f
-						  && getSignedDist(endVert, referencePlane) < -0.0001f )
+				else if ( startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
+						  && getSignedDist(endVert, referencePlane) < -cEpsilon )
 				{
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 					manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 				}
-				else if (startSignedDist < -0.0001f && endSignedDist > 0.0001f)
+				else if (startSignedDist < -cEpsilon && endSignedDist > cEpsilon)
 				{
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
 
-					if (getSignedDist(lerpIntersectPoint, referencePlane) < -0.0001f)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) < -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
@@ -326,11 +332,10 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	return manifold;
 }
 
-Manifold createEdgeContact( EdgeQuery edgeQuery,
-							BoxColliderGpuPackage const &boxColliderPackage, int boxAIdx, int boxBIdx)
+Manifold createEdgeContact( EdgeQuery edgeQuery, BoxColliderGpuPackage const &boxColliderPackage,
+							int boxAIdx, int boxBIdx )
 {
 	Manifold manifold;
-
 
 	float s = 0, t = 0;
 
@@ -380,13 +385,17 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionP
 {
 	ManifoldGpuPackage manifoldPkg;
 	int availableIdx = 0;
+	int boxAIdx = -1;
+	int boxBIdx = -1;
+	BoxCollider boxA = nullptr;
+	BoxCollider boxB = nullptr;
 
 	for (int collisionPairIdx = 0; collisionPairIdx < collisionPairPkg.misc.x; ++collisionPairIdx)
 	{
-		int boxAIdx = collisionPairPkg[collisionPairIdx].x;
-		int boxBIdx = collisionPairPkg[collisionPairIdx].y;
-		BoxCollider boxA = boxColliderPkg[boxAIdx];
-		BoxCollider boxB = boxColliderPkg[boxBIdx];
+		boxAIdx = collisionPairPkg[collisionPairIdx].x;
+		boxBIdx = collisionPairPkg[collisionPairIdx].y;
+		boxA = boxColliderPkg[boxAIdx];
+		boxB = boxColliderPkg[boxBIdx];
 
 		// Look at faces of A
 		FaceQuery faceQueryA = queryFaceDirections(boxA, boxB);
@@ -415,6 +424,8 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionP
 
 		manifoldPkg.manifolds[availableIdx++] = manifold;
 	}
+
+	manifoldPkg.misc.x = availableIdx;
 
 	return manifoldPkg;
 }

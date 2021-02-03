@@ -42,6 +42,7 @@ public:
 	// Is it the world responsibility to check for max capacity before adding?
 	void addRigidBody();
 	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
+	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &, glm::mat4 const &);
 	void addRigidBody(LinearTransform const &, AngularTransform const &);
 
 	//------------------------ Demos ------------------------//

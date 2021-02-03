@@ -47,7 +47,7 @@ private:
 		glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
 		glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
 		glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
-	};	// A unit box
+	}; // A unit box
 
 	std::vector<glm::vec4> mInstanceVertices =
 	{
