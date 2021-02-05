@@ -2,9 +2,9 @@
 
 #include <iomanip>
 #include <iostream>
-#include <glm/gtx/transform.hpp>
 #include <string>
 
+#include <glm/gtx/transform.hpp>
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
 #include "PrototypePhysicsEngine/ComputeProgram.h"
@@ -93,8 +93,8 @@ void Application::initPhysicsWorld(Demo demo)
 
 	case Demo::GRAVITY_TEST:
 		// Stack 2 unit cubes on top of each other. Same mass.
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -2.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f,  2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
 		break;
 
@@ -473,21 +473,13 @@ void Application::update(float dt)
 	mpManifoldPkg      = mPhysicsWorld.getPManifoldPkg();
 
 	// Get position array from the physics world
-	std::vector<LinearTransform> const &linearTransformContainer = mPhysicsWorld.getLinearTransformContainer();
+	std::vector<LinearTransform> const &rigidLinearTransformContainer  = mPhysicsWorld.getRigidLinearTransformContainer();
+	std::vector<LinearTransform> const &staticLinearTransformContainer = mPhysicsWorld.getStaticLinearTransformContainer();
 
-	unsigned int i = 0u;
-	// Update the model matrix array
-	for (LinearTransform const &linearTransform : linearTransformContainer)
-	{
-		glm::mat4 translation = glm::translate(linearTransform.position);
-
-		if (i >= mModelMatrixContainer.size())
-			mModelMatrixContainer.push_back(translation);
-		else
-			mModelMatrixContainer[i] = translation;
-
-		++i;
-	}
+	// Update the model matrix array - the bridge from physics quantity to transform matrices for graphics
+	// Combine both rigid and static linear transforms
+	int offset = updateModelMatrices(0, rigidLinearTransformContainer);
+	updateModelMatrices(offset, staticLinearTransformContainer);
 }
 
 void Application::updateWithInputs(float dt)
@@ -513,4 +505,21 @@ void Application::updateWithInputs(float dt)
 		controlPosition.y -= 5.0f * dt;
 
 	mPhysicsWorld.updateControllableBox(dt, controlPosition);
+}
+
+int Application::updateModelMatrices(int offset, std::vector<LinearTransform> const &linearTransforms)
+{
+	for (LinearTransform const &linearTransform : linearTransforms)
+	{
+		glm::mat4 translation = glm::translate(linearTransform.position);
+
+		if (offset >= mModelMatrixContainer.size())
+			mModelMatrixContainer.emplace_back(translation);
+		else
+			mModelMatrixContainer[offset] = translation;
+
+		++offset;
+	}
+
+	return offset;
 }

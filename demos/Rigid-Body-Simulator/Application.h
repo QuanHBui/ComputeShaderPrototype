@@ -65,12 +65,14 @@ private:
 
 	void updateWithInputs(float);
 
+	int updateModelMatrices(int, std::vector<LinearTransform> const &);
+
 	// Mouse ultility methods
 	void calculateWorldExtents();
 	void calculateScale(float *, float *, uint32_t, uint32_t);
 	void calculateShift(float *, float *, uint32_t, uint32_t);
 
-	inline float pixelToWorld(double pixel, float scale, float shift)
+	float pixelToWorld(double pixel, float scale, float shift)
 	{
 		return static_cast<float>((pixel - shift) / scale);
 	}

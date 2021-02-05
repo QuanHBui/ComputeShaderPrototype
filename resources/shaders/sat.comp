@@ -339,7 +339,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 
 	if (faceQueryA.largestDist < faceQueryB.largestDist)
 	{
-		// Reference face is from box A. Get normal from said face.
+		// Reference face is from box A. Span a plane from said face.
 		referencePlane  = getPlane(boxA, faceQueryA.faceIdx);
 		referenceBoxIdx = boxAIdx;
 		referenceBox    = boxA;
@@ -351,7 +351,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	}
 	else
 	{
-		// Reference face is from box B. Get normal.
+		// Reference face is from box B. Span a plane from said face.
 		referencePlane  = getPlane(boxB, faceQueryB.faceIdx);
 		referenceBoxIdx = boxBIdx;
 		referenceBox    = boxB;

@@ -11,7 +11,7 @@ constexpr int cVertCountPerFace  =  4;
 constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
-constexpr int cEpsilon = 0.0001f;
+constexpr float cEpsilon = 0.0001f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
 using ColliderFaceNormals = std::array<std::array<glm::vec3, cColliderFaceCount>, cMaxColliderCount>;
@@ -195,63 +195,63 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	return edgeQuery;
 }
 
-glm::vec3 getIncidentNormal(BoxCollider incidentBox, glm::vec3 const &referenceNormal)
+int getIncidentFaceIdx(BoxCollider incidentBox, glm::vec3 const &referenceNormal)
 {
+	int incidentFaceIdx = -1;
 	glm::vec3 incidentNormal{ 0.0f };
-	glm::vec3 potentialIncidentNormal{ 0.0f };
 	float smallestDotProduct = std::numeric_limits<float>::max();
 	float localDotProduct    = 0.0f;
 
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
-		potentialIncidentNormal = getFaceNormal(incidentBox, faceIdx);
-		localDotProduct         = glm::dot(potentialIncidentNormal, referenceNormal);
+		incidentNormal  = getFaceNormal(incidentBox, faceIdx);
+		localDotProduct = glm::dot(incidentNormal, referenceNormal);
+
+		if (localDotProduct < smallestDotProduct)
+		{
+			smallestDotProduct = localDotProduct;
+			incidentFaceIdx    = faceIdx;
+		}
 	}
 
-	if (localDotProduct < smallestDotProduct)
-	{
-		smallestDotProduct = localDotProduct;
-		incidentNormal     = potentialIncidentNormal;
-	}
-
-	return incidentNormal;
+	return incidentFaceIdx;
 }
 
 Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQueryB,
 							BoxCollider boxA, BoxCollider boxB,
 							int boxAIdx, int boxBIdx )
 {
-	glm::vec3 incidentNormal{ 0.0f };
 	int referenceBoxIdx = -1;
 	int incidentBoxIdx  = -1;
-	float incidentLargestDist = 0.0f;
+	int incidentFaceIdx = -1;
+	float referenceSeperation = 0.0f;
 	Plane referencePlane;
-	BoxCollider incidentBox = nullptr;
+	BoxCollider incidentBox  = nullptr;
 	BoxCollider referenceBox = nullptr;
 
+	// Identify reference plane, then incident face
 	if (faceQueryA.largestDist < faceQueryB.largestDist)
 	{
 		referencePlane  = getPlane(boxA, faceQueryA.faceIdx);
 		referenceBoxIdx = boxAIdx;
 		referenceBox    = boxA;
+		referenceSeperation = faceQueryA.largestDist; // Does this make sense?
 
-		incidentNormal = getIncidentNormal(boxB, referencePlane.normal);
-		incidentBoxIdx = boxBIdx;
-		incidentBox    = boxB;
-		incidentLargestDist = faceQueryB.largestDist;
+		incidentFaceIdx = getIncidentFaceIdx(boxB, referencePlane.normal);
+		incidentBoxIdx  = boxBIdx;
+		incidentBox     = boxB;
 	}
 	else
 	{
 		referencePlane  = getPlane(boxB, faceQueryB.faceIdx);
 		referenceBoxIdx = boxBIdx;
 		referenceBox    = boxB;
+		referenceSeperation = faceQueryB.largestDist;
 
-		incidentNormal = getIncidentNormal(boxA, referencePlane.normal);
-		incidentBoxIdx = boxAIdx;
-		incidentBox    = boxA;
-		incidentLargestDist = faceQueryA.largestDist;
+		incidentFaceIdx = getIncidentFaceIdx(boxA, referencePlane.normal);
+		incidentBoxIdx  = boxAIdx;
+		incidentBox     = boxA;
 	}
-
 
 	Plane clipPlane;
 	glm::vec3 startVert{ 0.0f };
@@ -266,19 +266,22 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	int contactPointCount = 0;
 	Manifold manifold;
 
+	// Iterate over all the reference faces.
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
 		if (glm::abs(glm::dot(referencePlane.normal, clipPlane.normal)) <= cEpsilon)
 		{
-			startVertIdx = cFaces[faceIdx][0];
+			// Start from vert# 0 of the incident face - since there's only 1 incident face, we can cache some data regarding it.
+			startVertIdx = cFaces[incidentFaceIdx][0];
 			startVert    = incidentBox[startVertIdx];
 
+			// Iterate through vert# 1, 2, 3 of the incident face
 			for (int vertIdx = 1; vertIdx < cVertCountPerFace; ++vertIdx)
 			{
 				if (contactPointCount >= cMaxContactPointCount) break;
 
-				endVertIdx = cFaces[faceIdx][vertIdx];
+				endVertIdx = cFaces[incidentFaceIdx][vertIdx];
 				endVert  = incidentBox[endVertIdx];
 
 				startSignedDist = getSignedDist(startVert, clipPlane);
@@ -327,7 +330,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-	manifold.contactNormal = glm::vec4(referencePlane.normal, incidentLargestDist);
+	manifold.contactNormal = glm::vec4(referencePlane.normal, referenceSeperation);
 
 	return manifold;
 }

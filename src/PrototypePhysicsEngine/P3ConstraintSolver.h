@@ -3,11 +3,13 @@
 #ifndef P3_CONSTRAINT_SOLVER
 #define P3_CONSTRAINT_SOLVER
 
+#include <vector>
+
 #include <glad/glad.h>
 
-#include "P3BroadPhaseCollisionDetection.h"
+#include "P3Common.h"
 
-struct BoxColliderGpuPackage;
+struct LinearTransform;
 struct ManifoldGpuPackage;
 
 /**
@@ -27,17 +29,19 @@ public:
 	P3ConstraintSolver(GLuint boxCollidersID, GLuint manifoldsID)
 		: mBoxCollidersID(boxCollidersID), mManifoldsID(manifoldsID) {}
 
-	void init();
+	void init() {};
 
 	// If the solver's implementation resides on the CPU
-	void solve(BoxColliderGpuPackage const &, ManifoldGpuPackage const &);
-	// Else if on GPU
+	std::vector<glm::vec3> const &solve(ManifoldGpuPackage const &, std::vector<LinearTransform> const &);
+	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
 	void solve();
 
 	~P3ConstraintSolver() {}
 
 private:
 	GLuint mBoxCollidersID = 0u, mManifoldsID = 0u;
+
+	std::vector<glm::vec3> mImpulseContainer;
 };
 
 #endif // P3_CONSTRAINT_SOLVER

@@ -6,10 +6,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#ifndef cMaxObjectCount
-#define MAX_NUM_OBJECTS 1000
-#endif
-
 /**
  * This aims to be used as a component. Should be an upgrade to the other rigid body class
  * Based on Baraff-Witkins lecture notes and Glenn Fiedler's blog post
@@ -22,13 +18,19 @@
 
 struct LinearTransform
 {
+	LinearTransform() {};
+	LinearTransform(float, float, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
+
 	//----------------- Constant quantities -----------------//
-	float mass, inverseMass;
+	float mass = 0.0f;
+	float inverseMass = 0.0f;
 
 	//----------------- State variables -----------------//
-	glm::vec3 position, velocity, momentum;
+	glm::vec3 position{};
+	glm::vec3 velocity{};
+	glm::vec3 momentum{};
 
-	inline void recalculate()
+	void recalculate()
 	{
 		velocity = momentum * inverseMass;
 	}
@@ -50,13 +52,16 @@ struct LinearTransformDerivate
 struct AngularTransform
 {
 	//----------------- Constant quantities -----------------//
-	float inertia, inverseInertia;
+	float inertia = 0.0f;
+	float inverseInertia = 0.0f;
 
 	//----------------- State variables -----------------//
-	glm::quat orientation, spin;
-	glm::vec3 angularVelocity, angularMomentum;
+	glm::quat orientation{};
+	glm::quat spin{};
+	glm::vec3 angularVelocity{};
+	glm::vec3 angularMomentum{};
 
-	inline void recalculate()
+	void recalculate()
 	{
 		angularVelocity = angularMomentum * inverseInertia;
 
@@ -69,8 +74,8 @@ struct AngularTransform
 
 struct AngularTransformDerivative
 {
-	glm::quat spin;
-	glm::vec3 torque;
+	glm::quat spin{};
+	glm::vec3 torque{};
 };
 
 inline glm::vec3 calculateTorque(AngularTransform &state, double t)

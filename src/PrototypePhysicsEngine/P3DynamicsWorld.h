@@ -24,7 +24,6 @@
 #define NARROW_PHASE_CPU
 
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
-using RigidBody = unsigned int;
 
 class P3DynamicsWorld
 {
@@ -45,10 +44,13 @@ public:
 
 	//---------------------- Add bodies to the world ----------------------//
 	// Is it the world responsibility to check for max capacity before adding?
-	void addRigidBody();
-	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
-	void addRigidBody(float, glm::vec3 const &, glm::vec3 const &, glm::mat4 const &);
-	void addRigidBody(LinearTransform const &, AngularTransform const &);
+	int addRigidBody();
+	int addRigidBody(float, glm::vec3 const &, glm::vec3 const &);
+	int addRigidBody(float, glm::vec3 const &, glm::vec3 const &, glm::mat4 const &);
+	int addRigidBody(LinearTransform const &, AngularTransform const &);
+
+	int addStaticBody(glm::vec3 const &);
+	int addStaticBodies(std::vector<glm::vec3> const &);
 
 	//------------------------ Demos ------------------------//
 	void reset();
@@ -67,9 +69,19 @@ public:
 	unsigned int getMaxCapacity() const { return mMaxCapacity; }
 	std::vector<P3BoxCollider> const &getBoxColliders() const { return mBoxColliders; }
 
-	std::vector<LinearTransform> const &getLinearTransformContainer() const
+	std::vector<LinearTransform> const &getRigidLinearTransformContainer() const
 	{
-		return mLinearTransformContainer;
+		return mRigidLinearTransformContainer;
+	}
+
+	std::vector<LinearTransform> const &getStaticLinearTransformContainer() const
+	{
+		return mStaticLinearTransformContainer;
+	}
+
+	std::vector<AngularTransform> const &getAngularTransformContainer() const
+	{
+		return mRigidAngularTransformContainer;
 	}
 
 	CollisionPairGpuPackage const *getPCollisionPairPkg() const
@@ -81,7 +93,7 @@ public:
 	{
 #ifdef NARROW_PHASE_CPU
 		return &mManifoldPkg;
-#else 
+#else
 		return mNarrowPhase.getPManifoldPkg();
 #endif
 	}
@@ -97,23 +109,25 @@ private:
 	size_t mMaxCapacity{ 20u };
 
 	//------------------------- Entity list -------------------------//
-	std::vector<RigidBody> mBodyContainer;
-	RigidBody mUniqueID = 0u;
+	std::vector<int> mBodyContainer;
+	int mUniqueID = 0u;
 
 	//----------------------- Component list -----------------------//
-	std::vector<LinearTransform> mLinearTransformContainer;
-	std::vector<AngularTransform> mAngularTransformContainer;
+	std::vector<LinearTransform> mRigidLinearTransformContainer;
+	std::vector<AngularTransform> mRigidAngularTransformContainer;
+	std::vector<LinearTransform> mStaticLinearTransformContainer;
+	std::vector<AngularTransform> mStaticAngularTransformContainer;
 	std::vector<P3MeshCollider> mMeshColliderContainer;
 	std::vector<P3BoxCollider> mBoxColliders;
 
 	//----------------- Data package optimized for the GPU -----------------//
-	LinearTransformGpuPackage mLinearTransformPkg;
+	LinearTransformGpuPackage mLinearTransformPkg; // For rigid and kinematic bodies
 	ManifoldGpuPackage mManifoldPkg;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
-	// std::unordered_map<RigidBody, size_t> mEntityToIndexMap;
-	// std::unordered_map<size_t, RigidBody> mIndexToEntityMap;
+	 //std::unordered_map<int, int> mEntityToIndexMap;
+	 //std::unordered_map<int, int> mIndexToEntityMap;
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions

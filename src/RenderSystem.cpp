@@ -92,9 +92,8 @@ void RenderSystem::renderInstanced(MatrixContainer const &modelMatrices)
 	renderProgram.unbind();
 }
 
-void RenderSystem::renderDebug(
-	std::vector<P3BoxCollider> const &boxColliders,
-	const ManifoldGpuPackage *manifoldGpuPackage )
+void RenderSystem::renderDebug( std::vector<P3BoxCollider> const &boxColliders,
+								const ManifoldGpuPackage *manifoldGpuPackage )
 {
 	glBindVertexArray(mDebugVao);
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo));
