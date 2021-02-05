@@ -10,13 +10,6 @@ void P3OpenGLComputeBroadPhase::init()
 	initGpuBuffers();
 }
 
-CollisionPairGpuPackage const &P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
-{
-	detectCollisionPairs(boxColliders);
-
-	return *mpCollisionPairPkg;
-}
-
 /**
  * Maybe hard reset on everything
  */
@@ -85,7 +78,7 @@ void P3OpenGLComputeBroadPhase::buildBvhTreeOnGpu()
 
 }
 
-void P3OpenGLComputeBroadPhase::detectCollisionPairs(std::vector<P3BoxCollider> const &boxColliders)
+void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxColliders)
 {
 	// Pack data for GPU
 	for (int i = 0; i < boxColliders.size(); ++i)

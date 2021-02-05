@@ -29,7 +29,7 @@ int main()
 
 	pApplication->init();
 
-	double lastTime            = glfwGetTime();	// In seconds
+	double lastTime            = glfwGetTime(); // In seconds
 	double lastFrameTime       = lastTime;
 	double frameTimeInterval   = 0.0;
 	double UIFrameTimeInterval = frameTimeInterval;
@@ -37,6 +37,7 @@ int main()
 
 	double lastPhysicsTickTime      = lastTime;
 	double fixedPhysicsTickInterval = 1.0 / 144.0;
+	int physicsTickCount = 0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
 	GLFWwindow *pCurrentGlfwWindow = pWindowManager->getHandle();
@@ -49,10 +50,11 @@ int main()
 		lastFrameTime = currentTime;
 		++numFrames;
 
-		if (currentTime - lastPhysicsTickTime >= fixedPhysicsTickInterval)
+		if (currentTime - lastPhysicsTickTime >= fixedPhysicsTickInterval || !physicsTickCount)
 		{
 			pApplication->update(float(fixedPhysicsTickInterval));
 			lastPhysicsTickTime = currentTime;
+			++physicsTickCount;
 		}
 
 		pApplication->renderFrame(float(frameTimeInterval));

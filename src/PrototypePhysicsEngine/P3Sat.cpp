@@ -301,8 +301,8 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
-				else if ( startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
-						  && getSignedDist(endVert, referencePlane) <= -cEpsilon )
+				else if (   startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
+						 && getSignedDist(endVert, referencePlane) <= -cEpsilon )
 				{
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 					manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
@@ -381,7 +381,7 @@ Manifold createEdgeContact( EdgeQuery edgeQuery, BoxColliderGpuPackage const &bo
 }
 
 // The size of the collisionPairs buffer can be sent here for a more elegant solution.
-ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionPairGpuPackage const &collisionPairPkg)
+ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const CollisionPairGpuPackage *pCollisionPairPkg)
 {
 	ManifoldGpuPackage manifoldPkg;
 	int availableIdx = 0;
@@ -389,11 +389,12 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionP
 	int boxBIdx = -1;
 	BoxCollider boxA = nullptr;
 	BoxCollider boxB = nullptr;
+	constexpr float queryBias = 0.9f;
 
-	for (int collisionPairIdx = 0; collisionPairIdx < collisionPairPkg.misc.x; ++collisionPairIdx)
+	for (int collisionPairIdx = 0; collisionPairIdx < pCollisionPairPkg->misc.x; ++collisionPairIdx)
 	{
-		boxAIdx = collisionPairPkg[collisionPairIdx].x;
-		boxBIdx = collisionPairPkg[collisionPairIdx].y;
+		boxAIdx = pCollisionPairPkg->collisionPairs[collisionPairIdx].x;
+		boxBIdx = pCollisionPairPkg->collisionPairs[collisionPairIdx].y;
 		boxA = boxColliderPkg[boxAIdx];
 		boxB = boxColliderPkg[boxBIdx];
 
@@ -413,7 +414,10 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, CollisionP
 		// Find the closest feature type
 		Manifold manifold;
 
-		if (faceQueryA.largestDist > edgeQuery.largestDist && faceQueryB.largestDist > edgeQuery.largestDist)
+		// Apply a bias to prefer face contact over edge contact in the case when the separations returned
+		//  from the face query and edge query are the same.
+		if (   queryBias * faceQueryA.largestDist > edgeQuery.largestDist
+			&& queryBias * faceQueryB.largestDist > edgeQuery.largestDist )
 		{
 			manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 		}

@@ -21,7 +21,9 @@ class P3OpenGLComputeNarrowPhase
 public:
 	void init(GLuint, GLuint);
 
-	ManifoldGpuPackage const &step(uint16_t);
+	void step();
+
+	const ManifoldGpuPackage *getPManifoldPkg() const { return mpManifoldPkg; }
 	
 	void reset();
 
@@ -56,7 +58,7 @@ private:
 	std::unordered_map<ComputeShader, GLuint> mComputeProgIDs{};
 	std::unordered_map<Buffer, GLuint> mSsboIDs{};
 
-	AtomicCounter mAtomicCounter;
+	AtomicCounter mAtomicCounter{};
 	ManifoldGpuPackage *mpManifoldPkg; // Stores the results from last physics tick
 };
 

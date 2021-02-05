@@ -50,7 +50,7 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 	//);
 }
 
-ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxCollidersSize)
+void P3OpenGLComputeNarrowPhase::step()
 {
 	GLuint currProgID = mComputeProgIDs[ComputeShader::SAT];
 	glUseProgram(currProgID);
@@ -73,6 +73,4 @@ ManifoldGpuPackage const &P3OpenGLComputeNarrowPhase::step(uint16_t boxColliders
 	mAtomicCounter.reset();
 	glUseProgram(0u);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0u);
-
-	return *mpManifoldPkg;
 }

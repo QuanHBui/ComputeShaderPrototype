@@ -21,11 +21,13 @@ public:
 	void init();
 
 	//--------------------- Main proccesses --------------------------//
-	CollisionPairGpuPackage const &step(std::vector<P3BoxCollider> const &);
+	void step(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
 	GLuint getBoxCollidersID() const { return mSsboIDs[P3_BOX_COLLIDERS]; };
 	GLuint getCollisionPairsID() const { return mSsboIDs[P3_COLLISION_PAIRS]; }
+
+	CollisionPairGpuPackage const *getPCollisionPairPkg() const { return mpCollisionPairPkg; }
 
 	void reset();
 
@@ -71,7 +73,7 @@ private:
 	//--------------------------------- CPU data ---------------------------------//
 	AtomicCounter mAtomicCounter[3]; // Triple buffering let's go
 	AabbGpuPackage mAabbCpuData;
-	BoxColliderGpuPackage *mpBoxColliderPkg = nullptr;  // Data streaming to GPU
+	BoxColliderGpuPackage *mpBoxColliderPkg = nullptr; // Data streaming to GPU
 	CollisionPairGpuPackage *mpCollisionPairPkg = nullptr;
 };
 

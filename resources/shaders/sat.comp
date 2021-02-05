@@ -1,5 +1,7 @@
 #version 430
 
+precision highp float;
+
 // Properties of the collider should be more configurable
 #define VERT_COUNT_PER_EDGE 2
 #define VERT_COUNT_PER_FACE 4
@@ -398,7 +400,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
-		if (abs(dot(referencePlane.normal, clipPlane.normal)) < EPSILON) // Check if perpendicular
+		if (abs(dot(referencePlane.normal, clipPlane.normal)) <= EPSILON) // Check if perpendicular
 		{
 			startVertIdx = faces[faceIdx][0];
 			startVert    = vec3(incidentBox.vertices[startVertIdx]);
@@ -433,8 +435,8 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 					}
 				}
 				// Else if both start and end on the negative side, keep only the end.
-				else if ( sign(startSignedDist) == -1.0f && sign(endSignedDist) == -1.0f
-						  && sign(getSignedDist(endVert, referencePlane)) < -1.0f )
+				else if (   sign(startSignedDist) == -1.0f && sign(endSignedDist) == -1.0f
+						 && sign(getSignedDist(endVert, referencePlane)) < -1.0f )
 				{
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 					manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
@@ -466,7 +468,6 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-
 	manifold.contactNormal = vec4(referencePlane.normal, incidentLargestDist);
 
 	return manifold;
@@ -559,6 +560,7 @@ void separatingAxisTest(uint collisionPairIdx)
 	int boxBIdx      = collisionPairs[collisionPairIdx].y;
 	BoxCollider boxA = boxColliders[boxAIdx];
 	BoxCollider boxB = boxColliders[boxBIdx];
+	const float queryBias = 0.9f;
 
 	uint debugIdx = atomicCounterIncrement(nextAvailableIdx);
 
@@ -587,7 +589,10 @@ void separatingAxisTest(uint collisionPairIdx)
 	// Find the closest feature type
 	Manifold manifold;
 
-	if (faceQueryA.largestDist > edgeQuery.largestDist && faceQueryB.largestDist > edgeQuery.largestDist)
+	// Apply a bias to prefer face contact over edge contact in the case when the separations returned
+	//  from the face query and edge query are the same.
+	if (   queryBias * faceQueryA.largestDist > edgeQuery.largestDist
+		&& queryBias * faceQueryB.largestDist > edgeQuery.largestDist )
 	{
 		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 	}

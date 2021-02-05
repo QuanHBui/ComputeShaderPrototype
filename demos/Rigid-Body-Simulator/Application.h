@@ -26,6 +26,14 @@
 
 #define MAX_NUM_ENTITIES 10u
 
+enum class Demo
+{
+	BOWLING_GAME,
+	MULTIPLE_BOXES,
+	CONTROLLABLE_BOX,
+	GRAVITY_TEST
+};
+
 class Application : public EventCallbacks
 {
 public:
@@ -52,8 +60,10 @@ public:
 
 private:
 	void initRenderSystem();
-	void initPhysicsWorld();
+	void initPhysicsWorld(Demo = Demo::CONTROLLABLE_BOX);
 	void initUI();
+
+	void updateWithInputs(float);
 
 	// Mouse ultility methods
 	void calculateWorldExtents();
@@ -91,8 +101,11 @@ private:
 
 	MatrixContainer mModelMatrixContainer;
 
-	CollisionPairGpuPackage mCollisionPairsFromGpu;
-	ManifoldGpuPackage mManifoldsFromGpu;
+	const CollisionPairGpuPackage *mpCollisionPairPkg = nullptr;
+	const ManifoldGpuPackage *mpManifoldPkg = nullptr;
+
+	// Remember what demo being shown
+	Demo mDemo = Demo::CONTROLLABLE_BOX;
 };
 
 #endif // APPLICATION_H

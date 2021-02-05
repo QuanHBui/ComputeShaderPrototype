@@ -18,7 +18,7 @@ void RenderSystem::init(int width, int height)
 	initDebug();
 }
 
-void RenderSystem::render(MatrixContainer const &modelMatrices, CollisionPairGpuPackage const &collisionPairs)
+void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionPairGpuPackage *collisionPairs)
 {
 	// Clear framebuffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -39,7 +39,7 @@ void RenderSystem::render(MatrixContainer const &modelMatrices, CollisionPairGpu
 	{
 		unsigned int redOrNo = 0u;
 		// Check collision pair list if this mesh has collided
-		for (glm::ivec4 const &collisonPair : collisionPairs.collisionPairs)
+		for (glm::ivec4 const &collisonPair : collisionPairs->collisionPairs)
 		{
 			if (collisonPair.x < 0.0) break;
 
@@ -94,7 +94,7 @@ void RenderSystem::renderInstanced(MatrixContainer const &modelMatrices)
 
 void RenderSystem::renderDebug(
 	std::vector<P3BoxCollider> const &boxColliders,
-	ManifoldGpuPackage const &manifoldGpuPackage )
+	const ManifoldGpuPackage *manifoldGpuPackage )
 {
 	glBindVertexArray(mDebugVao);
 	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, mDebugVbo));
@@ -140,9 +140,9 @@ void RenderSystem::renderDebug(
 	glm::vec4 batchedContactNormals[cMaxContactPointCount * cMaxColliderCount]{};
 	int contactPointIdx = 0, contacNormalIdx = 0;
 
-	for (int manifoldIdx = 0; manifoldIdx < manifoldGpuPackage.misc.x; ++manifoldIdx)
+	for (int manifoldIdx = 0; manifoldIdx < manifoldGpuPackage->misc.x; ++manifoldIdx)
 	{
-		Manifold const &manifold = manifoldGpuPackage.manifolds[manifoldIdx];
+		Manifold const &manifold = manifoldGpuPackage->manifolds[manifoldIdx];
 
 		// Iterate through all the contact points of this manifold
 		for (int k = 0; k < manifold.contactBoxIndicesAndContactCount.z; ++k)
@@ -152,7 +152,7 @@ void RenderSystem::renderDebug(
 			batchedContactPoints[contactPointIdx++]  = manifold.contactPoints[k];
 			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k];
 			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k]
-													 + glm::vec4(manifold.contactNormal.w * glm::vec3(manifold.contactNormal), 1.0f);
+													 + glm::vec4((1.1f * manifold.contactNormal.w) * glm::vec3(manifold.contactNormal), 1.0f);
 		}
 	}
 

@@ -37,9 +37,9 @@ public:
 
 	void init(int, int);
 
-	void render(MatrixContainer const &, CollisionPairGpuPackage const &);
+	void render(MatrixContainer const &, const CollisionPairGpuPackage *);
 	void renderInstanced(MatrixContainer const &);
-	void renderDebug(std::vector<P3BoxCollider> const &, ManifoldGpuPackage const &);
+	void renderDebug(std::vector<P3BoxCollider> const &, const ManifoldGpuPackage *);
 
 	void registerMeshForBody(MeshKey const &, unsigned int = 1u);
 	void setView(glm::mat4 const &view) { mView = view; }

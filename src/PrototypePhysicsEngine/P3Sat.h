@@ -10,6 +10,6 @@ struct ManifoldGpuPackage;
 /**
  * This is the implementation of Seperating Axis Test on the CPU.
  */
-ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &, CollisionPairGpuPackage const &);
+ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &, const CollisionPairGpuPackage *);
 
 #endif // P3_SAT_H

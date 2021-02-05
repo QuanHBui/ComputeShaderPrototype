@@ -13,8 +13,6 @@
 #include "P3Simplex.h"
 #include "P3Sat.h"
 
-//#define NARROW_PHASE_CPU
-
 float randf()
 {
 	return rand() / float(RAND_MAX);
@@ -22,18 +20,32 @@ float randf()
 
 void P3DynamicsWorld::init()
 {
-	broadPhase.init();
-	narrowPhase.init(broadPhase.getBoxCollidersID(), broadPhase.getCollisionPairsID());
+	mBroadPhase.init();
+	mNarrowPhase.init(mBroadPhase.getBoxCollidersID(), mBroadPhase.getCollisionPairsID());
 }
 
-void P3DynamicsWorld::update(
-	double dt,
-	CollisionPairGpuPackage &collisionPairGpuPackage,
-	ManifoldGpuPackage &manifoldGpuPackage )
+void P3DynamicsWorld::detectCollisions()
 {
-	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
-	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
+	mBroadPhase.step(mBoxColliders);
 
+#ifdef NARROW_PHASE_CPU
+	BoxColliderGpuPackage boxColliderPkg;
+	for (int i = 0; i < mBoxColliders.size(); ++i)
+	{
+		for (int j = 0; j < cBoxColliderVertCount; ++j)
+		{
+			boxColliderPkg.boxColliders[i][j] = mBoxColliders[i].mVertices[j];
+		}
+	}
+
+	mManifoldPkg = P3Sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
+#else
+	narrowPhase.step();
+#endif
+}
+
+void P3DynamicsWorld::updateMultipleBoxes(float dt)
+{
 	static float radians = 0.0f;
 
 	for (int i = 0; i < 50; ++i)
@@ -66,17 +78,13 @@ void P3DynamicsWorld::update(
 }
 
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
-CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
+void P3DynamicsWorld::updateBowlingGame(float dt)
 {
 	// To define a plane, we need a normal and a point
 	glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
 
 	std::vector<glm::vec3> sampleVelocityContainer;
-
-	mCollisionPairCpuData = broadPhase.step(mBoxColliders);
-	std::cout << mCollisionPairCpuData.collisionPairs[0].x << ", "
-		<< mCollisionPairCpuData.collisionPairs[0].y << std::endl;
 
 	for (RigidBody const &rigidBody : mBodyContainer)
 	{
@@ -163,34 +171,11 @@ CollisionPairGpuPackage const &P3DynamicsWorld::updateAndResolve(double dt)
 
 	for (unsigned int i = 0; i < mLinearTransformContainer.size(); ++i)
 		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mLinearTransformContainer[i].position));
-
-	return mCollisionPairCpuData;
 }
 
 // Specifically for the controllable box demo
-void P3DynamicsWorld::update(
-	double dt,
-	glm::vec3 const &deltaP,
-	CollisionPairGpuPackage &collisionPairGpuPackage,
-	ManifoldGpuPackage &manifoldGpuPackage )
+void P3DynamicsWorld::updateControllableBox(float dt, glm::vec3 const &deltaP)
 {
-	collisionPairGpuPackage = broadPhase.step(mBoxColliders);
-
-#ifdef NARROW_PHASE_CPU
-	BoxColliderGpuPackage boxColliderPkg;
-	for (int i = 0; i < mBoxColliders.size(); ++i)
-	{
-		for (int j = 0; j < cBoxColliderVertCount; ++j)
-		{
-			boxColliderPkg.boxColliders[i][j] = mBoxColliders[i].mVertices[j];
-		}
-	}
-
-	manifoldGpuPackage = P3Sat(boxColliderPkg, collisionPairGpuPackage);
-#else
-	manifoldGpuPackage = narrowPhase.step(mBoxColliders.size());
-#endif
-
 	// 1st box is static, 2nd box is kinematic/controllable.
 	mLinearTransformContainer[1].position += deltaP;
 
@@ -202,7 +187,7 @@ void P3DynamicsWorld::update(
 
 	float static angle = 0.0f;
 	// Box 4 is scaled non-uniformly and rotating.
-	glm::mat4 scale     = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 1.0f, 1.0f));
+	glm::mat4 scale     = glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 1.0f, 3.0f));
 	glm::mat4 rotate    = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
 	rotate = glm::mat4(1.0f);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), mLinearTransformContainer[3].position);
@@ -212,6 +197,19 @@ void P3DynamicsWorld::update(
 
 	angle += dt * 0.52f;
 	angle  = angle >= 6.28f ? 0.0f : angle; // This is so that we won't get floating point overflow.
+}
+
+void P3DynamicsWorld::updateGravityTest(float dt)
+{
+	// Detect collision
+	detectCollisions();
+
+	// Apply forces
+
+
+	// Solve constraints
+
+	// Apply update
 }
 
 // TODO: WIP

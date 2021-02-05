@@ -21,6 +21,8 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
+#define NARROW_PHASE_CPU
+
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
 using RigidBody = unsigned int;
 
@@ -32,9 +34,12 @@ public:
 
 	void init();
 
-	void update(double dt, CollisionPairGpuPackage &, ManifoldGpuPackage &);
-	CollisionPairGpuPackage const &updateAndResolve(double dt);
-	void update(double dt, glm::vec3 const &, CollisionPairGpuPackage &, ManifoldGpuPackage &);
+	void detectCollisions();
+
+	void updateMultipleBoxes(float dt);
+	void updateBowlingGame(float dt);
+	void updateControllableBox(float dt, glm::vec3 const &);
+	void updateGravityTest(float dt);
 
 	glm::vec3 castRay(glm::vec3 const &, glm::vec3 const &);
 
@@ -67,6 +72,20 @@ public:
 		return mLinearTransformContainer;
 	}
 
+	CollisionPairGpuPackage const *getPCollisionPairPkg() const
+	{
+		return mBroadPhase.getPCollisionPairPkg();
+	}
+
+	ManifoldGpuPackage const *getPManifoldPkg() const
+	{
+#ifdef NARROW_PHASE_CPU
+		return &mManifoldPkg;
+#else 
+		return mNarrowPhase.getPManifoldPkg();
+#endif
+	}
+
 	void setGravity(float gravity) { mGravity = gravity; }
 	void setMaxCapacity(const int maxCapacity) { mMaxCapacity = maxCapacity; } // Need error checking
 
@@ -88,9 +107,8 @@ private:
 	std::vector<P3BoxCollider> mBoxColliders;
 
 	//----------------- Data package optimized for the GPU -----------------//
-	LinearTransformGpuPackage mLinearTransformCpuData;
-	CollisionPairGpuPackage mCollisionPairCpuData;
-	ManifoldGpuPackage mManifoldCpuData;
+	LinearTransformGpuPackage mLinearTransformPkg;
+	ManifoldGpuPackage mManifoldPkg;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
@@ -99,10 +117,10 @@ private:
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
-	P3OpenGLComputeBroadPhase broadPhase;
-	P3OpenGLComputeNarrowPhase narrowPhase;
-	P3ConstraintSolver constraintSolver; // Produces forces to make sure things don't phase past each other
-	P3Integrator integrator;             // Actually integrates the force vector and apply to linear transform
+	P3OpenGLComputeBroadPhase mBroadPhase;
+	P3OpenGLComputeNarrowPhase mNarrowPhase;
+	P3ConstraintSolver mConstraintSolver; // Produces forces to make sure things don't phase past each other
+	P3Integrator mIntegrator;             // Actually integrates the force vector and apply to linear transform
 };
 
 #endif // P3_DYNAMICS_WORLD_H

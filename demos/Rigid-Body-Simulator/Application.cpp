@@ -57,7 +57,7 @@ void Application::init()
 	std::cout << '\n';
 
 	initRenderSystem();
-	initPhysicsWorld();
+	initPhysicsWorld(Demo::GRAVITY_TEST);
 	initUI();
 }
 
@@ -75,20 +75,36 @@ void Application::initRenderSystem()
 	mRenderSystem.setProjection(mFlyCamera.getProjectionMatrix());
 }
 
-void Application::initPhysicsWorld()
+void Application::initPhysicsWorld(Demo demo)
 {
 	mPhysicsWorld.init();
 
-	// TODO: Switch system is good here.
+	switch (demo)
+	{
+	case Demo::BOWLING_GAME:
+		mPhysicsWorld.bowlingGameDemo();
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
+		break;
 
-	// mPhysicsWorld.bowlingGameDemo();
-	// mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
+	case Demo::MULTIPLE_BOXES:
+		mPhysicsWorld.multipleBoxesDemo();
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
+		break;
 
-	//mPhysicsWorld.multipleBoxesDemo();
-	//mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
+	case Demo::GRAVITY_TEST:
+		// Stack 2 unit cubes on top of each other. Same mass.
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f,  2.0f, 5.0f), glm::vec3(0.0f));
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
+		break;
 
-	mPhysicsWorld.controllableBoxDemo();
-	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
+	case Demo::CONTROLLABLE_BOX:
+	default: // Defaulted to controllable box demo
+		mPhysicsWorld.controllableBoxDemo();
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
+	}
+
+	mDemo = demo;
 }
 
 void Application::initUI()
@@ -319,7 +335,7 @@ void Application::reset()
 	mModelMatrixContainer.clear();
 	mRenderSystem.reset();
 	mPhysicsWorld.reset();
-	initPhysicsWorld();
+	initPhysicsWorld(mDemo);
 }
 
 void Application::renderFrame(float dt)
@@ -354,11 +370,11 @@ void Application::renderFrame(float dt)
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
-	mRenderSystem.render(mModelMatrixContainer, mCollisionPairsFromGpu);
+	mRenderSystem.render(mModelMatrixContainer, mpCollisionPairPkg);
 	//mRenderSystem.renderInstanced(mModelMatrixContainer);
 
 	if (showHitBoxVerts)
-		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mManifoldsFromGpu);
+		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mpManifoldPkg);
 }
 
 void Application::renderUI(double dt)
@@ -429,6 +445,53 @@ void Application::shootBall()
 
 void Application::update(float dt)
 {
+	mPhysicsWorld.detectCollisions();
+
+	switch (mDemo)
+	{
+	case Demo::BOWLING_GAME:
+		mPhysicsWorld.updateBowlingGame(dt);
+		break;
+
+	case Demo::MULTIPLE_BOXES:
+		mPhysicsWorld.updateMultipleBoxes(dt);
+		break;
+
+	case Demo::GRAVITY_TEST:
+		mPhysicsWorld.updateGravityTest(dt);
+		break;
+
+	case Demo::CONTROLLABLE_BOX:
+	default:
+		updateWithInputs(dt);
+	}
+
+	mPhysicsTickInterval = dt;
+
+	// Get collision data if needed
+	mpCollisionPairPkg = mPhysicsWorld.getPCollisionPairPkg();
+	mpManifoldPkg      = mPhysicsWorld.getPManifoldPkg();
+
+	// Get position array from the physics world
+	std::vector<LinearTransform> const &linearTransformContainer = mPhysicsWorld.getLinearTransformContainer();
+
+	unsigned int i = 0u;
+	// Update the model matrix array
+	for (LinearTransform const &linearTransform : linearTransformContainer)
+	{
+		glm::mat4 translation = glm::translate(linearTransform.position);
+
+		if (i >= mModelMatrixContainer.size())
+			mModelMatrixContainer.push_back(translation);
+		else
+			mModelMatrixContainer[i] = translation;
+
+		++i;
+	}
+}
+
+void Application::updateWithInputs(float dt)
+{
 	glm::vec3 controlPosition{ 0.0f };
 
 	// Get any inputs for kinematics object
@@ -449,25 +512,5 @@ void Application::update(float dt)
 	if (moveDownward)
 		controlPosition.y -= 5.0f * dt;
 
-	mPhysicsWorld.update(dt, controlPosition, mCollisionPairsFromGpu, mManifoldsFromGpu);
-	//mPhysicsWorld.update(dt, mCollisionPairsFromGpu, mManifoldsFromGpu);
-
-	mPhysicsTickInterval = dt;
-
-	// Get position array from the physics world
-	std::vector<LinearTransform> const &linearTransformContainer = mPhysicsWorld.getLinearTransformContainer();
-
-	unsigned int i = 0u;
-	// Update the model matrix array
-	for (LinearTransform const &linearTransform : linearTransformContainer)
-	{
-		glm::mat4 translation = glm::translate(linearTransform.position);
-
-		if (i >= mModelMatrixContainer.size())
-			mModelMatrixContainer.push_back(translation);
-		else
-			mModelMatrixContainer[i] = translation;
-
-		++i;
-	}
+	mPhysicsWorld.updateControllableBox(dt, controlPosition);
 }
