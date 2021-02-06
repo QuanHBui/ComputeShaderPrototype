@@ -99,7 +99,7 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f, 2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.7f, 2.0f, 5.0f), glm::vec3(0.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
 		break;

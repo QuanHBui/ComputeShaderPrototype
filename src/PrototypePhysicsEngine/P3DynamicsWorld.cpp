@@ -209,29 +209,43 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		linearTransform.velocity.y -= 0.1f;
 	}
 
-	// Solve constraints
+	// Solve constraints - produces final impulses at certain contact points
 #ifdef NARROW_PHASE_CPU
-	std::vector<glm::vec3> const &solveImpulseContainer
-		= mConstraintSolver.solve(mManifoldPkg, mRigidLinearTransformContainer);
+	int offset = mConstraintSolver.solve(
+		mManifoldPkg,
+		mRigidLinearTransformContainer,
+		mRigidAngularTransformContainer
+	);
 #else
 	mConstraintSolver.solve();
 #endif
 
-	// Apply updates
-	int i = 0; // There must be a better way to connect linear transforms and hit boxes.
-	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
-	{
-		if (i < solveImpulseContainer.size())
-		{
-			linearTransform.velocity += solveImpulseContainer[i];
-		}
+	// After this function call, linear and angular transform containers for rigid bodies should be updated.
+	applyImpulses();
 
-		linearTransform.position += linearTransform.velocity * dt;
+	std::vector<glm::vec3> const &solveImpulseContainer = mConstraintSolver.getImpulseContainer();
+
+	// Store final linear transforms
+	// There must be a better way to connect linear transforms and hit boxes.
+	for (int i = 0; i < offset; ++i)
+	{
+		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
+		linearTransform.velocity += solveImpulseContainer[i];
+		linearTransform.position += dt * linearTransform.velocity;
 
 		// Update hit box
 		mBoxColliders[i].update(glm::translate(linearTransform.position));
+	}
 
-		++i;
+	// Store final angular transforms
+	for (int j = offset; j < solveImpulseContainer.size(); ++j)
+	{
+		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
+		angularTransform.angularVelocity += solveImpulseContainer[j];
+		angularTransform.tempOrientation += dt * glm::length(angularTransform.angularVelocity);
+
+		// Need to provide rotational angle and axis of rotation
+		mBoxColliders[j].update(glm::rotate(angularTransform.tempOrientation, glm::vec3(0.0f, 0.0f, 1.0f)));
 	}
 }
 
@@ -470,4 +484,9 @@ void P3DynamicsWorld::controllableBoxDemo()
 				 glm::rotate(glm::mat4(1.0f), 0.785f, glm::vec3(0.0f, 1.0f, 0.0f))); // The kinematic box
 	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with different size and rotating
+}
+
+void P3DynamicsWorld::applyImpulses()
+{
+
 }

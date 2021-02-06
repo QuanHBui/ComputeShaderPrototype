@@ -10,6 +10,7 @@
 #include "P3Common.h"
 
 struct LinearTransform;
+struct AngularTransform;
 struct ManifoldGpuPackage;
 
 /**
@@ -31,10 +32,13 @@ public:
 
 	void init() {};
 
-	// If the solver's implementation resides on the CPU
-	std::vector<glm::vec3> const &solve(ManifoldGpuPackage const &, std::vector<LinearTransform> const &);
+	// If the solver's implementation resides on the CPU, returns the offset
+	int solve( ManifoldGpuPackage const &, std::vector<LinearTransform> const &,
+			   std::vector<AngularTransform> const & );
 	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
 	void solve();
+
+	std::vector<glm::vec3> const &getImpulseContainer() const { return mImpulseContainer; }
 
 	~P3ConstraintSolver() {}
 

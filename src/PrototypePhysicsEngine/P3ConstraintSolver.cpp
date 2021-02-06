@@ -3,9 +3,10 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
-std::vector<glm::vec3> const &P3ConstraintSolver::solve(
+int P3ConstraintSolver::solve(
 	ManifoldGpuPackage const &manifoldPkg,
-	std::vector<LinearTransform> const &rigidLinearTransformContainer )
+	std::vector<LinearTransform> const &rigidLinearTransformContainer,
+	std::vector<AngularTransform> const &rigidAngularTransformContainer )
 {
 	// Gotta decide on which constraint to solve first: Floor or Contact
 	for (LinearTransform const &linearTransform : rigidLinearTransformContainer)
@@ -46,7 +47,7 @@ std::vector<glm::vec3> const &P3ConstraintSolver::solve(
 		mImpulseContainer.back() += finalImpulse;
 	}
 
-	return mImpulseContainer;
+	return mImpulseContainer.size();
 }
 
 void P3ConstraintSolver::solve()

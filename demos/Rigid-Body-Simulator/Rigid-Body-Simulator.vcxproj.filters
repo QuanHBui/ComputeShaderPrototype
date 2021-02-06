@@ -105,6 +105,9 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">

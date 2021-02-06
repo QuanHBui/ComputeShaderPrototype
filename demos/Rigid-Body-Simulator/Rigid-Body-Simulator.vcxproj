@@ -165,6 +165,7 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Collider.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />

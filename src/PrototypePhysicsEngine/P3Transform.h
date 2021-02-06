@@ -29,11 +29,6 @@ struct LinearTransform
 	glm::vec3 position{};
 	glm::vec3 velocity{};
 	glm::vec3 momentum{};
-
-	void recalculate()
-	{
-		velocity = momentum * inverseMass;
-	}
 };
 
 //------------------ Data pack for the GPU (SoA) --------------------//
@@ -44,11 +39,6 @@ struct LinearTransformGpuPackage
 	glm::vec4 masses[cMaxObjectCount]{};
 };
 
-struct LinearTransformDerivate
-{
-	glm::vec3 velocity, force;
-};
-
 struct AngularTransform
 {
 	//----------------- Constant quantities -----------------//
@@ -56,31 +46,11 @@ struct AngularTransform
 	float inverseInertia = 0.0f;
 
 	//----------------- State variables -----------------//
+	float tempOrientation = 0.0f; // Placeholder for rotational angle
 	glm::quat orientation{};
 	glm::quat spin{};
 	glm::vec3 angularVelocity{};
 	glm::vec3 angularMomentum{};
-
-	void recalculate()
-	{
-		angularVelocity = angularMomentum * inverseInertia;
-
-		/*orientation.normalize();*/
-		glm::quat q(0, angularVelocity.x, angularVelocity.y, angularVelocity.z);
-
-		spin = 0.5f * q * orientation;
-	}
 };
-
-struct AngularTransformDerivative
-{
-	glm::quat spin{};
-	glm::vec3 torque{};
-};
-
-inline glm::vec3 calculateTorque(AngularTransform &state, double t)
-{
-	return glm::vec3(1.0f, 0.0f, 0.0f) - state.angularVelocity * 0.1f;
-}
 
 #endif // P3_TRANSFORM_H
