@@ -7,6 +7,25 @@ std::vector<glm::vec3> const &P3ConstraintSolver::solve(
 	ManifoldGpuPackage const &manifoldPkg,
 	std::vector<LinearTransform> const &rigidLinearTransformContainer )
 {
+	// Gotta decide on which constraint to solve first: Floor or Contact
+	for (LinearTransform const &linearTransform : rigidLinearTransformContainer)
+	{
+		glm::vec3 finalImpulse{};
+
+		// Floor contraint
+		if (rigidLinearTransformContainer[0].position.y <= -3.0f)
+		{
+			finalImpulse -= rigidLinearTransformContainer[0].velocity;
+		}
+
+		// This is utterly stupid.
+		if (!mImpulseContainer.empty())
+		{
+			mImpulseContainer.pop_back();
+		}
+		mImpulseContainer.emplace_back(finalImpulse);
+	}
+
 	// Iterate through all manifolds
 	for (int i = 0; i < manifoldPkg.misc.x; ++i)
 	{
@@ -19,21 +38,12 @@ std::vector<glm::vec3> const &P3ConstraintSolver::solve(
 
 		// Solve constraint in pair, so 2 times every time
 
-		// Floor contraint
-		if (rigidLinearTransformContainer[0].position.y <= -3.0f)
-		{
-			finalImpulse -= rigidLinearTransformContainer[0].velocity;
-		}
-		else // Static contact constraint
-		{
-			finalImpulse += 0.65f * manifold.contactNormal.w * glm::vec3(manifold.contactNormal);
-		}
+		// Static contact constraint
+		//finalImpulse += 0.65f * manifold.contactNormal.w * glm::vec3(manifold.contactNormal);
+		finalImpulse += rigidLinearTransformContainer[0].velocity * glm::vec3(manifold.contactNormal);
 
-		if (!mImpulseContainer.empty())
-		{
-			mImpulseContainer.pop_back();
-		}
-		mImpulseContainer.emplace_back(finalImpulse);
+		// This is freaking stupid.
+		mImpulseContainer.back() += finalImpulse;
 	}
 
 	return mImpulseContainer;

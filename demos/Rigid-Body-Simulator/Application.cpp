@@ -57,7 +57,7 @@ void Application::init()
 	std::cout << '\n';
 
 	initRenderSystem();
-	initPhysicsWorld(Demo::GRAVITY_TEST);
+	initPhysicsWorld(Demo::ROTATIONAL_TEST);
 	initUI();
 }
 
@@ -94,6 +94,12 @@ void Application::initPhysicsWorld(Demo demo)
 	case Demo::GRAVITY_TEST:
 		// Stack 2 unit cubes on top of each other. Same mass.
 		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
+		break;
+
+	case Demo::ROTATIONAL_TEST:
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f, 2.0f, 5.0f), glm::vec3(0.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
 		break;
@@ -274,8 +280,8 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 }
 
 /**
- *	mouseCallback
- *	Every time the mouse click, this callback got invoked.
+ * mouseCallback
+ * Every time the mouse click, this callback got invoked.
  */
 void Application::mouseCallback(GLFWwindow *window, int button, int action, int mods)
 {
@@ -458,6 +464,7 @@ void Application::update(float dt)
 		break;
 
 	case Demo::GRAVITY_TEST:
+	case Demo::ROTATIONAL_TEST:
 		mPhysicsWorld.updateGravityTest(dt);
 		break;
 

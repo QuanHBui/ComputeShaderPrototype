@@ -31,7 +31,9 @@ enum class Demo
 	BOWLING_GAME,
 	MULTIPLE_BOXES,
 	CONTROLLABLE_BOX,
-	GRAVITY_TEST
+	GRAVITY_TEST,
+	ROTATIONAL_TEST,
+	THREE_BODY_STACK
 };
 
 class Application : public EventCallbacks
