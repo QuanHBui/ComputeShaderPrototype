@@ -71,10 +71,10 @@ void P3DynamicsWorld::updateMultipleBoxes(float dt)
 	}
 
 	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mMeshColliderContainer[i].update(glm::translate(glm::mat4(1.0f), mRigidLinearTransformContainer[i].position));
+		mMeshColliderContainer[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
 
 	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mBoxColliders[i].update(glm::translate(glm::mat4(1.0f), mRigidLinearTransformContainer[i].position));
+		mBoxColliders[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
 
 	radians += 1.0f;
 }
@@ -211,8 +211,9 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 
 	// Solve constraints - produces final impulses at certain contact points
 #ifdef NARROW_PHASE_CPU
-	int offset = mConstraintSolver.solve(
+	mConstraintSolver.solve(
 		mManifoldPkg,
+		mBoxColliders,
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer
 	);
@@ -220,33 +221,40 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	mConstraintSolver.solve();
 #endif
 
-	// After this function call, linear and angular transform containers for rigid bodies should be updated.
-	applyImpulses();
-
-	std::vector<glm::vec3> const &solveImpulseContainer = mConstraintSolver.getImpulseContainer();
+	std::vector<glm::vec3> const &solveLinearImpulseContainer  = mConstraintSolver.getLinearImpulseContainer();
+	std::vector<glm::vec3> const &solveAngularImpulseContainer = mConstraintSolver.getAngularImpulseContainer();
 
 	// Store final linear transforms
 	// There must be a better way to connect linear transforms and hit boxes.
-	for (int i = 0; i < offset; ++i)
+	for (int i = 0; i < solveLinearImpulseContainer.size(); ++i)
 	{
-		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
-		linearTransform.velocity += solveImpulseContainer[i];
-		linearTransform.position += dt * linearTransform.velocity;
+		// Warning: This is not always the case, most likely be wrong all the time.
+		mRigidLinearTransformContainer[i].velocity += solveLinearImpulseContainer[i];
+	}
 
-		// Update hit box
-		mBoxColliders[i].update(glm::translate(linearTransform.position));
+	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
+	{
+		linearTransform.position += dt * linearTransform.velocity;
 	}
 
 	// Store final angular transforms
-	for (int j = offset; j < solveImpulseContainer.size(); ++j)
+	for (int j = 0; j < solveAngularImpulseContainer.size(); ++j)
 	{
-		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
-		angularTransform.angularVelocity += solveImpulseContainer[j];
-		angularTransform.tempOrientation += dt * glm::length(angularTransform.angularVelocity);
-
-		// Need to provide rotational angle and axis of rotation
-		mBoxColliders[j].update(glm::rotate(angularTransform.tempOrientation, glm::vec3(0.0f, 0.0f, 1.0f)));
+		// Warning: This is not always the case, most likely be wrong all the time.
+		mRigidAngularTransformContainer[j].angularVelocity += solveAngularImpulseContainer[j];
 	}
+
+	for (AngularTransform &angularTransform : mRigidAngularTransformContainer)
+	{
+		angularTransform.tempOrientation += dt * glm::length(angularTransform.angularVelocity);
+	}
+
+	// Update hit boxes
+	int k = 0;
+	// Potential index mismatch, please switch to use ID instead
+	mBoxColliders[k].update(glm::translate(mRigidLinearTransformContainer[k].position)
+		* glm::rotate(mRigidAngularTransformContainer[k].tempOrientation
+		, glm::vec3(0.0f, 0.0f, -1.0f))); //glm::normalize(mRigidAngularTransformContainer[k].angularVelocity)));
 }
 
 glm::vec3 P3DynamicsWorld::castRay(glm::vec3 const &start, glm::vec3 const &direction)
@@ -301,11 +309,11 @@ int P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::ve
 	lastLinearTransform.momentum = mass * velocity;
 
 	mMeshColliderContainer.emplace_back();
-	mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), position));
+	mMeshColliderContainer.back().update(glm::translate(position));
 
 	// For Gpu collision detection
 	mBoxColliders.emplace_back();
-	mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), position));
+	mBoxColliders.back().update(glm::translate(position));
 
 	mRigidAngularTransformContainer.emplace_back();
 
@@ -327,11 +335,11 @@ int P3DynamicsWorld::addRigidBody( float mass, glm::vec3 const &position, glm::v
 	lastLinearTransform.momentum = mass * velocity;
 
 	mMeshColliderContainer.emplace_back();
-	mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), position) * extraTransforms);
+	mMeshColliderContainer.back().update(glm::translate(position) * extraTransforms);
 
 	// For Gpu collision detection
 	mBoxColliders.emplace_back();
-	mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), position) * extraTransforms);
+	mBoxColliders.back().update(glm::translate(position) * extraTransforms);
 
 	mRigidAngularTransformContainer.emplace_back();
 
@@ -366,11 +374,11 @@ int P3DynamicsWorld::addStaticBody(glm::vec3 const &position)
 	lastLinearTransform.momentum = glm::vec3(std::numeric_limits<float>::max());
 
 	mMeshColliderContainer.emplace_back();
-	mMeshColliderContainer.back().update(glm::translate(glm::mat4(1.0f), position));
+	mMeshColliderContainer.back().update(glm::translate(position));
 
 	// For Gpu collision detection
 	mBoxColliders.emplace_back();
-	mBoxColliders.back().update(glm::translate(glm::mat4(1.0f), position));
+	mBoxColliders.back().update(glm::translate(position));
 
 	return mUniqueID;
 }
@@ -427,7 +435,7 @@ void P3DynamicsWorld::bowlingGameDemo()
 		addRigidBody(1.0f, glm::vec3(startingX + i, 1.0f, -15.0f), glm::vec3(0.0f));
 		mMeshColliderContainer.back().setInstanceVertices(vertices);
 
-		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(startingX + i, 1.0f, -15.0f));
+		glm::mat4 translateMatrix = glm::translate(glm::vec3(startingX + i, 1.0f, -15.0f));
 		mMeshColliderContainer.back().update(translateMatrix);
 
 		mBoxColliders.back().setInstanceVertices(vertices.data());
@@ -470,7 +478,7 @@ void P3DynamicsWorld::multipleBoxesDemo()
 
 		addRigidBody(1.0f, 2.0f * glm::vec3(x, y, z), glm::vec3(r, g, b));
 
-		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), 2.0f * glm::vec3(x, y, z));
+		glm::mat4 translateMatrix = glm::translate(2.0f * glm::vec3(x, y, z));
 		mMeshColliderContainer.back().update(translateMatrix);
 
 		mBoxColliders.back().update(translateMatrix);
@@ -481,12 +489,7 @@ void P3DynamicsWorld::controllableBoxDemo()
 {
 	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // The static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f),
-				 glm::rotate(glm::mat4(1.0f), 0.785f, glm::vec3(0.0f, 1.0f, 0.0f))); // The kinematic box
+				 glm::rotate(0.785f, glm::vec3(0.0f, 1.0f, 0.0f))); // The kinematic box
 	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with different size and rotating
-}
-
-void P3DynamicsWorld::applyImpulses()
-{
-
 }

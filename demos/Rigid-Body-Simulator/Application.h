@@ -67,7 +67,7 @@ private:
 
 	void updateWithInputs(float);
 
-	int updateModelMatrices(int, std::vector<LinearTransform> const &);
+	int updateModelMatrices(int);
 
 	// Mouse ultility methods
 	void calculateWorldExtents();
@@ -110,6 +110,12 @@ private:
 
 	// Remember what demo being shown
 	Demo mDemo = Demo::CONTROLLABLE_BOX;
+
+	// Physics quantities
+	std::vector<LinearTransform> const &mRigidLinearTransformContainer    = mPhysicsWorld.getRigidLinearTransformContainer();
+	std::vector<LinearTransform> const &mStaticLinearTransformContainer   = mPhysicsWorld.getStaticLinearTransformContainer();
+	std::vector<AngularTransform> const &mRigidAngularTransformContainer  = mPhysicsWorld.getRigidAngularTransformContainer();
+	std::vector<AngularTransform> const &mStaticAngularTransformContainer = mPhysicsWorld.getStaticAngularTransformContainer();
 };
 
 #endif // APPLICATION_H

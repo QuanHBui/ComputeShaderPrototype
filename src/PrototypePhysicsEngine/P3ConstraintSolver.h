@@ -9,8 +9,9 @@
 
 #include "P3Common.h"
 
-struct LinearTransform;
 struct AngularTransform;
+struct LinearTransform;
+struct P3BoxCollider;
 struct ManifoldGpuPackage;
 
 /**
@@ -33,19 +34,25 @@ public:
 	void init() {};
 
 	// If the solver's implementation resides on the CPU, returns the offset
-	int solve( ManifoldGpuPackage const &, std::vector<LinearTransform> const &,
-			   std::vector<AngularTransform> const & );
+	void solve( ManifoldGpuPackage const &,
+				std::vector<P3BoxCollider> const &,
+				std::vector<LinearTransform> const &,
+				std::vector<AngularTransform> const & );
 	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
 	void solve();
 
-	std::vector<glm::vec3> const &getImpulseContainer() const { return mImpulseContainer; }
+	std::vector<glm::vec3> const &getLinearImpulseContainer() const { return mLinearImpulseContainer; }
+	std::vector<glm::vec3> const &getAngularImpulseContainer() const { return mAngularImpulseContainer; }
+
+	void reset();
 
 	~P3ConstraintSolver() {}
 
 private:
 	GLuint mBoxCollidersID = 0u, mManifoldsID = 0u;
 
-	std::vector<glm::vec3> mImpulseContainer;
+	std::vector<glm::vec3> mLinearImpulseContainer;
+	std::vector<glm::vec3> mAngularImpulseContainer;
 };
 
 #endif // P3_CONSTRAINT_SOLVER

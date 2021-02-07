@@ -99,7 +99,7 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.7f, 2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
 		break;
@@ -479,14 +479,10 @@ void Application::update(float dt)
 	mpCollisionPairPkg = mPhysicsWorld.getPCollisionPairPkg();
 	mpManifoldPkg      = mPhysicsWorld.getPManifoldPkg();
 
-	// Get position array from the physics world
-	std::vector<LinearTransform> const &rigidLinearTransformContainer  = mPhysicsWorld.getRigidLinearTransformContainer();
-	std::vector<LinearTransform> const &staticLinearTransformContainer = mPhysicsWorld.getStaticLinearTransformContainer();
-
 	// Update the model matrix array - the bridge from physics quantity to transform matrices for graphics
 	// Combine both rigid and static linear transforms
-	int offset = updateModelMatrices(0, rigidLinearTransformContainer);
-	updateModelMatrices(offset, staticLinearTransformContainer);
+	int offset = updateModelMatrices(0);
+	updateModelMatrices(offset);
 }
 
 void Application::updateWithInputs(float dt)
@@ -514,18 +510,39 @@ void Application::updateWithInputs(float dt)
 	mPhysicsWorld.updateControllableBox(dt, controlPosition);
 }
 
-int Application::updateModelMatrices(int offset, std::vector<LinearTransform> const &linearTransforms)
+int Application::updateModelMatrices(int offset)
 {
-	for (LinearTransform const &linearTransform : linearTransforms)
-	{
-		glm::mat4 translation = glm::translate(linearTransform.position);
+	// Need better iterating method. Currently only works for 1 object
+	if (offset == 0){
+		// Rigid bodies
+		glm::mat4 ctm = glm::translate(mRigidLinearTransformContainer[0].position)
+			* glm::rotate(mRigidAngularTransformContainer[0].tempOrientation , glm::vec3(0.0f, 0.0f, -1.0f));
 
 		if (offset >= mModelMatrixContainer.size())
-			mModelMatrixContainer.emplace_back(translation);
+		{
+			mModelMatrixContainer.emplace_back(ctm);
+		}
 		else
-			mModelMatrixContainer[offset] = translation;
+		{
+			mModelMatrixContainer[offset] = ctm;
+		}
 
 		++offset;
+	}
+
+	else
+	{
+		// Static bodies
+		glm::mat4 ctm = glm::translate(mStaticLinearTransformContainer[0].position);
+
+		if (offset >= mModelMatrixContainer.size())
+		{
+			mModelMatrixContainer.emplace_back(ctm);
+		}
+		else
+		{
+			mModelMatrixContainer[offset] = ctm;
+		}
 	}
 
 	return offset;

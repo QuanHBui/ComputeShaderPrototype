@@ -79,9 +79,14 @@ public:
 		return mStaticLinearTransformContainer;
 	}
 
-	std::vector<AngularTransform> const &getAngularTransformContainer() const
+	std::vector<AngularTransform> const &getRigidAngularTransformContainer() const
 	{
 		return mRigidAngularTransformContainer;
+	}
+
+	std::vector<AngularTransform> const &getStaticAngularTransformContainer() const
+	{
+		return mStaticAngularTransformContainer;
 	}
 
 	CollisionPairGpuPackage const *getPCollisionPairPkg() const
@@ -104,9 +109,6 @@ public:
 	bool isFull() { return mBodyContainer.size() >= mMaxCapacity; }
 
 private:
-	// Intepret the final resulting impulse and translate them to final linear and angular transforms
-	void applyImpulses();
-
 	//---------------- Constant physics quantities ----------------//
 	float mGravity{ 0.001f }, mAirDrag{ 2.0f };
 	size_t mMaxCapacity{ 20u };
