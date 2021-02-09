@@ -65,9 +65,9 @@ public:
 	float getGravity() const { return mGravity; }
 	float getAirDrag() const { return mAirDrag; }
 	unsigned int getOccupancy() const { return mBodyContainer.size(); }
-	unsigned int getNumBoxColliders() const { return mBoxColliders.size(); }
+	unsigned int getNumBoxColliders() const { return mBoxColliderContainer.size(); }
 	unsigned int getMaxCapacity() const { return mMaxCapacity; }
-	std::vector<P3BoxCollider> const &getBoxColliders() const { return mBoxColliders; }
+	std::vector<P3BoxCollider> const &getBoxColliders() const { return mBoxColliderContainer; }
 
 	std::vector<LinearTransform> const &getRigidLinearTransformContainer() const
 	{
@@ -123,7 +123,8 @@ private:
 	std::vector<LinearTransform> mStaticLinearTransformContainer;
 	std::vector<AngularTransform> mStaticAngularTransformContainer;
 	std::vector<P3MeshCollider> mMeshColliderContainer;
-	std::vector<P3BoxCollider> mBoxColliders;
+	std::vector<P3BoxCollider> mBoxColliderContainer;
+	std::vector<glm::mat4> mBoxColliderCtmContainer;
 
 	//----------------- Data package optimized for the GPU -----------------//
 	LinearTransformGpuPackage mLinearTransformPkg; // For rigid and kinematic bodies

@@ -67,7 +67,7 @@ private:
 
 	void updateWithInputs(float);
 
-	int updateModelMatrices(int);
+	void updateModelMatrices();
 
 	// Mouse ultility methods
 	void calculateWorldExtents();

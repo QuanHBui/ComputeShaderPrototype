@@ -99,9 +99,9 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.25f, 3.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(0.0f,  0.0f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-1.5f, -2.5f, 5.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3( 1.5f, -2.5f, 5.0f));
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 3u);
 		break;
 
@@ -445,7 +445,8 @@ void Application::shootBall()
 	mPhysicsWorld.addRigidBody(
 		1.0f,
 		glm::vec3(mFlyCamera.getPosition() + 1.0f * mFlyCamera.getFront()),
-		glm::vec3(0.0f, 0.0f, -10.0f));
+		glm::vec3(0.0f, 0.0f, -10.0f)
+	);
 
 	mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::SPHERE, 1u);
 }
@@ -482,8 +483,7 @@ void Application::update(float dt)
 
 	// Update the model matrix array - the bridge from physics quantity to transform matrices for graphics
 	// Combine both rigid and static linear transforms
-	int offset = updateModelMatrices(0);
-	updateModelMatrices(offset);
+	updateModelMatrices();
 }
 
 void Application::updateWithInputs(float dt)
@@ -511,41 +511,52 @@ void Application::updateWithInputs(float dt)
 	mPhysicsWorld.updateControllableBox(dt, controlPosition);
 }
 
-int Application::updateModelMatrices(int offset)
+void Application::updateModelMatrices()
 {
-	// Need better iterating method. Currently only works for 1 object
-	if (offset == 0)
-	{
-		// Rigid bodies
-		glm::mat4 ctm = glm::translate(mRigidLinearTransformContainer[0].position)
-			* glm::rotate(mRigidAngularTransformContainer[0].tempOrientation, glm::vec3(0.0f, 0.0f, -1.0f));
+	int offset = 0;
 
-		if (offset >= mModelMatrixContainer.size())
+	// First wipe, rigid bodies
+	for (int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
+	{
+		glm::mat4 translation = glm::translate(mRigidLinearTransformContainer[i].position);
+
+		if (i >= mModelMatrixContainer.size())
 		{
-			mModelMatrixContainer.emplace_back(ctm);
+			mModelMatrixContainer.emplace_back(translation);
 		}
 		else
 		{
-			mModelMatrixContainer[offset] = ctm;
+			mModelMatrixContainer[i] = translation;
 		}
 
 		++offset;
 	}
 
-	else
+	// Angular transforms follow up, indices should sync up with linear transforms
+	for (int j = 0; j < mRigidAngularTransformContainer.size(); ++j)
 	{
-		// Static bodies
-		glm::mat4 ctm = glm::translate(mStaticLinearTransformContainer[0].position);
+		glm::mat4 rotation = glm::rotate(mRigidAngularTransformContainer[j].tempOrientation, glm::vec3(0.0f, 0.0f, -1.0f));
+		mModelMatrixContainer[j] *= rotation;
+	}
 
-		if (offset >= mModelMatrixContainer.size())
+	// Static bodies
+	for (int k = 0; k < mStaticLinearTransformContainer.size(); ++k)
+	{
+		glm::mat4 translation = glm::translate(mStaticLinearTransformContainer[k].position);
+
+		if ((k + offset) >= mModelMatrixContainer.size())
 		{
-			mModelMatrixContainer.emplace_back(ctm);
+			mModelMatrixContainer.emplace_back(translation);
 		}
 		else
 		{
-			mModelMatrixContainer[offset] = ctm;
+			mModelMatrixContainer[k + offset] = translation;
 		}
 	}
 
-	return offset;
+	for (int l = 0; l < mStaticLinearTransformContainer.size(); ++l)
+	{
+		glm::mat4 rotation = glm::rotate(mStaticAngularTransformContainer[l].tempOrientation, glm::vec3(0.0f, 0.0f, -1.0f));
+		mModelMatrixContainer[l + offset] *= rotation;
+	}
 }

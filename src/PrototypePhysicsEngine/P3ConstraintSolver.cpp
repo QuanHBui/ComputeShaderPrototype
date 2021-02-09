@@ -56,7 +56,7 @@ void P3ConstraintSolver::solve(
 
 		// Iterate through each contact points
 		for (int contactPointIdx = 0
-			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
+			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z || contactPointIdx < 4
 			; ++contactPointIdx)
 		{
 			glm::vec3 contactPointPos = manifold.contactPoints[contactPointIdx];
@@ -69,8 +69,8 @@ void P3ConstraintSolver::solve(
 
 			r = glm::normalize(r);
 			// Linear final impulse
-			finalLinearImpulse += 0.20f * glm::dot(r, glm::vec3(manifold.contactNormal))
-								* glm::length(linearTransform.velocity) * -r;
+			finalLinearImpulse += (1.0f * glm::dot(r, glm::vec3(manifold.contactNormal))
+								+ 0.45f * glm::length(linearTransform.velocity)) * -r;
 			//finalLinearImpulse += glm::vec3(0.5f, 0.5f, 0.0f);
 
 			// Angular final impulse
