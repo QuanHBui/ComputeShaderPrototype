@@ -10,6 +10,19 @@
 
 #include "P3Common.h"
 
+constexpr glm::vec4 cInstanceVertices[cBoxColliderVertCount] =
+{
+	glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f },
+	glm::vec4{  1.0f,  1.0f,  1.0f,  1.0f },
+	glm::vec4{  1.0f, -1.0f,  1.0f,  1.0f },
+	glm::vec4{ -1.0f, -1.0f,  1.0f,  1.0f },
+
+	glm::vec4{ -1.0f,  1.0f, -1.0f,  1.0f },
+	glm::vec4{  1.0f,  1.0f, -1.0f,  1.0f },
+	glm::vec4{  1.0f, -1.0f, -1.0f,  1.0f },
+	glm::vec4{ -1.0f, -1.0f, -1.0f,  1.0f }
+};
+
 class P3Collider
 {
 public:

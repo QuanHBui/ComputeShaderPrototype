@@ -10,6 +10,16 @@ void P3ConstraintSolver::solve(
 	std::vector<LinearTransform> const &rigidLinearTransformContainer,
 	std::vector<AngularTransform> const &rigidAngularTransformContainer )
 {
+	// Reset the containers
+	if (!mLinearImpulseContainer.empty())
+	{
+		mLinearImpulseContainer.pop_back();
+	}
+	if (!mAngularImpulseContainer.empty())
+	{
+		mAngularImpulseContainer.pop_back();
+	}
+
 	// Solve floor constraint first
 	for (LinearTransform const &linearTransform : rigidLinearTransformContainer)
 	{
@@ -54,25 +64,26 @@ void P3ConstraintSolver::solve(
 			// Reject contact points that are not a part of the solving body
 			glm::vec3 r = contactPointPos - linearTransform.position;
 			glm::vec3 boxColliderCornerExtension = boxColliderContainer[incidentBoxIdx].mVertices[0];
-			if (glm::length(r) > glm::length(boxColliderCornerExtension - linearTransform.position))
+			if (glm::length(r) > 0.15f + glm::length(boxColliderCornerExtension - linearTransform.position))
 				continue;
 
+			r = glm::normalize(r);
 			// Linear final impulse
-			finalLinearImpulse += glm::dot(glm::normalize(r), glm::vec3(manifold.contactNormal))
-								* glm::length(linearTransform.velocity) * glm::vec3(-r);
+			finalLinearImpulse += 0.20f * glm::dot(r, glm::vec3(manifold.contactNormal))
+								* glm::length(linearTransform.velocity) * -r;
 			//finalLinearImpulse += glm::vec3(0.5f, 0.5f, 0.0f);
 
 			// Angular final impulse
-			finalAngularImpulse += 0.01f * glm::cross(r, glm::vec3(manifold.contactNormal));
+			finalAngularImpulse += 0.5f * glm::cross(r, glm::vec3(manifold.contactNormal));
 		}
 
 		// This is freaking stupid.
 		mLinearImpulseContainer.back() += finalLinearImpulse;
 		// Wow, I'm dumb!
 		if (!mAngularImpulseContainer.empty())
-			mAngularImpulseContainer.back() = finalLinearImpulse;
+			mAngularImpulseContainer.back() = finalAngularImpulse;
 		else
-			mAngularImpulseContainer.emplace_back(finalLinearImpulse);
+			mAngularImpulseContainer.emplace_back(finalAngularImpulse);
 	}
 }
 

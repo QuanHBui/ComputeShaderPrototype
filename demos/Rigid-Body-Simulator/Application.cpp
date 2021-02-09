@@ -99,9 +99,10 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.25f, 3.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(0.0f,  0.0f, 5.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 3u);
 		break;
 
 	case Demo::CONTROLLABLE_BOX:
@@ -513,10 +514,11 @@ void Application::updateWithInputs(float dt)
 int Application::updateModelMatrices(int offset)
 {
 	// Need better iterating method. Currently only works for 1 object
-	if (offset == 0){
+	if (offset == 0)
+	{
 		// Rigid bodies
 		glm::mat4 ctm = glm::translate(mRigidLinearTransformContainer[0].position)
-			* glm::rotate(mRigidAngularTransformContainer[0].tempOrientation , glm::vec3(0.0f, 0.0f, -1.0f));
+			* glm::rotate(mRigidAngularTransformContainer[0].tempOrientation, glm::vec3(0.0f, 0.0f, -1.0f));
 
 		if (offset >= mModelMatrixContainer.size())
 		{
