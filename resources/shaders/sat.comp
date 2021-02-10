@@ -188,14 +188,6 @@ FaceQuery queryFaceDirections(BoxCollider boxA, BoxCollider boxB)
 		// Get signed distance from support point to plane
 		dist = getSignedDist(supportPoint, plane);
 
-		uint debugIdx = atomicCounterIncrement(nextAvailableIdx);
-
-		manifolds[debugIdx].contactPoints[0] = vec4(plane.point,  -11.44f);
-		manifolds[debugIdx].contactPoints[1] = vec4(plane.normal, -11.44f);
-		manifolds[debugIdx].contactPoints[2] = vec4(supportPoint, -11.44f);
-		manifolds[debugIdx].contactNormal.x = -11.44f;
-		manifolds[debugIdx].contactNormal.y = dist;
-
 		// We have to be aware of the direction here, signed distance can be negative. We
 		//  care about the least negative/most positive signed distance.
 		if (dist > faceQuery.largestDist)
@@ -284,27 +276,29 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
  *  we simply iterate through all the faces, compute the dot product
  *  of each face normal with the normal of the reference face. The
  *  face with the smallest dot product is the incident face.
+ *
+ * @return: the faceIdx : int
  */
-vec3 getIncidentNormal(BoxCollider incidentBox, vec3 referenceNormal)
+int getIncidentFaceIdx(BoxCollider incidentBox, vec3 referenceNormal)
 {
-	vec3 incidentNormal          = vec3(0.0f);
-	vec3 potentialIncidentNormal = vec3(0.0f);
-	float smallestDotProduct     = FLT_MAX;
-	float localDotProduct        = 0.0f;
+	int incidentFaceIdx = -1;
+	vec3 incidentNormal      = vec3(0.0f);
+	float smallestDotProduct = FLT_MAX;
+	float localDotProduct    = 0.0f;
 
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
-		potentialIncidentNormal = getFaceNormal(incidentBox, faceIdx);
-		localDotProduct         = dot(potentialIncidentNormal, referenceNormal);
+		incidentNormal  = getFaceNormal(incidentBox, faceIdx);
+		localDotProduct = dot(incidentNormal, referenceNormal);
 
 		if (localDotProduct < smallestDotProduct)
 		{
 			smallestDotProduct = localDotProduct;
-			incidentNormal     = potentialIncidentNormal;
+			incidentFaceIdx    = faceIdx;
 		}
 	}
 
-	return incidentNormal;
+	return incidentFaceIdx;
 }
 
 /**
@@ -329,25 +323,27 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	//  into this function will be the reference face, and the most anti-parallel
 	//  face on the other box is the incident face.
 
-	vec3 incidentNormal = vec3(0.0f);
 	int referenceBoxIdx = -1;
 	int incidentBoxIdx  = -1;
-	float incidentLargestDist = 0.0f;
+	int incidentFaceIdx = -1;
+	float referenceSeparation = 0.0f;
 	Plane referencePlane;
 	BoxCollider incidentBox;
 	BoxCollider referenceBox;
+	const float axisBias = 0.9f;
 
-	if (faceQueryA.largestDist < faceQueryB.largestDist)
+	// Apply a bias to prefer a certain axis of penetration, i.e the rigid body feature
+	if (axisBias * faceQueryA.largestDist > faceQueryB.largestDist)
 	{
 		// Reference face is from box A. Span a plane from said face.
 		referencePlane  = getPlane(boxA, faceQueryA.faceIdx);
 		referenceBoxIdx = boxAIdx;
 		referenceBox    = boxA;
+		referenceSeparation = faceQueryA.largestDist;
 
-		incidentNormal      = getIncidentNormal(boxB, referencePlane.normal);
-		incidentBoxIdx      = boxBIdx;
-		incidentBox         = boxB;
-		incidentLargestDist = faceQueryB.largestDist;
+		incidentFaceIdx = getIncidentFaceIdx(boxB, referencePlane.normal);
+		incidentBoxIdx  = boxBIdx;
+		incidentBox     = boxB;
 	}
 	else
 	{
@@ -355,11 +351,11 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 		referencePlane  = getPlane(boxB, faceQueryB.faceIdx);
 		referenceBoxIdx = boxBIdx;
 		referenceBox    = boxB;
+		referenceSeparation = faceQueryB.largestDist;
 
-		incidentNormal      = getIncidentNormal(boxA, referencePlane.normal);
-		incidentBoxIdx      = boxAIdx;
-		incidentBox         = boxA;
-		incidentLargestDist = faceQueryA.largestDist;
+		incidentFaceIdx = getIncidentFaceIdx(boxA, referencePlane.normal);
+		incidentBoxIdx  = boxAIdx;
+		incidentBox     = boxA;
 	}
 
 	// At this point, we know the incident and reference faces (more like their
@@ -395,21 +391,24 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 		manifold.contactPoints[i] = vec4(0.0f);
 	}
 
-	manifold.contactNormal = vec4(-2.0f); // TODO: This is a debugging value.
+	manifold.contactNormal = vec4(0.0f);
 
+	// Iterate through all the reference faces
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
 		if (abs(dot(referencePlane.normal, clipPlane.normal)) <= EPSILON) // Check if perpendicular
 		{
-			startVertIdx = faces[faceIdx][0];
+			// Start from vert# 0 of incident face
+			startVertIdx = faces[incidentFaceIdx][0];
 			startVert    = vec3(incidentBox.vertices[startVertIdx]);
 
+			// Iterate through vert# 1, 2, 3 of incident face
 			for (int vertIdx = 1; vertIdx < VERT_COUNT_PER_FACE; ++vertIdx)
 			{
 				if (contactPointCount >= MAX_CONTACT_POINT_COUNT) break;
 
-				endVertIdx = faces[faceIdx][vertIdx];
+				endVertIdx = faces[incidentFaceIdx][vertIdx];
 				endVert = vec3(incidentBox.vertices[endVertIdx]);
 
 				startSignedDist = getSignedDist(startVert, clipPlane);
@@ -464,11 +463,10 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	}
 
 	// Set reference and incident box indices, contact point count, and contact normal.
-	//  The penetration depth is the largestDist of incident face.
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-	manifold.contactNormal = vec4(referencePlane.normal, incidentLargestDist);
+	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation);
 
 	return manifold;
 }
@@ -495,7 +493,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 		manifold.contactPoints[i] = vec4(0.0f);
 	}
 
-	manifold.contactNormal = vec4(-3.0f); // TODO: This is a debugging value.
+	manifold.contactNormal = vec4(0.0f);
 
 	float s = 0, t = 0;
 
@@ -562,23 +560,11 @@ void separatingAxisTest(uint collisionPairIdx)
 	BoxCollider boxB = boxColliders[boxBIdx];
 	const float queryBias = 0.9f;
 
-	uint debugIdx = atomicCounterIncrement(nextAvailableIdx);
-
 	FaceQuery faceQueryA = queryFaceDirections(boxA, boxB); // Look at faces of A
-
-	manifolds[debugIdx].contactNormal.x = boxA.vertices[0].x;
-	manifolds[debugIdx].contactNormal.z = -90.44f;
-
 	if (faceQueryA.largestDist > 0.0f) return; // We have found a separating axis. No overlap.
 
 	FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
-
-//	manifolds[debugIdx].contactNormal.y = faceQueryB.largestDist;
-	manifolds[debugIdx].contactNormal.y = -78.55f;
-
 	if (faceQueryB.largestDist > 0.0f) return;
-
-	manifolds[debugIdx].contactNormal.y = faceQueryB.largestDist;
 
 	EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
 	if (edgeQuery.largestDist > 0.0f) return;

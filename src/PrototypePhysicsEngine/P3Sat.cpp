@@ -224,18 +224,20 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	int referenceBoxIdx = -1;
 	int incidentBoxIdx  = -1;
 	int incidentFaceIdx = -1;
-	float referenceSeperation = 0.0f;
+	float referenceSeparation = 0.0f;
 	Plane referencePlane;
 	BoxCollider incidentBox  = nullptr;
 	BoxCollider referenceBox = nullptr;
+	constexpr float cAxisBias = 0.9f;
 
 	// Identify reference plane, then incident face
-	if (faceQueryA.largestDist < faceQueryB.largestDist)
+	// Apply a bias to prefer a certain axis of penetration, i.e the rigid body feature
+	if (cAxisBias * faceQueryA.largestDist > faceQueryB.largestDist)
 	{
 		referencePlane  = getPlane(boxA, faceQueryA.faceIdx);
 		referenceBoxIdx = boxAIdx;
 		referenceBox    = boxA;
-		referenceSeperation = faceQueryA.largestDist; // Does this make sense?
+		referenceSeparation = faceQueryA.largestDist; // Does this make sense?
 
 		incidentFaceIdx = getIncidentFaceIdx(boxB, referencePlane.normal);
 		incidentBoxIdx  = boxBIdx;
@@ -246,7 +248,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 		referencePlane  = getPlane(boxB, faceQueryB.faceIdx);
 		referenceBoxIdx = boxBIdx;
 		referenceBox    = boxB;
-		referenceSeperation = faceQueryB.largestDist;
+		referenceSeparation = faceQueryB.largestDist;
 
 		incidentFaceIdx = getIncidentFaceIdx(boxA, referencePlane.normal);
 		incidentBoxIdx  = boxAIdx;
@@ -266,7 +268,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	int contactPointCount = 0;
 	Manifold manifold;
 
-	// Iterate over all the reference faces.
+	// Iterate over all the reference faces
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
@@ -330,7 +332,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-	manifold.contactNormal = glm::vec4(referencePlane.normal, referenceSeperation);
+	manifold.contactNormal = glm::vec4(referencePlane.normal, referenceSeparation);
 
 	return manifold;
 }
@@ -352,7 +354,7 @@ Manifold createEdgeContact( EdgeQuery edgeQuery, BoxColliderGpuPackage const &bo
 	float denom = squaredLengthEdgeA * squaredLengthEdgeB - b * b; // a * e - b * b
 
 	if (denom != 0.0f)
-		s = glm::clamp((b * f) / denom, 0.0f, 1.0f); // Clamp to [0, 1]
+		s = glm::clamp((b * f - c * squaredLengthEdgeB) / denom, 0.0f, 1.0f); // Clamp to [0, 1]
 
 	t = (b * s + f) / squaredLengthEdgeB;
 
@@ -392,7 +394,7 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 	int boxBIdx = -1;
 	BoxCollider boxA = nullptr;
 	BoxCollider boxB = nullptr;
-	constexpr float queryBias = 0.9f;
+	constexpr float cQueryBias = 0.9f;
 
 	for (int collisionPairIdx = 0; collisionPairIdx < pCollisionPairPkg->misc.x; ++collisionPairIdx)
 	{
@@ -419,8 +421,8 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 
 		// Apply a bias to prefer face contact over edge contact in the case when the separations returned
 		//  from the face query and edge query are the same.
-		if (   queryBias * faceQueryA.largestDist > edgeQuery.largestDist
-			&& queryBias * faceQueryB.largestDist > edgeQuery.largestDist )
+		if (   cQueryBias * faceQueryA.largestDist > edgeQuery.largestDist
+			&& cQueryBias * faceQueryB.largestDist > edgeQuery.largestDist )
 		{
 			manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 		}

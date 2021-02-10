@@ -132,8 +132,8 @@ private:
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/
-	 //std::unordered_map<int, int> mEntityToIndexMap;
-	 //std::unordered_map<int, int> mIndexToEntityMap;
+	//std::unordered_map<int, int> mEntityToIndexMap;
+	//std::unordered_map<int, int> mIndexToEntityMap;
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions

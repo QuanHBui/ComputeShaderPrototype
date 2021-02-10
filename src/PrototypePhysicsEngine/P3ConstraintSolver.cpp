@@ -20,22 +20,6 @@ void P3ConstraintSolver::solve(
 		mAngularImpulseContainer.pop_back();
 	}
 
-	// Solve floor constraint first
-	for (LinearTransform const &linearTransform : rigidLinearTransformContainer)
-	{
-		glm::vec3 finalLinearImpulse{};
-
-		if (rigidLinearTransformContainer[0].position.y <= -3.0f)
-		{
-			finalLinearImpulse -= rigidLinearTransformContainer[0].velocity;
-		}
-
-		if (!mLinearImpulseContainer.empty())
-			mLinearImpulseContainer.back() = finalLinearImpulse;
-		else
-			mLinearImpulseContainer.emplace_back(finalLinearImpulse);
-	}
-
 	// Then solve contact constraints - Iterate through all manifolds
 	for (int i = 0; i < manifoldPkg.misc.x; ++i)
 	{
@@ -56,7 +40,7 @@ void P3ConstraintSolver::solve(
 
 		// Iterate through each contact points
 		for (int contactPointIdx = 0
-			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z || contactPointIdx < 4
+			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
 			; ++contactPointIdx)
 		{
 			glm::vec3 contactPointPos = manifold.contactPoints[contactPointIdx];
@@ -68,9 +52,9 @@ void P3ConstraintSolver::solve(
 				continue;
 
 			r = glm::normalize(r);
-			// Linear final impulse
-			finalLinearImpulse += (1.0f * glm::dot(r, glm::vec3(manifold.contactNormal))
-								+ 0.45f * glm::length(linearTransform.velocity)) * -r;
+			// Apply linear impulse onto each contact point
+			finalLinearImpulse += (0.45f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
+								+ 0.09f * glm::length(linearTransform.velocity)) * glm::vec3(manifold.contactNormal);
 			//finalLinearImpulse += glm::vec3(0.5f, 0.5f, 0.0f);
 
 			// Angular final impulse
@@ -78,7 +62,11 @@ void P3ConstraintSolver::solve(
 		}
 
 		// This is freaking stupid.
-		mLinearImpulseContainer.back() += finalLinearImpulse;
+		if (!mLinearImpulseContainer.empty())
+			mLinearImpulseContainer.back() += finalLinearImpulse;
+		else
+			mLinearImpulseContainer.emplace_back(finalLinearImpulse);
+
 		// Wow, I'm dumb!
 		if (!mAngularImpulseContainer.empty())
 			mAngularImpulseContainer.back() = finalAngularImpulse;

@@ -42,7 +42,8 @@ void P3DynamicsWorld::detectCollisions()
 
 	mManifoldPkg = P3Sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
 #else
-	narrowPhase.step();
+	mNarrowPhase.step();
+	mManifoldPkg = *mNarrowPhase.getPManifoldPkg(); // Warning: Unnecessary copying here
 #endif
 }
 
@@ -206,7 +207,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// Apply forces
 	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
 	{
-		linearTransform.velocity.y -= 9.8f * dt;
+		linearTransform.velocity.y -= 5.0f * dt;
 	}
 
 	// Solve constraints - produces final impulses at certain contact points
@@ -218,7 +219,13 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		mRigidAngularTransformContainer
 	);
 #else
-	mConstraintSolver.solve();
+	// TODO: Use the implementation on the GPU
+	mConstraintSolver.solve(
+		mManifoldPkg,
+		mBoxColliderContainer,
+		mRigidLinearTransformContainer,
+		mRigidAngularTransformContainer
+	);
 #endif
 
 	std::vector<glm::vec3> const &solveLinearImpulseContainer  = mConstraintSolver.getLinearImpulseContainer();
@@ -253,7 +260,14 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		AngularTransform &angularTransform = mRigidAngularTransformContainer[l];
 		angularTransform.tempOrientation  += dt * glm::length(angularTransform.angularVelocity);
 
-		mBoxColliderCtmContainer[l] *= glm::rotate(angularTransform.tempOrientation, glm::vec3(0.0f, 0.0f, -1.0f));
+		if (angularTransform.angularVelocity == glm::vec3(0.0f))
+		{
+			mBoxColliderCtmContainer[l] *= glm::mat4(1.0f);
+		}
+		else
+		{
+			mBoxColliderCtmContainer[l] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.angularVelocity));
+		}
 	}
 
 	for (int m = 0; m < mBoxColliderCtmContainer.size(); ++m)
