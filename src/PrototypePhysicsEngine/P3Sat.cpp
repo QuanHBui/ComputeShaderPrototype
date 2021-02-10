@@ -217,6 +217,94 @@ int getIncidentFaceIdx(BoxCollider incidentBox, glm::vec3 const &referenceNormal
 	return incidentFaceIdx;
 }
 
+// Filter out bad contact points - if this function is called, it's assumed that there are more than 4 contact points.
+void reduceContactPoints(Manifold &manifold)
+{
+	// First contact point - query a support point in normal of contact plane
+	int firstContactIdx     = -1;
+	float largestSeparation = std::numeric_limits<float>::lowest();
+
+	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
+	{
+		float separation = glm::dot(glm::vec3(manifold.contactPoints[i]), -glm::vec3(manifold.contactNormal));
+
+		if (separation > largestSeparation)
+		{
+			largestSeparation = separation;
+			firstContactIdx   = i;
+		}
+	}
+
+	glm::vec3 a = manifold.contactPoints[firstContactIdx];
+
+	// Second contact point - find the contact point farthest away from the first point
+	int secondContactIdx = -1;
+	largestSeparation    = std::numeric_limits<float>::lowest();
+
+	for (int j = 0; j < manifold.contactBoxIndicesAndContactCount.z; ++j)
+	{
+		if (j == firstContactIdx) continue;
+
+		float separation = glm::length(glm::vec3(manifold.contactPoints[j]) - a);
+
+		if (separation > largestSeparation)
+		{
+			largestSeparation = separation;
+			secondContactIdx  = j;
+		}
+	}
+
+	glm::vec3 b = manifold.contactPoints[secondContactIdx];
+
+	// Third contact point - find the contact point that maximizes the triangle area
+	int thirdContactIdx = -1;
+	float largestArea   = std::numeric_limits<float>::lowest();
+
+	for (int k = 0; k < manifold.contactBoxIndicesAndContactCount.z; ++k)
+	{
+		if (k == firstContactIdx || k == secondContactIdx) continue;
+
+		glm::vec3 potC = manifold.contactPoints[k];
+		float area = 0.5f * glm::dot(glm::cross(a - potC, b - potC), glm::vec3(manifold.contactNormal));
+
+		if (area > largestArea)
+		{
+			largestArea = area;
+			thirdContactIdx = k;
+		}
+	}
+
+	glm::vec3 c = manifold.contactPoints[thirdContactIdx];
+
+	// Fourth contact point - find the contact point that maximizes the rectangle area
+	int fourthContactIdx = -1;
+	largestArea = std::numeric_limits<float>::max();
+
+	for (int l = 0; l < manifold.contactBoxIndicesAndContactCount.z; ++l)
+	{
+		if (l == firstContactIdx || l == secondContactIdx || l == thirdContactIdx) continue;
+
+		glm::vec3 potD = manifold.contactPoints[l];
+		float area = 0.5f * glm::dot(glm::cross(a - potD, b - potD), glm::vec3(manifold.contactNormal));
+
+		// Interested in most negative area, really depends on the winding of the triangle
+		if (area < largestArea)
+		{
+			largestArea = area;
+			fourthContactIdx = l;
+		}
+	}
+
+	glm::vec3 d = manifold.contactPoints[fourthContactIdx];
+
+	// The w component could be anything really.
+	manifold.contactPoints[0] = glm::vec4(a, 1.0f);
+	manifold.contactPoints[1] = glm::vec4(b, 1.0f);
+	manifold.contactPoints[2] = glm::vec4(c, 1.0f);
+	manifold.contactPoints[3] = glm::vec4(d, 1.0f);
+	manifold.contactBoxIndicesAndContactCount.z = 4;
+}
+
 Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQueryB,
 							BoxCollider boxA, BoxCollider boxB,
 							int boxAIdx, int boxBIdx )
@@ -228,7 +316,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	Plane referencePlane;
 	BoxCollider incidentBox  = nullptr;
 	BoxCollider referenceBox = nullptr;
-	constexpr float cAxisBias = 0.9f;
+	constexpr float cAxisBias = 0.5f;
 
 	// Identify reference plane, then incident face
 	// Apply a bias to prefer a certain axis of penetration, i.e the rigid body feature
@@ -334,6 +422,11 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
 	manifold.contactNormal = glm::vec4(referencePlane.normal, referenceSeparation);
 
+	if (contactPointCount > 4)
+	{
+		reduceContactPoints(manifold);
+	}
+
 	return manifold;
 }
 
@@ -394,7 +487,7 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 	int boxBIdx = -1;
 	BoxCollider boxA = nullptr;
 	BoxCollider boxB = nullptr;
-	constexpr float cQueryBias = 0.9f;
+	constexpr float cQueryBias = 0.4f;
 
 	for (int collisionPairIdx = 0; collisionPairIdx < pCollisionPairPkg->misc.x; ++collisionPairIdx)
 	{

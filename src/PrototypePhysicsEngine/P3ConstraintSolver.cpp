@@ -53,8 +53,8 @@ void P3ConstraintSolver::solve(
 
 			r = glm::normalize(r);
 			// Apply linear impulse onto each contact point
-			finalLinearImpulse += (0.45f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
-								+ 0.09f * glm::length(linearTransform.velocity)) * glm::vec3(manifold.contactNormal);
+			finalLinearImpulse += (0.9f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
+								+ 0.3f * glm::length(linearTransform.velocity)) * -r;
 			//finalLinearImpulse += glm::vec3(0.5f, 0.5f, 0.0f);
 
 			// Angular final impulse

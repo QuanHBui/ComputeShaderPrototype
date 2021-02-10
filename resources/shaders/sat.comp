@@ -510,7 +510,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	// If the denom is not zero, then the 2 line segments are not parallel, we compute
 	//  closest point on edgeA and edgeB, then apply clamping to if needed.
 	if (denom != 0.0f)
-		s = clamp((b * f) / denom, 0.0f, 1.0f); // Clamp to [0, 1]
+		s = clamp((b * f - c * squaredLengthEdgeB) / denom, 0.0f, 1.0f); // Clamp to [0, 1]
 
 	t = (b * s + f) / squaredLengthEdgeB;
 
