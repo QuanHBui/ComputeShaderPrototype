@@ -301,6 +301,94 @@ int getIncidentFaceIdx(BoxCollider incidentBox, vec3 referenceNormal)
 	return incidentFaceIdx;
 }
 
+// Filter out bad contact points - if this function is called, it's assumed that there are more than 4 contact points.
+void reduceContactPoints(inout Manifold manifold)
+{
+	// First contact point - query a support point in normal of contact plane
+	int firstContactIdx     = -1;
+	float largestSeparation = -FLT_MAX;
+
+	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
+	{
+		float separation = dot(manifold.contactPoints[i].xyz, -manifold.contactNormal.xyz);
+
+		if (separation > largestSeparation)
+		{
+			largestSeparation = separation;
+			firstContactIdx   = i;
+		}
+	}
+
+	vec3 a = manifold.contactPoints[firstContactIdx].xyz;
+
+	// Second contact point - find the contact point farthest away from the first point
+	int secondContactIdx = -1;
+	largestSeparation    = -FLT_MAX;
+
+	for (int j = 0; j < manifold.contactBoxIndicesAndContactCount.z; ++j)
+	{
+		if (j == firstContactIdx) continue;
+
+		float separation = length(manifold.contactPoints[j].xyz - a);
+
+		if (separation > largestSeparation)
+		{
+			largestSeparation = separation;
+			secondContactIdx  = j;
+		}
+	}
+
+	vec3 b = vec3(manifold.contactPoints[secondContactIdx]);
+
+	// Third contact point - find the contact point that maximizes the triangle area
+	int thirdContactIdx = -1;
+	float largestArea   = -FLT_MAX;
+
+	for (int k = 0; k < manifold.contactBoxIndicesAndContactCount.z; ++k)
+	{
+		if (k == firstContactIdx || k == secondContactIdx) continue;
+
+		vec3 potC = manifold.contactPoints[k].xyz;
+		float area = 0.5f * dot(cross(a - potC, b - potC), vec3(manifold.contactNormal));
+
+		if (area > largestArea)
+		{
+			largestArea = area;
+			thirdContactIdx = k;
+		}
+	}
+
+	vec3 c = manifold.contactPoints[thirdContactIdx].xyz;
+
+	// Fourth contact point - find the contact point that maximizes the rectangle area
+	int fourthContactIdx = -1;
+	largestArea = FLT_MAX;
+
+	for (int l = 0; l < manifold.contactBoxIndicesAndContactCount.z; ++l)
+	{
+		if (l == firstContactIdx || l == secondContactIdx || l == thirdContactIdx) continue;
+
+		vec3 potD = manifold.contactPoints[l].xyz;
+		float area = 0.5f * dot(cross(a - potD, b - potD), manifold.contactNormal.xyz);
+
+		// Interested in most negative area, really depends on the winding of the triangle
+		if (area < largestArea)
+		{
+			largestArea = area;
+			fourthContactIdx = l;
+		}
+	}
+
+	vec3 d = manifold.contactPoints[fourthContactIdx].xyz;
+
+	// The w component could be anything really.
+	manifold.contactPoints[0] = vec4(a, 1.0f);
+	manifold.contactPoints[1] = vec4(b, 1.0f);
+	manifold.contactPoints[2] = vec4(c, 1.0f);
+	manifold.contactPoints[3] = vec4(d, 1.0f);
+	manifold.contactBoxIndicesAndContactCount.z = 4;
+}
+
 /**
  * On a high level, we are clipping the incident face on the other convex hull
  *  against the side planes of the minimizing/reference face.
@@ -330,7 +418,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	Plane referencePlane;
 	BoxCollider incidentBox;
 	BoxCollider referenceBox;
-	const float axisBias = 0.9f;
+	const float axisBias = 0.4f;
 
 	// Apply a bias to prefer a certain axis of penetration, i.e the rigid body feature
 	if (axisBias * faceQueryA.largestDist > faceQueryB.largestDist)
@@ -468,6 +556,11 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
 	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation);
 
+	if (contactPointCount > 4)
+	{
+		reduceContactPoints(manifold);
+	}
+
 	return manifold;
 }
 
@@ -541,11 +634,6 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	return manifold;
 }
 
-void reduceContactPoints(inout Manifold manifold)
-{
-
-}
-
 // This function will create and append to the manifold buffer.
 // We are trying to find the closest feature that defines the contact type, face-face or edge-edge.
 //  If the closest feature is a face-face, then we create a face contact.
@@ -558,7 +646,7 @@ void separatingAxisTest(uint collisionPairIdx)
 	int boxBIdx      = collisionPairs[collisionPairIdx].y;
 	BoxCollider boxA = boxColliders[boxAIdx];
 	BoxCollider boxB = boxColliders[boxBIdx];
-	const float queryBias = 0.9f;
+	const float queryBias = 0.5f;
 
 	FaceQuery faceQueryA = queryFaceDirections(boxA, boxB); // Look at faces of A
 	if (faceQueryA.largestDist > 0.0f) return; // We have found a separating axis. No overlap.

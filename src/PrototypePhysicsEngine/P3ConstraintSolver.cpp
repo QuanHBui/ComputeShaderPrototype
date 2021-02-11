@@ -38,6 +38,8 @@ void P3ConstraintSolver::solve(
 		LinearTransform const &linearTransform = rigidLinearTransformContainer[0];
 		AngularTransform const &angularTransform = rigidAngularTransformContainer[0];
 
+		glm::vec3 prevR{};
+
 		// Iterate through each contact points
 		for (int contactPointIdx = 0
 			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
@@ -47,18 +49,19 @@ void P3ConstraintSolver::solve(
 
 			// Reject contact points that are not a part of the solving body
 			glm::vec3 r = contactPointPos - linearTransform.position;
+			if (r == prevR) continue;
+
 			glm::vec3 boxColliderCornerExtension = boxColliderContainer[incidentBoxIdx].mVertices[0];
-			if (glm::length(r) > 0.15f + glm::length(boxColliderCornerExtension - linearTransform.position))
-				continue;
 
 			r = glm::normalize(r);
 			// Apply linear impulse onto each contact point
-			finalLinearImpulse += (0.9f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
-								+ 0.3f * glm::length(linearTransform.velocity)) * -r;
-			//finalLinearImpulse += glm::vec3(0.5f, 0.5f, 0.0f);
+			finalLinearImpulse += 0.5f * (0.5f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
+								+ 0.5f * glm::length(linearTransform.velocity)) * -r;
 
 			// Angular final impulse
 			finalAngularImpulse += 0.5f * glm::cross(r, glm::vec3(manifold.contactNormal));
+
+			prevR = r;
 		}
 
 		// This is freaking stupid.

@@ -99,10 +99,10 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-1.5f, -2.5f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3( 1.5f, -2.5f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-4.0f, -6.0f, 5.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 5.0f, 4.5f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3( 1.5f,  0.0f, 5.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-3.5f, -3.0f, 5.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-6.5f, -6.0f, 5.0f));
 
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 4u);
 		break;

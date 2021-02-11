@@ -162,8 +162,8 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 		for (int edgeIdxB = 0; edgeIdxB < cColliderEdgeCount; ++edgeIdxB)
 		{
 			startB = boxB[cEdges[edgeIdxB][0]];
-			endB = boxB[cEdges[edgeIdxB][1]];
-			edgeB = endB - startB;
+			endB   = boxB[cEdges[edgeIdxB][1]];
+			edgeB  = endB - startB;
 
 			// Make sure the 2 edges are not parallel
 			temp = glm::cross(edgeA, edgeB);
@@ -316,7 +316,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	Plane referencePlane;
 	BoxCollider incidentBox  = nullptr;
 	BoxCollider referenceBox = nullptr;
-	constexpr float cAxisBias = 0.5f;
+	constexpr float cAxisBias = 0.4f;
 
 	// Identify reference plane, then incident face
 	// Apply a bias to prefer a certain axis of penetration, i.e the rigid body feature
@@ -356,6 +356,13 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	int contactPointCount = 0;
 	Manifold manifold;
 
+	// TODO: Need some sort of way to keep track of what points already got clipped out. If it already got clipped
+	//  by a plane, then it wouldn't be considered to be clipped again.
+	// Also, there might be duplicates, i.e store the vert that's already stored.
+	bool clippedIndices[4] = { false, false, false, false };
+	bool storedIndices[4]  = { false, false, false, false };
+	constexpr int actualIndices[4] = { 1, 2, 3, 0 };
+
 	// Iterate over all the reference faces
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
@@ -366,21 +373,37 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 			startVertIdx = cFaces[incidentFaceIdx][0];
 			startVert    = incidentBox[startVertIdx];
 
-			// Iterate through vert# 1, 2, 3 of the incident face
-			for (int vertIdx = 1; vertIdx < cVertCountPerFace; ++vertIdx)
+			// Iterate through vert# 1, 2, 3, 0 of the incident face
+			for (int vertIdx = 0; vertIdx < cVertCountPerFace; ++vertIdx)
 			{
+				int actualIdx = actualIndices[vertIdx];
+
 				if (contactPointCount >= cMaxContactPointCount) break;
 
-				endVertIdx = cFaces[incidentFaceIdx][vertIdx];
-				endVert  = incidentBox[endVertIdx];
+				endVertIdx = cFaces[incidentFaceIdx][actualIdx];
+				endVert = incidentBox[endVertIdx];
 
 				startSignedDist = getSignedDist(startVert, clipPlane);
 				endSignedDist   = getSignedDist(endVert, clipPlane);
 
-				if (startSignedDist > cEpsilon && endSignedDist < -cEpsilon)
+				// If start vert is on the positive side, store the end vert and lerp the intersection. Start vert is clipped.
+				if (!clippedIndices[actualIdx] && !storedIndices[actualIdx] && startSignedDist >= cEpsilon && endSignedDist < -cEpsilon)
 				{
+					// This might be a bad clipping logic, don't know what to do if the end vert not below the reference face.
+					//  Does that get clipped too?
+					// Start vertex idx here is just current vert idx - 1
+					if (actualIdx == 0)
+					{
+						clippedIndices[3] = true;
+					}
+					else
+					{
+						clippedIndices[actualIdx - 1] = true;
+					}
+
 					if (getSignedDist(endVert, referencePlane) <= -cEpsilon)
 					{
+						storedIndices[actualIdx] = true;
 						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
@@ -394,14 +417,24 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
-				else if (   startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
+
+				// Both start and end vertices are on the negative side, store only the end vert because start vert already got
+				//  stored from the previous iteration.
+				else if ( !clippedIndices[actualIdx] && !storedIndices[actualIdx] && startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
 						 && getSignedDist(endVert, referencePlane) <= -cEpsilon )
 				{
+					storedIndices[actualIdx] = true;
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
 					manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 				}
-				else if (startSignedDist < -cEpsilon && endSignedDist > cEpsilon)
+
+				// If start vert is on the negative side, and end vert is on the positive side, only lerp the intersection,
+				//  then clip the end vert.
+				else if (startSignedDist < -cEpsilon && endSignedDist >= cEpsilon)
 				{
+					// The end vert idx is just the current vert idx.
+					clippedIndices[actualIdx] = true;
+
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
 
@@ -411,9 +444,9 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
 					}
 				}
-			}
 
-			startVert = endVert;
+				startVert = endVert;
+			}
 		}
 	}
 
@@ -487,7 +520,7 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 	int boxBIdx = -1;
 	BoxCollider boxA = nullptr;
 	BoxCollider boxB = nullptr;
-	constexpr float cQueryBias = 0.4f;
+	constexpr float cQueryBias = 0.5f;
 
 	for (int collisionPairIdx = 0; collisionPairIdx < pCollisionPairPkg->misc.x; ++collisionPairIdx)
 	{

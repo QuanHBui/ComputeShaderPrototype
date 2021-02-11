@@ -67,9 +67,18 @@ void sweepZ(uint i, uint j)
 			  minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
-			collisionPairs[availableIdx].x = int(minCoords[i].w); // w comp stores object ID
-			collisionPairs[availableIdx].y = int(minCoords[j].w);
 
+			// Sort ID for consistency
+			if (minCoords[i].w < minCoords[j].w)
+			{
+				collisionPairs[availableIdx].x = int(minCoords[j].w); // w comp stores object ID
+				collisionPairs[availableIdx].y = int(minCoords[i].w);
+			}
+			else
+			{
+				collisionPairs[availableIdx].x = int(minCoords[i].w);
+				collisionPairs[availableIdx].y = int(minCoords[j].w);
+			}
 			break;
 		}
 	}
