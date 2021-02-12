@@ -2,6 +2,9 @@
 
 #include <array>
 #include <limits>
+#include <unordered_set>
+
+#include <glm/gtx/hash.hpp>
 
 #include "P3BroadPhaseCommon.h"
 #include "P3NarrowPhaseCommon.h"
@@ -235,6 +238,7 @@ void reduceContactPoints(Manifold &manifold)
 		}
 	}
 
+	assert(firstContactIdx > -1);
 	glm::vec3 a = manifold.contactPoints[firstContactIdx];
 
 	// Second contact point - find the contact point farthest away from the first point
@@ -254,6 +258,7 @@ void reduceContactPoints(Manifold &manifold)
 		}
 	}
 
+	assert(secondContactIdx > -1);
 	glm::vec3 b = manifold.contactPoints[secondContactIdx];
 
 	// Third contact point - find the contact point that maximizes the triangle area
@@ -274,6 +279,7 @@ void reduceContactPoints(Manifold &manifold)
 		}
 	}
 
+	assert(thirdContactIdx > -1);
 	glm::vec3 c = manifold.contactPoints[thirdContactIdx];
 
 	// Fourth contact point - find the contact point that maximizes the rectangle area
@@ -295,6 +301,7 @@ void reduceContactPoints(Manifold &manifold)
 		}
 	}
 
+	assert(fourthContactIdx > -1);
 	glm::vec3 d = manifold.contactPoints[fourthContactIdx];
 
 	// The w component could be anything really.
@@ -359,8 +366,8 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	// TODO: Need some sort of way to keep track of what points already got clipped out. If it already got clipped
 	//  by a plane, then it wouldn't be considered to be clipped again.
 	// Also, there might be duplicates, i.e store the vert that's already stored.
-	bool clippedIndices[4] = { false, false, false, false };
-	bool storedIndices[4]  = { false, false, false, false };
+	std::unordered_set<glm::vec3> includedVertSet; // Oh yea, this is big brain time.
+	std::unordered_set<glm::vec3> clippedVertSet;
 	constexpr int actualIndices[4] = { 1, 2, 3, 0 };
 
 	// Iterate over all the reference faces
@@ -378,8 +385,6 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 			{
 				int actualIdx = actualIndices[vertIdx];
 
-				if (contactPointCount >= cMaxContactPointCount) break;
-
 				endVertIdx = cFaces[incidentFaceIdx][actualIdx];
 				endVert = incidentBox[endVertIdx];
 
@@ -387,25 +392,18 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 				endSignedDist   = getSignedDist(endVert, clipPlane);
 
 				// If start vert is on the positive side, store the end vert and lerp the intersection. Start vert is clipped.
-				if (!clippedIndices[actualIdx] && !storedIndices[actualIdx] && startSignedDist >= cEpsilon && endSignedDist < -cEpsilon)
+				if (startSignedDist >= cEpsilon && endSignedDist < -cEpsilon)
 				{
 					// This might be a bad clipping logic, don't know what to do if the end vert not below the reference face.
 					//  Does that get clipped too?
 					// Start vertex idx here is just current vert idx - 1
-					if (actualIdx == 0)
-					{
-						clippedIndices[3] = true;
-					}
-					else
-					{
-						clippedIndices[actualIdx - 1] = true;
-					}
+					projPointOntoRefPlane = projectPointOntoPlane(startVert, referencePlane);
+					clippedVertSet.insert(projPointOntoRefPlane);
 
 					if (getSignedDist(endVert, referencePlane) <= -cEpsilon)
 					{
-						storedIndices[actualIdx] = true;
 						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
-						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
+						includedVertSet.insert(projPointOntoRefPlane);
 					}
 
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
@@ -414,26 +412,25 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
-						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
+						includedVertSet.insert(projPointOntoRefPlane);
 					}
 				}
 
 				// Both start and end vertices are on the negative side, store only the end vert because start vert already got
 				//  stored from the previous iteration.
-				else if ( !clippedIndices[actualIdx] && !storedIndices[actualIdx] && startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
+				else if (   startSignedDist < -cEpsilon && endSignedDist < -cEpsilon
 						 && getSignedDist(endVert, referencePlane) <= -cEpsilon )
 				{
-					storedIndices[actualIdx] = true;
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
-					manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
+					includedVertSet.insert(projPointOntoRefPlane);
 				}
 
 				// If start vert is on the negative side, and end vert is on the positive side, only lerp the intersection,
 				//  then clip the end vert.
 				else if (startSignedDist < -cEpsilon && endSignedDist >= cEpsilon)
 				{
-					// The end vert idx is just the current vert idx.
-					clippedIndices[actualIdx] = true;
+					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
+					clippedVertSet.insert(projPointOntoRefPlane);
 
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = glm::mix(startVert, endVert, lerpRatio);
@@ -441,12 +438,22 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -cEpsilon)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
-						manifold.contactPoints[contactPointCount++] = glm::vec4(projPointOntoRefPlane, 0.0f);
+						includedVertSet.insert(projPointOntoRefPlane);
 					}
 				}
 
 				startVert = endVert;
 			}
+		}
+	}
+
+	// Process the clipped and included sets. Once the vert got clipped, game over.
+	// Iterate through the included set, check if it's got clip in the clipped set; if not, store it as contact point
+	for (glm::vec3 const &potContactPoint : includedVertSet)
+	{
+		if (contactPointCount <= cMaxContactPointCount && clippedVertSet.find(potContactPoint) == clippedVertSet.end())
+		{
+			manifold.contactPoints[contactPointCount++] = glm::vec4(potContactPoint, 1.0f);
 		}
 	}
 
