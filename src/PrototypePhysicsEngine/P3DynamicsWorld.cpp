@@ -24,6 +24,7 @@ void P3DynamicsWorld::init()
 {
 	mBroadPhase.init();
 	mNarrowPhase.init(mBroadPhase.getBoxCollidersID(), mBroadPhase.getCollisionPairsID());
+	mConstraintSolver.init();
 }
 
 void P3DynamicsWorld::detectCollisions()
@@ -231,42 +232,32 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	std::vector<glm::vec3> const &solveLinearImpulseContainer  = mConstraintSolver.getLinearImpulseContainer();
 	std::vector<glm::vec3> const &solveAngularImpulseContainer = mConstraintSolver.getAngularImpulseContainer();
 
-	// Store final linear transforms
+	// Apply final linear transforms
 	// There must be a better way to connect linear transforms and hit boxes.
-	for (int i = 0; i < solveLinearImpulseContainer.size(); ++i)
-	{
-		// Warning: This is not always the case, most likely be wrong all the time.
-		mRigidLinearTransformContainer[i].velocity += solveLinearImpulseContainer[i];
-	}
-
 	// First wipe - linear transforms
-	for (int j = 0; j < mRigidLinearTransformContainer.size(); ++j)
+	for (int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
 	{
-		LinearTransform &linearTransform = mRigidLinearTransformContainer[j];
+		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
+		linearTransform.velocity += solveLinearImpulseContainer[i];
 		linearTransform.position += dt * linearTransform.velocity;
 
-		mBoxColliderCtmContainer[j] = glm::translate(linearTransform.position);
+		mBoxColliderCtmContainer[i] = glm::translate(linearTransform.position);
 	}
 
-	// Store final angular transforms
-	for (int k = 0; k < solveAngularImpulseContainer.size(); ++k)
+	// Apply final angular transforms
+	for (int j = 0; j < mRigidAngularTransformContainer.size(); ++j)
 	{
-		// Warning: This is not always the case, most likely be wrong all the time.
-		mRigidAngularTransformContainer[k].angularVelocity += solveAngularImpulseContainer[k];
-	}
-
-	for (int l = 0; l < mRigidAngularTransformContainer.size(); ++l)
-	{
-		AngularTransform &angularTransform = mRigidAngularTransformContainer[l];
+		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
+		angularTransform.angularVelocity  += solveAngularImpulseContainer[j];
 		angularTransform.tempOrientation  += dt * glm::length(angularTransform.angularVelocity);
 
 		if (angularTransform.angularVelocity == glm::vec3(0.0f))
 		{
-			mBoxColliderCtmContainer[l] *= glm::mat4(1.0f);
+			mBoxColliderCtmContainer[j] *= glm::mat4(1.0f);
 		}
 		else
 		{
-			mBoxColliderCtmContainer[l] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.angularVelocity));
+			mBoxColliderCtmContainer[j] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.angularVelocity));
 		}
 	}
 

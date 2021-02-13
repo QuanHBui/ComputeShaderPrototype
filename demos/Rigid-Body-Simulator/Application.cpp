@@ -83,34 +83,33 @@ void Application::initPhysicsWorld(Demo demo)
 	{
 	case Demo::BOWLING_GAME:
 		mPhysicsWorld.bowlingGameDemo();
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, 5u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::BOWLING_PIN, mPhysicsWorld.getOccupancy());
 		break;
 
 	case Demo::MULTIPLE_BOXES:
 		mPhysicsWorld.multipleBoxesDemo();
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 100u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 		break;
 
 	case Demo::GRAVITY_TEST:
 		// Stack 2 unit cubes on top of each other. Same mass.
 		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(0.0f, -2.0f, 5.0f));
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 2u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.0f, 5.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3( 1.5f,  0.0f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-3.5f, -3.0f, 5.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f, 3.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-2.0f, 3.0f, 5.0f), glm::vec3(0.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-0.5f,  0.0f, 5.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(-6.5f, -6.0f, 5.0f));
-
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 4u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 		break;
 
 	case Demo::CONTROLLABLE_BOX:
 	default: // Defaulted to controllable box demo
 		mPhysicsWorld.controllableBoxDemo();
-		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, 5u);
+		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 	}
 
 	mDemo = demo;

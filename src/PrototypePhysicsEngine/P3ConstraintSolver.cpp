@@ -10,18 +10,27 @@ void P3ConstraintSolver::solve(
 	std::vector<LinearTransform> const &rigidLinearTransformContainer,
 	std::vector<AngularTransform> const &rigidAngularTransformContainer )
 {
-	// Reset the containers
-	if (!mLinearImpulseContainer.empty())
+	// Prototype temporal coherence, keep the old values for 4 physics ticks, depending on how fast the objects are moving.
+	++mResetCounter;
+	if (mResetCounter >= 4)
 	{
-		mLinearImpulseContainer.pop_back();
-	}
-	if (!mAngularImpulseContainer.empty())
-	{
-		mAngularImpulseContainer.pop_back();
+		assert(rigidLinearTransformContainer.size() == rigidAngularTransformContainer.size()); // This should always be the case.
+
+		// Might want to make sure the size of the rigidLinearTransform and mLinearImpulseContainer are roughly the same size.
+		for (int i = 0; i < rigidLinearTransformContainer.size(); ++i)
+		{
+			mLinearImpulseContainer[i] = glm::vec3(0.0f);
+		}
+		for (int j = 0; j < rigidAngularTransformContainer.size(); ++j)
+		{
+			mAngularImpulseContainer[j] = glm::vec3(0.0f);
+		}
+
+		mResetCounter = 0;
 	}
 
 	// Then solve contact constraints - Iterate through all manifolds
-	for (int i = 0; i < manifoldPkg.misc.x; ++i)
+	for (int i = 0; mResetCounter == 0 && i < manifoldPkg.misc.x; ++i)
 	{
 		glm::vec3 finalLinearImpulse{};
 		glm::vec3 finalAngularImpulse{};
@@ -29,14 +38,18 @@ void P3ConstraintSolver::solve(
 		// A manifold contains collision info of a pair of objects, namely their handles/IDs.
 		//  And we can use the IDs to access the component container.
 		Manifold const &manifold = manifoldPkg.manifolds[i];
-		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x; // We don't know what type the object is based on their IDs
-		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
+		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
+		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y; // We don't know what type the object is based on their IDs
 
-		// Solve constraint in pair, so 2 times every time
+		// Solve constraint in pair, so 2 times every time, but for now the solver only works on the incident body.
+
+		// Between 2 indices, the smaller index is of rigid body, if the incident index is greater than reference index,
+		//  we don't solve that collision because we don't solve reference collision. This is not always the case of course
+		if (incidentBoxIdx > referenceBoxIdx) continue;
 
 		// Static contact constraint - Compute both constraint solving linear and angular impulses
-		LinearTransform const &linearTransform = rigidLinearTransformContainer[0];
-		AngularTransform const &angularTransform = rigidAngularTransformContainer[0];
+		LinearTransform const &linearTransform   = rigidLinearTransformContainer[incidentBoxIdx];
+		AngularTransform const &angularTransform = rigidAngularTransformContainer[incidentBoxIdx];
 
 		glm::vec3 prevR{};
 
@@ -55,8 +68,8 @@ void P3ConstraintSolver::solve(
 
 			r = glm::normalize(r);
 			// Apply linear impulse onto each contact point
-			finalLinearImpulse += 0.5f * (0.5f * glm::dot(-r, glm::vec3(manifold.contactNormal) * -manifold.contactNormal.w)
-								+ 0.5f * glm::length(linearTransform.velocity)) * -r;
+			finalLinearImpulse += 0.25f * (0.5f * glm::dot(-r, glm::vec3(manifold.contactNormal))
+								+ 0.35f * glm::length(linearTransform.velocity)) * -r;
 
 			// Angular final impulse
 			finalAngularImpulse += 0.5f * glm::cross(r, glm::vec3(manifold.contactNormal));
@@ -64,17 +77,8 @@ void P3ConstraintSolver::solve(
 			prevR = r;
 		}
 
-		// This is freaking stupid.
-		if (!mLinearImpulseContainer.empty())
-			mLinearImpulseContainer.back() += finalLinearImpulse;
-		else
-			mLinearImpulseContainer.emplace_back(finalLinearImpulse);
-
-		// Wow, I'm dumb!
-		if (!mAngularImpulseContainer.empty())
-			mAngularImpulseContainer.back() = finalAngularImpulse;
-		else
-			mAngularImpulseContainer.emplace_back(finalAngularImpulse);
+		mLinearImpulseContainer[incidentBoxIdx]  += finalLinearImpulse;
+		mAngularImpulseContainer[incidentBoxIdx] += finalAngularImpulse;
 	}
 }
 

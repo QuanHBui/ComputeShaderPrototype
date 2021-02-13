@@ -31,7 +31,15 @@ public:
 	P3ConstraintSolver(GLuint boxCollidersID, GLuint manifoldsID)
 		: mBoxCollidersID(boxCollidersID), mManifoldsID(manifoldsID) {}
 
-	void init() {};
+	// By default, reserve enough space for 10 things.
+	void init(int reserveObjCount = 10)
+	{
+		for (int i = 0; i < reserveObjCount; ++i)
+		{
+			mLinearImpulseContainer.emplace_back();
+			mAngularImpulseContainer.emplace_back();
+		}
+	};
 
 	// If the solver's implementation resides on the CPU, returns the offset
 	void solve( ManifoldGpuPackage const &,
@@ -53,6 +61,8 @@ private:
 
 	std::vector<glm::vec3> mLinearImpulseContainer;
 	std::vector<glm::vec3> mAngularImpulseContainer;
+
+	int mResetCounter = 0;
 };
 
 #endif // P3_CONSTRAINT_SOLVER

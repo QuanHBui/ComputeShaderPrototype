@@ -173,8 +173,8 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 			if (glm::length(temp) == 0.0f) continue;
 			edgeNormal = glm::normalize(temp);
 
-			if (glm::dot(edgeNormal, startA - centerA) < 0.0f)
-				edgeNormal *= -1.0f;
+			if (glm::dot(edgeNormal, glm::normalize(startB - centerA)) < 0.0f)
+				edgeNormal = -edgeNormal;
 
 			plane.point   = startA;
 			plane.normal  = edgeNormal;
@@ -470,8 +470,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	return manifold;
 }
 
-Manifold createEdgeContact( EdgeQuery edgeQuery, BoxColliderGpuPackage const &boxColliderPackage,
-							int boxAIdx, int boxBIdx )
+Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 {
 	Manifold manifold;
 
@@ -543,8 +542,11 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 		FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
 		if (faceQueryB.largestDist > 0.0f) continue;
 
-		EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
-		if (edgeQuery.largestDist > 0.0f) continue;
+		//EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
+		//// TODO: This is stupidly hacky, don't leave this like this.
+		////if (edgeQuery.largestDist > 0) edgeQuery.largestDist = -edgeQuery.largestDist;
+
+		//if (edgeQuery.largestDist > 0.0f) continue;
 
 		// If we get to here, there's no separating axis, the 2 boxes must overlap.
 		// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist
@@ -554,15 +556,16 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 
 		// Apply a bias to prefer face contact over edge contact in the case when the separations returned
 		//  from the face query and edge query are the same.
-		if (   cQueryBias * faceQueryA.largestDist > edgeQuery.largestDist
+		/*if (   cQueryBias * faceQueryA.largestDist > edgeQuery.largestDist
 			&& cQueryBias * faceQueryB.largestDist > edgeQuery.largestDist )
 		{
 			manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 		}
 		else
 		{
-			manifold = createEdgeContact(edgeQuery, boxColliderPkg, boxAIdx, boxBIdx);
-		}
+			manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
+		}*/
+		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
 		manifoldPkg.manifolds[availableIdx++] = manifold;
 	}
