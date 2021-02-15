@@ -172,6 +172,7 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Epa.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Gjk.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sap.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp" />
     <ClCompile Include="..\..\src\RenderSystem.cpp" />
     <ClCompile Include="..\..\src\Shape.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCommon.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sap.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sat.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Simplex.h" />

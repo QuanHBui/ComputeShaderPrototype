@@ -71,4 +71,6 @@ void main()
 
 	//-------------------- The actual sweeping --------------------//
 	sortComponent(i, j);
+
+	barrier();
 }

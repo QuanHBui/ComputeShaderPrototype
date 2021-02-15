@@ -544,7 +544,7 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 
 		//EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
 		//// TODO: This is stupidly hacky, don't leave this like this.
-		////if (edgeQuery.largestDist > 0) edgeQuery.largestDist = -edgeQuery.largestDist;
+		//if (edgeQuery.largestDist > 0) edgeQuery.largestDist = -edgeQuery.largestDist;
 
 		//if (edgeQuery.largestDist > 0.0f) continue;
 
@@ -556,15 +556,15 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const Coll
 
 		// Apply a bias to prefer face contact over edge contact in the case when the separations returned
 		//  from the face query and edge query are the same.
-		/*if (   cQueryBias * faceQueryA.largestDist > edgeQuery.largestDist
-			&& cQueryBias * faceQueryB.largestDist > edgeQuery.largestDist )
-		{
-			manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
-		}
-		else
-		{
-			manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
-		}*/
+		//if (   cQueryBias * faceQueryA.largestDist > edgeQuery.largestDist
+		//	&& cQueryBias * faceQueryB.largestDist > edgeQuery.largestDist )
+		//{
+		//	manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
+		//}
+		//else
+		//{
+		//	manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
+		//}
 		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
 		manifoldPkg.manifolds[availableIdx++] = manifold;

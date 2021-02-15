@@ -36,7 +36,7 @@ int main()
 	int    numFrames           = 0;
 
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 144.0;
+	double fixedPhysicsTickInterval = 1.0 / 75.0;
 	int physicsTickCount = 0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
@@ -59,7 +59,7 @@ int main()
 
 		pApplication->renderFrame(float(frameTimeInterval));
 
-		// Show updated FPS/Frame time on UI ever half a sec.
+		// Show updated FPS/Frame time on UI every half a sec.
 		if (currentTime - lastTime >= 0.5)
 		{
 			UIFrameTimeInterval = 0.5 / numFrames;

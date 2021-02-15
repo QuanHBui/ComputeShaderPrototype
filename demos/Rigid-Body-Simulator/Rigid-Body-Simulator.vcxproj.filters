@@ -108,6 +108,9 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sap.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -195,6 +198,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ComponentManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,5 +1,7 @@
 #include "P3OpenGLComputeBroadPhase.h"
 
+#include <algorithm>
+
 #include "ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
@@ -50,7 +52,8 @@ GLuint P3OpenGLComputeBroadPhase::initGpuBuffers()
 		GL_SHADER_STORAGE_BUFFER,
 		0,
 		sizeof(BoxColliderGpuPackage),
-		mapFlags ));
+		mapFlags
+	));
 
 	mapFlags = GL_MAP_READ_BIT
 			 | GL_MAP_PERSISTENT_BIT
@@ -112,29 +115,31 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 
 	//================== Start of SAP ==================//
 
-	// SORT ON X-AXIS
-	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
-	glUseProgram(currProgID);
+	GLuint subroutineIdx = 0;
 
-	glUniform1ui(uniformIdx, boxColliders.size());
-	uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
+	//// SORT ON X-AXIS
+	//currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
+	//glUseProgram(currProgID);
 
-	GLuint subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortX");
-	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
+	//glUniform1ui(uniformIdx, boxColliders.size());
+	//uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
 
-	int iterations = boxColliders.size();
-	while (iterations--)
-	{
-		//--------------------------- Dispatch and synchronize ---------------------------//
-		// -1 for even, 1 for odd; we start processing the odd pair first
-		glUniform1i(uniformIdx, 1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//GLuint subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortX");
+	//glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-		glUniform1i(uniformIdx, -1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	}
+	//int iterations = boxColliders.size();
+	//while (iterations--)
+	//{
+	//	//--------------------------- Dispatch and synchronize ---------------------------//
+	//	// -1 for even, 1 for odd; we start processing the odd pair first
+	//	glUniform1i(uniformIdx, 1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	//	glUniform1i(uniformIdx, -1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//}
 
 	// SWEEP AND PRUNE ON X-AXIS
 	currProgID = mComputeProgramIDContainer[P3_SAP];
@@ -150,32 +155,33 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
+	GLsync sapSyncObj = oglutils::lock();
 
 	// SORT ON Y-AXIS
-	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
-	glUseProgram(currProgID);
+	//currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
+	//glUseProgram(currProgID);
 
-	uniformIdx = glGetUniformLocation(currProgID, "currNumObjects");
-	CHECKED_GL_CALL(glUniform1ui(uniformIdx, boxColliders.size()));
+	//uniformIdx = glGetUniformLocation(currProgID, "currNumObjects");
+	//CHECKED_GL_CALL(glUniform1ui(uniformIdx, boxColliders.size()));
 
-	uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
+	//uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
 
-	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortY");
-	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
+	//subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortY");
+	//glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	iterations = boxColliders.size();
-	while (iterations--)
-	{
-		//--------------------------- Dispatch and synchronize ---------------------------//
-		// -1 for even, 1 for odd; we start processing the odd pair first
-		glUniform1i(uniformIdx, 1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//iterations = boxColliders.size();
+	//while (iterations--)
+	//{
+	//	//--------------------------- Dispatch and synchronize ---------------------------//
+	//	// -1 for even, 1 for odd; we start processing the odd pair first
+	//	glUniform1i(uniformIdx, 1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		glUniform1i(uniformIdx, -1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	}
+	//	glUniform1i(uniformIdx, -1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//}
 
 	// SWEEP AND PRUNE ON Y-AXIS
 	currProgID = mComputeProgramIDContainer[P3_SAP];
@@ -189,35 +195,39 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepY");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
+	oglutils::wait(sapSyncObj);
+
 	glDispatchComputeIndirect(0);
+
+	sapSyncObj = oglutils::lock();
 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	// SORT ON Z-AXIS
-	currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
-	glUseProgram(currProgID);
+	//// SORT ON Z-AXIS
+	//currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
+	//glUseProgram(currProgID);
 
-	uniformIdx = glGetUniformLocation(currProgID, "currNumObjects");
-	CHECKED_GL_CALL(glUniform1ui(uniformIdx, boxColliders.size()));
+	//uniformIdx = glGetUniformLocation(currProgID, "currNumObjects");
+	//CHECKED_GL_CALL(glUniform1ui(uniformIdx, boxColliders.size()));
 
-	uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
+	//uniformIdx = glGetUniformLocation(currProgID, "evenOrOdd");
 
-	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortZ");
-	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
+	//subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sortZ");
+	//glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	iterations = boxColliders.size();
-	while (iterations--)
-	{
-		//--------------------------- Dispatch and synchronize ---------------------------//
-		// -1 for even, 1 for odd; we start processing the odd pair first
-		glUniform1i(uniformIdx, 1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//iterations = boxColliders.size();
+	//while (iterations--)
+	//{
+	//	//--------------------------- Dispatch and synchronize ---------------------------//
+	//	// -1 for even, 1 for odd; we start processing the odd pair first
+	//	glUniform1i(uniformIdx, 1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-		glUniform1i(uniformIdx, -1);
-		glDispatchComputeIndirect(0);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	}
+	//	glUniform1i(uniformIdx, -1);
+	//	glDispatchComputeIndirect(0);
+	//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//}
 
 	// SWEEP AND PRUNE ON Z-AXIS
 	currProgID = mComputeProgramIDContainer[P3_SAP];
@@ -230,6 +240,8 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepZ");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
+
+	oglutils::wait(sapSyncObj);
 
 	glDispatchComputeIndirect(0);
 

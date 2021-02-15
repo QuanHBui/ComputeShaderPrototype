@@ -208,7 +208,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// Apply forces
 	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
 	{
-		linearTransform.velocity.y -= 5.0f * dt;
+		linearTransform.velocity.y -= 4.0f * dt;
 	}
 
 	// Solve constraints - produces final impulses at certain contact points
@@ -239,6 +239,10 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	{
 		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
 		linearTransform.velocity += solveLinearImpulseContainer[i];
+
+		//if (solveLinearImpulseContainer[i] != glm::vec3(0.0f))
+		//	linearTransform.velocity = glm::vec3(0.0f);
+
 		linearTransform.position += dt * linearTransform.velocity;
 
 		mBoxColliderCtmContainer[i] = glm::translate(linearTransform.position);
@@ -249,6 +253,10 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	{
 		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
 		angularTransform.angularVelocity  += solveAngularImpulseContainer[j];
+
+		//if (solveAngularImpulseContainer[j] != glm::vec3(0.0f))
+		//	angularTransform.angularVelocity = glm::vec3(0.0f);
+
 		angularTransform.tempOrientation  += dt * glm::length(angularTransform.angularVelocity);
 
 		if (angularTransform.angularVelocity == glm::vec3(0.0f))

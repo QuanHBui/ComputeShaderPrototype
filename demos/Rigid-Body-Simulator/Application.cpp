@@ -68,7 +68,7 @@ void Application::initRenderSystem()
 	mRenderSystem.init(width, height);
 
 	// Move camera a bit closer. This depends on which demo is showing.
-	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 50.0f));
 	mFlyCamera.updateViewMatrix();
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
@@ -99,10 +99,36 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f, 3.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-2.0f, 3.0f, 5.0f), glm::vec3(0.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-0.5f,  0.0f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-6.5f, -6.0f, 5.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3( 0.5f, 6.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+
+		for (int i = 0; i < 3; ++i)
+		{
+			mPhysicsWorld.addRigidBody(-1.5f, glm::vec3(2.5f + float(i) * 3.0f, 2.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+		}
+
+		mPhysicsWorld.addStaticBody(glm::vec3( 2.0f, -2.0f, 5.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-4.0f, -7.0f, 5.0f));
+
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f , -15.0f, 5.0f));
+		}
+
+		for (int k = 0; k < 10; ++k)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f, -13.0f + float(k) * 2.0f, 5.0f));
+		}
+
+		for (int l = 0; l < 10; ++l)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(18.0f, -13.0f + float(l) * 2.0f, 5.0f));
+		}
+
+		for (int m = 0; m < 20; ++m)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(m) * 2.0f, 7.0f, 5.0f));
+		}
+
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 		break;
 
@@ -263,13 +289,13 @@ void Application::keyCallback(GLFWwindow *window, int key, int scancode, int act
 		if (!hasChanged)
 		{
 			// Set position of the camera to be on the same z as the static box
-			mFlyCamera.setPosition(glm::vec3(-15.0f, 2.0f, 5.0f));
+			mFlyCamera.setPosition(glm::vec3(-50.0f, 2.0f, 5.0f));
 			// Look at the static box
 			mFlyCamera.setLookAt(glm::vec3(0.0f, -2.0f, 5.0f));
 		}
 		else
 		{
-			mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 20.0f));
+			mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 50.0f));
 			mFlyCamera.setLookAt(glm::vec3(0.0f, -2.0f, 5.0f));
 		}
 

@@ -12,7 +12,7 @@ void P3ConstraintSolver::solve(
 {
 	// Prototype temporal coherence, keep the old values for 4 physics ticks, depending on how fast the objects are moving.
 	++mResetCounter;
-	if (mResetCounter >= 4)
+	if (mResetCounter >= 1)
 	{
 		assert(rigidLinearTransformContainer.size() == rigidAngularTransformContainer.size()); // This should always be the case.
 
@@ -41,11 +41,8 @@ void P3ConstraintSolver::solve(
 		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
 		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y; // We don't know what type the object is based on their IDs
 
-		// Solve constraint in pair, so 2 times every time, but for now the solver only works on the incident body.
-
-		// Between 2 indices, the smaller index is of rigid body, if the incident index is greater than reference index,
-		//  we don't solve that collision because we don't solve reference collision. This is not always the case of course
-		if (incidentBoxIdx > referenceBoxIdx) continue;
+		// Solve constraint in pair, so 2 times every time if the 2 bodies are both rigid. This solver doesn't work on static bodies.
+		if (incidentBoxIdx >= rigidLinearTransformContainer.size()) continue;
 
 		// Static contact constraint - Compute both constraint solving linear and angular impulses
 		LinearTransform const &linearTransform   = rigidLinearTransformContainer[incidentBoxIdx];
@@ -68,17 +65,27 @@ void P3ConstraintSolver::solve(
 
 			r = glm::normalize(r);
 			// Apply linear impulse onto each contact point
-			finalLinearImpulse += 0.25f * (0.5f * glm::dot(-r, glm::vec3(manifold.contactNormal))
-								+ 0.35f * glm::length(linearTransform.velocity)) * -r;
+			finalLinearImpulse += 0.20f * (0.3f * glm::dot(-r, glm::vec3(manifold.contactNormal))
+								+ 0.35f * (glm::length(linearTransform.velocity) + 0.15f)) * -r;
 
 			// Angular final impulse
-			finalAngularImpulse += 0.5f * glm::cross(r, glm::vec3(manifold.contactNormal));
+			finalAngularImpulse += 0.4f * glm::cross(r, glm::vec3(manifold.contactNormal));
 
 			prevR = r;
 		}
 
-		mLinearImpulseContainer[incidentBoxIdx]  += finalLinearImpulse;
-		mAngularImpulseContainer[incidentBoxIdx] += finalAngularImpulse;
+		if (incidentBoxIdx < rigidLinearTransformContainer.size())
+		{
+			mLinearImpulseContainer[incidentBoxIdx]  += finalLinearImpulse;
+			mAngularImpulseContainer[incidentBoxIdx] += finalAngularImpulse;
+		}
+
+		// If the reference box is also a rigid body
+		if (referenceBoxIdx < rigidLinearTransformContainer.size())
+		{
+			mLinearImpulseContainer[referenceBoxIdx]  -= finalLinearImpulse;
+			mAngularImpulseContainer[referenceBoxIdx] -= finalAngularImpulse;
+		}
 	}
 }
 
