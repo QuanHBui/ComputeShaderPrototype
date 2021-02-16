@@ -7,13 +7,11 @@
 #include <glm/gtx/transform.hpp>
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
-#include "PrototypePhysicsEngine/ComputeProgram.h"
 #include "GLSL.h"
 #include "OpenGLUtils.h"
 #include "Shape.h"
 
-// Physics stuff
-#include "PrototypePhysicsEngine/P3DynamicsWorld.h"
+#include "P3Engine/P3Engine.h"
 
 // UI stuff
 #include "imgui.h"

@@ -47,4 +47,4 @@ private:
 	GLuint *mpAtomicCounter = nullptr;
 };
 
-#endif
+#endif // ATOMIC_COUNTER_H

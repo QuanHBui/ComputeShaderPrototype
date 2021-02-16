@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir)ext\imgui;$(SolutionDir)ext\GLFW\include;$(SolutionDir)ext\glad\include;$(SolutionDir)ext;$(SolutionDir)src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ext\glm;$(SolutionDir)ext\imgui;$(SolutionDir)ext\GLFW\include;$(SolutionDir)ext\glad\include;$(SolutionDir)ext;$(SolutionDir)src;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)(Configuration)\</OutDir>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
