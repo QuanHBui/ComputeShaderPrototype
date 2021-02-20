@@ -5,6 +5,16 @@
 
 #include "P3Common.h"
 
+struct Aabb
+{
+	Aabb() {};
+	Aabb(glm::vec4 const &minCoord, glm::vec4 const &maxCoord)
+		: mMinCoord(minCoord), mMaxCoord(maxCoord) {}
+
+	glm::vec4 mMinCoord{};
+	glm::vec4 mMaxCoord{};
+};
+
 //------------------ Data packs for the GPU (SoA) --------------------//
 struct AabbGpuPackage
 {
@@ -24,7 +34,8 @@ struct BoxColliderGpuPackage
 
 struct CollisionPairGpuPackage
 {
-	glm::vec4 const &operator[](int boxIdx) const { return collisionPairs[boxIdx]; }
+	glm::ivec4 const &operator[](int boxIdx) const { return collisionPairs[boxIdx]; }
+	glm::ivec4 &operator[](int boxIdx) { return collisionPairs[boxIdx]; }
 
 	glm::ivec4 misc{};
 	glm::ivec4 collisionPairs[2 * cMaxObjectCount]{};

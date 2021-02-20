@@ -117,7 +117,7 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 
 	GLuint subroutineIdx = 0;
 
-	//// SORT ON X-AXIS
+	// SORT ON X-AXIS
 	//currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
 	//glUseProgram(currProgID);
 
@@ -155,7 +155,6 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
 	glDispatchComputeIndirect(0);
-	GLsync sapSyncObj = oglutils::lock();
 
 	// SORT ON Y-AXIS
 	//currProgID = mComputeProgramIDContainer[P3_ODD_EVEN_SORT];
@@ -195,12 +194,7 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepY");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
 
-	oglutils::wait(sapSyncObj);
-
 	glDispatchComputeIndirect(0);
-
-	sapSyncObj = oglutils::lock();
-
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	//// SORT ON Z-AXIS
@@ -240,8 +234,6 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 
 	subroutineIdx = glGetSubroutineIndex(currProgID, GL_COMPUTE_SHADER, "sweepZ");
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutineIdx);
-
-	oglutils::wait(sapSyncObj);
 
 	glDispatchComputeIndirect(0);
 

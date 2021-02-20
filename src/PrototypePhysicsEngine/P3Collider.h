@@ -96,6 +96,8 @@ struct P3BoxCollider
 		}
 	}
 
+	glm::vec4 const &operator[](int i) const { return mVertices[i]; }
+
 	glm::vec4 mVertices[cBoxColliderVertCount] =
 	{
 		glm::vec4{ -1.0f,  1.0f,  1.0f,  1.0f }, // 0

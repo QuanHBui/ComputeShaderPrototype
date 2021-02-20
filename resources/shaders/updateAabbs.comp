@@ -50,22 +50,17 @@ void main()
 	minX = minY = minZ = POS_INF_32_BIT_FLOAT;
 	maxX = maxY = maxZ = NEG_INF_32_BIT_FLOAT;
 
-	vec3 vertex = vec3(0.0f, 0.0f, 0.0f);
-
 	// Go through all vertices
 	for (int i = 0; i < NUM_COLLIDER_VERTS; ++i)
 	{
-		// Go through each dimension
-		vertex = boxCollider.vertices[i].xyz;
+		minX = min(minX, boxCollider.vertices[i].x);
+		maxX = max(maxX, boxCollider.vertices[i].x);
 
-		minX = min(minX, vertex.x);
-		maxX = max(maxX, vertex.x);
+		minY = min(minY, boxCollider.vertices[i].y);
+		maxY = max(maxY, boxCollider.vertices[i].y);
 
-		minY = min(minY, vertex.y);
-		maxY = max(maxY, vertex.y);
-
-		minZ = min(minZ, vertex.z);
-		maxZ = max(maxZ, vertex.z);
+		minZ = min(minZ, boxCollider.vertices[i].z);
+		maxZ = max(maxZ, boxCollider.vertices[i].z);
 	}
 
 	// Store the results

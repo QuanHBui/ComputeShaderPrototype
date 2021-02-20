@@ -50,9 +50,10 @@ int main()
 		lastFrameTime = currentTime;
 		++numFrames;
 
-		if (currentTime - lastPhysicsTickTime >= fixedPhysicsTickInterval || !physicsTickCount)
+		double realPhysicsTickTime = currentTime - lastPhysicsTickTime;
+		if (realPhysicsTickTime >= fixedPhysicsTickInterval || !physicsTickCount)
 		{
-			pApplication->update(float(fixedPhysicsTickInterval));
+			pApplication->update(float(realPhysicsTickTime));
 			lastPhysicsTickTime = currentTime;
 			++physicsTickCount;
 		}

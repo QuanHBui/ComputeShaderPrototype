@@ -14,3 +14,7 @@ Debug/
 
 # Cmake settings for IDE (Microsoft Visual Studio)
 CMakeSettings.json
+
+# Some build misc stuff
+*.lib
+*.pdb

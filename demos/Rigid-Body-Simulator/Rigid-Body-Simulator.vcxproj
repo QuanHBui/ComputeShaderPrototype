@@ -82,7 +82,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)src;$(SolutionDir)ext\glm;$(SolutionDir)ext\glad\include;$(SolutionDir)ext;$(SolutionDir)ext\GLFW\include;$(SolutionDir)ext\imgui;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Quan\Documents\Thesis\OpenGL-Compute\lib;$(SolutionDir)src;$(SolutionDir)ext\glm;$(SolutionDir)ext\glad\include;$(SolutionDir)ext;$(SolutionDir)ext\GLFW\include;$(SolutionDir)ext\imgui;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)ext\GLFW\lib;$(LibraryPath)</LibraryPath>
     <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
@@ -164,6 +164,7 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\AtomicCounter.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\ComputeProgram.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Collider.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuBroadPhase.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.cpp" />

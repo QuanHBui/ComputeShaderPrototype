@@ -23,13 +23,18 @@ float randf()
 void P3DynamicsWorld::init()
 {
 	mBroadPhase.init();
+	mCpuBroadPhase.init();
 	mNarrowPhase.init(mBroadPhase.getBoxCollidersID(), mBroadPhase.getCollisionPairsID());
 	mConstraintSolver.init();
 }
 
 void P3DynamicsWorld::detectCollisions()
 {
+#ifdef BROAD_PHASE_CPU
+	mCpuBroadPhase.step(mBoxColliderContainer);
+#else
 	mBroadPhase.step(mBoxColliderContainer);
+#endif // BROAD_PHASE_CPU
 
 #ifdef NARROW_PHASE_CPU
 	BoxColliderGpuPackage boxColliderPkg;
@@ -41,11 +46,17 @@ void P3DynamicsWorld::detectCollisions()
 		}
 	}
 
-	mManifoldPkg = P3Sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
+#ifdef BROAD_PHASE_CPU
+	mCpuBroadPhase.getPCollisionPkg()->misc.x;
+	mManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
+#else
+	mManifoldPkg = P3::sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
+#endif // BROAD_PHASE_CPU
+
 #else
 	mNarrowPhase.step();
 	mManifoldPkg = *mNarrowPhase.getPManifoldPkg(); // Warning: Unnecessary copying here
-#endif
+#endif // NARROW_PHASE_CPU
 }
 
 void P3DynamicsWorld::updateMultipleBoxes(float dt)

@@ -3,10 +3,31 @@
 #ifndef P3_ENGINE
 #define P3_ENGINE
 
-#ifndef ATOMIC_COUNTER_H
-#define ATOMIC_COUNTER_H
+#include <array>
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <glad/glad.h>
+#include <glm/gtc/quaternion.hpp>
+
+#ifndef P3_COMMON_H
+#define P3_COMMON_H
+
+constexpr int cBoxColliderFaceCount = 6;
+constexpr int cBoxColliderVertCount = 8;
+constexpr int cMaxContactPointCount = 16;
+constexpr int cMaxColliderCount = 1024;
+constexpr int cMaxObjectCount = 1024;
+
+#endif // P3_COMMON_H
+
+//===========================================================================//
+
+#ifndef ATOMIC_COUNTER_H
+#define ATOMIC_COUNTER_H
 
 class AtomicCounter
 {
@@ -56,9 +77,6 @@ private:
 
 #ifndef BOUNDING_VOLUME_H
 #define BOUNDING_VOLUME_H
-
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 
 enum class BoundingType : uint16_t
 {
@@ -114,8 +132,6 @@ struct Mesh : public BoundingVolume
 #ifndef COMPUTE_PROGRAM_H
 #define COMPUTE_PROGRAM_H
 
-#include <string>
-
 struct DispatchIndirectCommand
 {
 	GLuint numGroupsX;
@@ -131,8 +147,6 @@ GLuint createComputeProgram(std::string const &);
 
 #ifndef OPENGL_UTILS
 #define OPENGL_UTILS
-
-#include <cassert>
 
 namespace oglutils
 {
@@ -170,8 +184,6 @@ namespace oglutils
 
 #ifndef P3_TRANSFORM_H
 #define P3_TRANSFORM_H
-
-#include <glm/gtc/quaternion.hpp>
 
 /**
  * This aims to be used as a component. Should be an upgrade to the other rigid body class
@@ -226,8 +238,6 @@ struct AngularTransform
 
 #ifndef P3_COLLIDER_H
 #define P3_COLLIDER_H
-
-#include <glm/mat4x4.hpp>
 
 constexpr glm::vec4 cInstanceVertices[cBoxColliderVertCount] =
 {
@@ -346,19 +356,6 @@ struct P3BoxCollider
 
 //===========================================================================//
 
-#ifndef P3_COMMON_H
-#define P3_COMMON_H
-
-constexpr int cBoxColliderFaceCount = 6;
-constexpr int cBoxColliderVertCount = 8;
-constexpr int cMaxContactPointCount = 16;
-constexpr int cMaxColliderCount = 1024;
-constexpr int cMaxObjectCount = 1024;
-
-#endif // P3_COMMON_H
-
-//===========================================================================//
-
 #ifndef P3_BROAD_PHASE_COMMON
 #define P3_BROAD_PHASE_COMMON
 
@@ -393,8 +390,6 @@ struct CollisionPairGpuPackage
 
 #ifndef P3_OPENGL_COMPUTE_BROAD_PHASE_H
 #define P3_OPENGL_COMPUTE_BROAD_PHASE_H
-
-#include <array>
 
 constexpr int cBroadPhaseComputeProgramCount = 5;
 constexpr GLsizei cBroadPhaseSsboCount = 3;
@@ -512,8 +507,6 @@ ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &, const CollisionPairGpuPa
 constexpr uint16_t cNarrowPhaseComputeProgramCount = 1u;
 constexpr GLsizei cNarrowPhaseSsboCount = 1u;
 
-struct BoundingVolume;
-struct ManifoldGpuPackage;
 
 class P3OpenGLComputeNarrowPhase
 {
@@ -558,7 +551,7 @@ private:
 	std::unordered_map<Buffer, GLuint> mSsboIDs{};
 
 	AtomicCounter mAtomicCounter{};
-	ManifoldGpuPackage *mpManifoldPkg; // Stores the results from last physics tick
+	ManifoldGpuPackage *mpManifoldPkg = nullptr; // Stores the results from last physics tick
 };
 
 #endif // P3_OPENGL_COMPUTE_NARROW_PHASE_H
@@ -567,8 +560,6 @@ private:
 
 #ifndef P3_CONSTRAINT_SOLVER
 #define P3_CONSTRAINT_SOLVER
-
-#include <vector>
 
 struct ManifoldGpuPackage;
 
@@ -641,9 +632,6 @@ class P3Integrator
 
 #ifndef P3_DYNAMICS_WORLD_H
 #define P3_DYNAMICS_WORLD_H
-
-#include <unordered_map>
-#include <memory>
 
 #define NARROW_PHASE_CPU
 

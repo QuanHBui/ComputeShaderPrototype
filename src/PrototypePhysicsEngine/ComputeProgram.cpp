@@ -6,6 +6,8 @@
 #include "GLSL.h"
 #include "OpenGLUtils.h"
 
+//#define COMPILE_STATIC_LIB
+
 // When you don't care about elegance anymore
 namespace shadersource
 {
@@ -39,7 +41,7 @@ layout(std430, binding = 1) writeonly buffer out_data
 	vec4 maxCoords[MAX_NUM_COLLIDERS];
 };
 
-uniform uint currNumColliders; a
+uniform uint currNumColliders;
 
 void main()
 {
@@ -895,7 +897,8 @@ GLuint createComputeProgram(std::string const &shaderName)
 	const char *shader;
 	std::string shaderSource;
 
-	if (shaderName == "../resources/shaders/updateAabbs.comp")
+#ifdef COMPILE_STATIC_LIB
+	if (shaderName == "../resources/shaders/updateAABBs.comp")
 	{
 		shader = shadersource::updateAabbs;
 	}
@@ -916,6 +919,10 @@ GLuint createComputeProgram(std::string const &shaderName)
 		shaderSource = oglutils::readFileAsString(shaderName);
 		shader = shaderSource.c_str();
 	}
+#else
+	shaderSource = oglutils::readFileAsString(shaderName);
+	shader = shaderSource.c_str();
+#endif
 
 	GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(computeShader, 1, &shader, nullptr);

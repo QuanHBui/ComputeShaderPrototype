@@ -21,7 +21,8 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
-#define NARROW_PHASE_CPU
+//#define BROAD_PHASE_CPU
+//#define NARROW_PHASE_CPU
 
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
 
@@ -91,7 +92,11 @@ public:
 
 	CollisionPairGpuPackage const *getPCollisionPairPkg() const
 	{
+#ifdef BROAD_PHASE_CPU
+		return mCpuBroadPhase.getPCollisionPkg();
+#else
 		return mBroadPhase.getPCollisionPairPkg();
+#endif // BROAD_PHASE_CPU
 	}
 
 	ManifoldGpuPackage const *getPManifoldPkg() const
@@ -100,7 +105,7 @@ public:
 		return &mManifoldPkg;
 #else
 		return mNarrowPhase.getPManifoldPkg();
-#endif
+#endif // NARROW_PHASE_CPU
 	}
 
 	void setGravity(float gravity) { mGravity = gravity; }
@@ -138,7 +143,10 @@ private:
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 	P3OpenGLComputeBroadPhase mBroadPhase;
+	P3::CpuBroadPhase mCpuBroadPhase;
+
 	P3OpenGLComputeNarrowPhase mNarrowPhase;
+
 	P3ConstraintSolver mConstraintSolver; // Produces forces to make sure things don't phase past each other
 	P3Integrator mIntegrator;             // Actually integrates the force vector and apply to linear transform
 };

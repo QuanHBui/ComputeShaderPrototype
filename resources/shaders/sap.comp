@@ -20,8 +20,6 @@ layout(std430, binding = 2) volatile buffer out_collision_pairs_data
 
 layout(binding = 0) uniform atomic_uint nextAvailableIdx;
 
-shared ivec2 localCollisionPairs[2 * MAX_NUM_COLLIDERS];
-
 uniform uint currNumColliders;
 
 subroutine void sweep(uint i, uint j);
@@ -46,13 +44,13 @@ void sweepY(uint i, uint j)
 	// Look through the previous collision pair buffer
 	for (int collisionPairIdx = 0; collisionPairIdx < 2 * currNumColliders; ++collisionPairIdx)
 	{
-		if (((int(minCoords[i].w) == localCollisionPairs[collisionPairIdx].x && int(minCoords[j].w) == localCollisionPairs[collisionPairIdx].y) ||
-			 (int(minCoords[j].w) == localCollisionPairs[collisionPairIdx].x && int(minCoords[i].w) == localCollisionPairs[collisionPairIdx].y)) &&
+		if (((int(minCoords[i].w) == collisionPairs[collisionPairIdx].x && int(minCoords[j].w) == collisionPairs[collisionPairIdx].y) ||
+			 (int(minCoords[j].w) == collisionPairs[collisionPairIdx].x && int(minCoords[i].w) == collisionPairs[collisionPairIdx].y)) &&
 			  minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
-			collisionPairs[availableIdx].x = int(minCoords[i].w); // w comp stores object ID
-			collisionPairs[availableIdx].y = int(minCoords[j].w);
+			collisionPairs[availableIdx].z = int(minCoords[i].w); // w comp stores object ID
+			collisionPairs[availableIdx].w = int(minCoords[j].w);
 
 			break;
 		}
@@ -64,8 +62,8 @@ void sweepZ(uint i, uint j)
 {
 	for (int collisionPairIdx = 0; collisionPairIdx < 2 * currNumColliders; ++collisionPairIdx)
 	{
-		if (((int(minCoords[i].w) == localCollisionPairs[collisionPairIdx].x && int(minCoords[j].w) == localCollisionPairs[collisionPairIdx].y) ||
-			 (int(minCoords[j].w) == localCollisionPairs[collisionPairIdx].x && int(minCoords[i].w) == localCollisionPairs[collisionPairIdx].y)) &&
+		if (((int(minCoords[i].w) == collisionPairs[collisionPairIdx].z && int(minCoords[j].w) == collisionPairs[collisionPairIdx].w) ||
+			 (int(minCoords[j].w) == collisionPairs[collisionPairIdx].z && int(minCoords[i].w) == collisionPairs[collisionPairIdx].w)) &&
 			  minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
@@ -108,29 +106,11 @@ void sweepZ(uint i, uint j)
 
 void main()
 {
-	uint collisionPairIdx = 2 * gl_LocalInvocationID.x;
-
-	// Reset collision pair buffer
-	for ( uint collisionPairCycle = collisionPairIdx
-		; collisionPairCycle < collisionPairIdx + 2u && collisionPairCycle < 2 * MAX_NUM_COLLIDERS
-		; ++collisionPairCycle )
-	{
-		localCollisionPairs[collisionPairCycle] = collisionPairs[collisionPairCycle].xy;
-
-		// Reset
-		collisionPairs[collisionPairCycle] = ivec4(-5, -5, -5, -5);
-	}
-
-	barrier(); //=============================================================
-	memoryBarrierShared();
-	memoryBarrier();
-
 	uint currObjectIdx = gl_LocalInvocationID.x;
 
-	// Still loop through pretty much all objects in the world
 	for (uint nextObjectIdx = 0u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
 	{
-		if (nextObjectIdx == currObjectIdx) continue;
+		if (currObjectIdx == nextObjectIdx) continue;
 
 		sweepAxis(currObjectIdx, nextObjectIdx); // Collision pair buffer got updated.
 	}

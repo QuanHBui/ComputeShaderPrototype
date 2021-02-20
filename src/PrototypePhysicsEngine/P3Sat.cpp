@@ -518,7 +518,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 }
 
 // The size of the collisionPairs buffer can be sent here for a more elegant solution.
-ManifoldGpuPackage P3Sat(BoxColliderGpuPackage const &boxColliderPkg, const CollisionPairGpuPackage *pCollisionPairPkg)
+ManifoldGpuPackage P3::sat(BoxColliderGpuPackage const &boxColliderPkg, const CollisionPairGpuPackage *pCollisionPairPkg)
 {
 	ManifoldGpuPackage manifoldPkg;
 	int availableIdx = 0;
