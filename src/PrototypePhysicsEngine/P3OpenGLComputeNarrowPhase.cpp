@@ -63,11 +63,8 @@ void P3OpenGLComputeNarrowPhase::step()
 	mAtomicCounter.bindTo(0);
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
-	GLsync syncObj = oglutils::lock();
+	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
 
-	// Wait till the manifold buffer done being used by the dispatch call, just bc it's coherent
-	//  doesn't mean ALL of its data are the most up-to-date.
-	oglutils::wait(syncObj);
 	mpManifoldPkg->misc.x = mAtomicCounter.get();
 
 	mAtomicCounter.reset();

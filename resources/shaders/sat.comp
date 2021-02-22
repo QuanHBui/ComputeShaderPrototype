@@ -654,8 +654,8 @@ void separatingAxisTest(uint collisionPairIdx)
 	FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
 	if (faceQueryB.largestDist > 0.0f) return;
 
-	EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
-	if (edgeQuery.largestDist > 0.0f) return;
+//	EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
+//	if (edgeQuery.largestDist > 0.0f) return;
 
 	// If we get to here, there's no separating axis, the 2 boxes must overlap.
 	// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist
@@ -665,17 +665,20 @@ void separatingAxisTest(uint collisionPairIdx)
 
 	// Apply a bias to prefer face contact over edge contact in the case when the separations returned
 	//  from the face query and edge query are the same.
-	if (   queryBias * faceQueryA.largestDist > edgeQuery.largestDist
-		&& queryBias * faceQueryB.largestDist > edgeQuery.largestDist )
-	{
-		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
-	}
-	else
-	{
-		manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
-	}
+//	if (   queryBias * faceQueryA.largestDist > edgeQuery.largestDist
+//		&& queryBias * faceQueryB.largestDist > edgeQuery.largestDist )
+//	{
+//		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
+//	}
+//	else
+//	{
+//		manifold = createEdgeContact(edgeQuery, boxAIdx, boxBIdx);
+//	}
+
+	manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
 	uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+	memoryBarrierAtomicCounter();
 	manifolds[availableIdx] = manifold;
 }
 
@@ -684,7 +687,7 @@ void main()
 {
 	uint collisionPairIdx = gl_GlobalInvocationID.x;
 
-	if (collisionPairs[collisionPairIdx].x >= 0)
+	if (collisionPairIdx < collisionPairMisc.x)
 	{
 		separatingAxisTest(collisionPairIdx);
 	}

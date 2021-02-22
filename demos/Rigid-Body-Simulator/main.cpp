@@ -36,7 +36,7 @@ int main()
 	int    numFrames           = 0;
 
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 75.0;
+	double fixedPhysicsTickInterval = 1.0 / 65.0;
 	int physicsTickCount = 0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop

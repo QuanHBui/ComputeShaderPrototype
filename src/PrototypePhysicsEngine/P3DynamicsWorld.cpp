@@ -33,7 +33,7 @@ void P3DynamicsWorld::detectCollisions()
 #ifdef BROAD_PHASE_CPU
 	mCpuBroadPhase.step(mBoxColliderContainer);
 #else
-	mBroadPhase.step(mBoxColliderContainer);
+	mBroadPhase.betterStep(mBoxColliderContainer);
 #endif // BROAD_PHASE_CPU
 
 #ifdef NARROW_PHASE_CPU

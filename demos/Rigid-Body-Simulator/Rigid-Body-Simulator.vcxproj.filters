@@ -250,5 +250,8 @@
     <None Include="..\..\resources\shaders\debug.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\resources\shaders\broadPhase.comp">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

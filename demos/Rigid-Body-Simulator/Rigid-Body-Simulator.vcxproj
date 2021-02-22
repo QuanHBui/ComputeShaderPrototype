@@ -215,6 +215,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp" />
+    <None Include="..\..\resources\shaders\broadPhase.comp" />
     <None Include="..\..\resources\shaders\buildParallelLinearBvh.comp" />
     <None Include="..\..\resources\shaders\debug.frag" />
     <None Include="..\..\resources\shaders\debug.vert" />

@@ -1,0 +1,283 @@
+#version 430
+
+#define MAX_NUM_COLLIDERS 1024
+#define NUM_COLLIDER_VERTS 8
+
+// source: https://www.khronos.org/opengl/wiki/Small_Float_Formats
+#define NEG_INF_32_BIT_FLOAT -3.4028237e35
+#define POS_INF_32_BIT_FLOAT 3.4028237e35
+
+precision highp float;
+
+layout(local_size_x = MAX_NUM_COLLIDERS) in;
+
+struct BoxCollider
+{
+	vec4 vertices[NUM_COLLIDER_VERTS];
+};
+
+layout(std430, binding = 0) readonly buffer in_data
+{
+	ivec4 colliderMisc;
+	BoxCollider boxColliders[];
+};
+
+layout(std430, binding = 1) coherent buffer in_sorted_data
+{
+	vec4 minCoords[MAX_NUM_COLLIDERS];
+	vec4 maxCoords[MAX_NUM_COLLIDERS];
+};
+
+layout(std430, binding = 2) coherent buffer out_collision_pairs_data
+{
+	ivec4 collisionPairMisc;
+	ivec4 collisionPairs[2 * MAX_NUM_COLLIDERS];
+};
+
+layout(binding = 0) uniform atomic_uint nextAvailableIdx_1;
+layout(binding = 1) uniform atomic_uint nextAvailableIdx_2;
+layout(binding = 2) uniform atomic_uint nextAvailableIdx_3;
+
+shared int boxIdxToAabbIdx[MAX_NUM_COLLIDERS];
+
+uniform uint currNumColliders;
+
+void syncStorageBuffer()
+{
+	barrier();
+	memoryBarrierBuffer();
+}
+
+void swap(uint i, uint j)
+{
+	// We are swapping info in index i and j.
+	vec4 temp = minCoords[i];
+
+	boxIdxToAabbIdx[int(minCoords[i].w)] = int(j);
+	boxIdxToAabbIdx[int(minCoords[j].w)] = int(i);
+
+	minCoords[i] = minCoords[j];
+	minCoords[j] = temp;
+
+	temp = maxCoords[i];
+	maxCoords[i] = maxCoords[j];
+	maxCoords[j] = temp;
+
+	memoryBarrierShared();
+}
+
+void sweepX()
+{
+	// Check for collision on the x-axis
+	int i = int(gl_LocalInvocationID.x);
+
+	for (int j = 0; j < currNumColliders; ++j)
+	{
+		if (i == j) continue;
+
+		if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].x)
+		{
+			uint availableIdx = atomicCounterIncrement(nextAvailableIdx_1);
+			memoryBarrierAtomicCounter();
+
+			collisionPairs[availableIdx].x = int(minCoords[i].w); // w comp stores object ID
+			collisionPairs[availableIdx].y = int(minCoords[j].w);
+		}
+	}
+
+	syncStorageBuffer();
+}
+
+void sweepY()
+{
+	uint collisionPairIdx = gl_LocalInvocationID.x;
+
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1)) return;
+
+	// Look through the previous collision pair buffer
+	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].x;
+	int boxColliderIdx_2 = collisionPairs[collisionPairIdx].y;
+
+	int i = boxIdxToAabbIdx[boxColliderIdx_1];
+	int j = boxIdxToAabbIdx[boxColliderIdx_2];
+
+	if (minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx_2);
+		memoryBarrierAtomicCounter();
+
+		collisionPairs[availableIdx].z = int(minCoords[i].w); // w comp stores object ID
+		collisionPairs[availableIdx].w = int(minCoords[j].w);
+	}
+
+	syncStorageBuffer();
+}
+
+void sweepZ()
+{
+	uint collisionPairIdx = gl_LocalInvocationID.x;
+
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2)) return;
+
+	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].z;
+	int boxColliderIdx_2 = collisionPairs[collisionPairIdx].w;
+
+	int i = boxIdxToAabbIdx[boxColliderIdx_1];
+	int j = boxIdxToAabbIdx[boxColliderIdx_2];
+
+	if (minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx_3);
+		memoryBarrierAtomicCounter();
+
+		// Sort ID for consistency
+		if (minCoords[i].w < minCoords[j].w)
+		{
+			collisionPairs[availableIdx].x = int(minCoords[j].w); // w comp stores object ID
+			collisionPairs[availableIdx].y = int(minCoords[i].w);
+		}
+		else
+		{
+			collisionPairs[availableIdx].x = int(minCoords[i].w);
+			collisionPairs[availableIdx].y = int(minCoords[j].w);
+		}
+	}
+
+	syncStorageBuffer();
+}
+
+void main()
+{
+	// Update AABB
+	uint colliderIdx = gl_LocalInvocationID.x;
+
+	if (colliderIdx >= currNumColliders)
+	{
+		minCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -2.0f);
+		maxCoords[colliderIdx] = vec4(-1.0f, -1.0f, -1.0f, -2.0f);
+	}
+	else
+	{
+		BoxCollider boxCollider = boxColliders[colliderIdx];
+
+		float minX, minY, minZ;
+		float maxX, maxY, maxZ;
+
+		minX = minY = minZ = POS_INF_32_BIT_FLOAT;
+		maxX = maxY = maxZ = NEG_INF_32_BIT_FLOAT;
+
+		// Go through all vertices
+		for (int i = 0; i < NUM_COLLIDER_VERTS; ++i)
+		{
+			minX = min(minX, boxCollider.vertices[i].x);
+			maxX = max(maxX, boxCollider.vertices[i].x);
+
+			minY = min(minY, boxCollider.vertices[i].y);
+			maxY = max(maxY, boxCollider.vertices[i].y);
+
+			minZ = min(minZ, boxCollider.vertices[i].z);
+			maxZ = max(maxZ, boxCollider.vertices[i].z);
+		}
+
+		// Store the results
+		minCoords[colliderIdx] = vec4(minX, minY, minZ, colliderIdx); // Store the entity unique ID in the w comp
+		maxCoords[colliderIdx] = vec4(maxX, maxY, maxZ, colliderIdx);
+
+		boxIdxToAabbIdx[colliderIdx] = int(colliderIdx);
+	}
+
+	syncStorageBuffer(); //=======================================================//
+
+	// Sort x
+	bool isEven = false;
+	for (int i = 0; i < 2 * currNumColliders; ++i)
+	{
+		// Figure what index pair we are looking at
+		uint j = gl_LocalInvocationID.x;
+		uint k = gl_LocalInvocationID.x + 1;
+
+		// If either index is bigger than the buffer size, we let the compute unit idle
+		if (j >= currNumColliders || k >= currNumColliders) continue;
+
+		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+		// If we are doing odd, the starting index must be even
+		if (isEven == false && j % 2 != 0) continue;
+
+		// If we are doing even, the starting index must be odd
+		else if (isEven == true && j % 2 == 0) continue;
+
+		if (minCoords[j].x > minCoords[k].x)
+		{
+			swap(j, k);
+		}
+
+		isEven = !isEven;
+		syncStorageBuffer(); //=======================================================//
+	}
+
+	barrier(); //=======================================================//
+
+	sweepX();
+
+	// Sort y
+	isEven = false;
+	for (int i = 0; i < currNumColliders; ++i)
+	{
+		// Figure what index pair we are looking at
+		uint j = gl_LocalInvocationID.x;
+		uint k = gl_LocalInvocationID.x + 1;
+
+		// If either index is bigger than the buffer size, we let the compute unit idle
+		if (j >= currNumColliders || k >= currNumColliders) continue;
+
+		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+		// If we are doing odd, the starting index must be even
+		if (isEven == false && j % 2 != 0) continue;
+
+		// If we are doing even, the starting index must be odd
+		else if (isEven == true && j % 2 == 0) continue;
+
+		if (minCoords[j].y > minCoords[k].y)
+		{
+			swap(j, k);
+		}
+
+		isEven = !isEven;
+		syncStorageBuffer(); //=======================================================//
+	}
+
+	barrier(); //=======================================================//
+
+	sweepY();
+
+	// Sort z
+	isEven = false;
+	for (int i = 0; i < currNumColliders; ++i)
+	{
+		// Figure what index pair we are looking at
+		uint j = gl_LocalInvocationID.x;
+		uint k = gl_LocalInvocationID.x + 1;
+
+		// If either index is bigger than the buffer size, we let the compute unit idle
+		if (j >= currNumColliders || k >= currNumColliders) continue;
+
+		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+		// If we are doing odd, the starting index must be even
+		if (isEven == false && j % 2 != 0) continue;
+
+		// If we are doing even, the starting index must be odd
+		else if (isEven == true && j % 2 == 0) continue;
+
+		if (minCoords[j].z > minCoords[k].z)
+		{
+			swap(j, k);
+		}
+
+		isEven = !isEven;
+		syncStorageBuffer(); //=======================================================//
+	}
+
+	barrier(); //=======================================================//
+
+	sweepZ();
+}

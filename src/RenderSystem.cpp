@@ -39,11 +39,13 @@ void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionP
 	{
 		unsigned int redOrNo = 0u;
 		// Check collision pair list if this mesh has collided
-		for (glm::ivec4 const &collisonPair : collisionPairs->collisionPairs)
+		for (int i = 0; i < collisionPairs->misc.x; ++i)
 		{
-			if (collisonPair.x < 0.0) break;
+			glm::ivec4 const &collisionPair = (*collisionPairs)[i];
 
-			if (collisonPair.x == objectIdx || collisonPair.y == objectIdx)
+			if (collisionPair.x < 0.0) break;
+
+			if (collisionPair.x == objectIdx || collisionPair.y == objectIdx)
 			{
 				redOrNo = 1u;
 

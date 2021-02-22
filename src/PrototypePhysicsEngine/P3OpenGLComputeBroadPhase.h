@@ -22,6 +22,7 @@ public:
 
 	//--------------------- Main proccesses --------------------------//
 	void step(std::vector<P3BoxCollider> const &);
+	void betterStep(std::vector<P3BoxCollider> const &);
 	//----------------------------------------------------------------//
 
 	GLuint getBoxCollidersID() const { return mSsboIDs[P3_BOX_COLLIDERS]; };
@@ -50,6 +51,7 @@ private:
 		P3_UPDATE_AABBS = 0,
 		P3_ODD_EVEN_SORT,
 		P3_SAP,
+		P3_BROAD_PHASE,
 		P3_ASSIGN_MORTON_CODES,
 		P3_SORT_LEAF_NODES,
 		P3_BUILD_PARALLEL_LINEAR_BVH
@@ -70,8 +72,10 @@ private:
 	GLuint mDispatchIndirectBufferID = 0;
 	DispatchIndirectCommand mDispatchIndirectCommand{ 1, 1, 1 };
 
+	GLuint mUniformLocation = 0;
+
 	//--------------------------------- CPU data ---------------------------------//
-	AtomicCounter mAtomicCounter[3]; // Triple buffering let's go
+	AtomicCounter mAtomicCounters[3]; // Triple buffering let's go
 	AabbGpuPackage mAabbCpuData;
 	BoxColliderGpuPackage *mpBoxColliderPkg = nullptr; // Data streaming to GPU
 	CollisionPairGpuPackage *mpCollisionPairPkg = nullptr;

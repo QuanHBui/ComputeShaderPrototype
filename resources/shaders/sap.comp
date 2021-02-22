@@ -6,13 +6,13 @@ precision highp float;
 
 layout(local_size_x = MAX_NUM_COLLIDERS) in;
 
-layout(std430, binding = 1) volatile buffer in_sorted_data
+layout(std430, binding = 1) coherent buffer in_sorted_data
 {
 	vec4 minCoords[MAX_NUM_COLLIDERS];
 	vec4 maxCoords[MAX_NUM_COLLIDERS];
 };
 
-layout(std430, binding = 2) volatile buffer out_collision_pairs_data
+layout(std430, binding = 2) coherent buffer out_collision_pairs_data
 {
 	ivec4 collisionPairMisc;
 	ivec4 collisionPairs[2 * MAX_NUM_COLLIDERS];
@@ -33,6 +33,7 @@ void sweepX(uint i, uint j)
 	if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].x)
 	{
 		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		memoryBarrierAtomicCounter();
 		collisionPairs[availableIdx].x = int(minCoords[i].w); // w comp stores object ID
 		collisionPairs[availableIdx].y = int(minCoords[j].w);
 	}
@@ -49,6 +50,7 @@ void sweepY(uint i, uint j)
 			  minCoords[i].y < maxCoords[j].y && maxCoords[i].y > minCoords[j].y)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+			memoryBarrierAtomicCounter();
 			collisionPairs[availableIdx].z = int(minCoords[i].w); // w comp stores object ID
 			collisionPairs[availableIdx].w = int(minCoords[j].w);
 
@@ -67,6 +69,7 @@ void sweepZ(uint i, uint j)
 			  minCoords[i].z < maxCoords[j].z && maxCoords[i].z > minCoords[j].z)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+			memoryBarrierAtomicCounter();
 
 			// Sort ID for consistency
 			if (minCoords[i].w < minCoords[j].w)
@@ -85,33 +88,13 @@ void sweepZ(uint i, uint j)
 	}
 }
 
-// void prune()
-// {
-// 	uint aabbIdx = gl_LocalInvocationID.x;
-
-// 	if (aabbIdx >= currNumColliders) return;
-
-// 	for ( uint collisionPairIdx = 0
-// 		; collisionPairIdx < atomicCounter(nextAvailableIdx)
-// 		; ++collisionPairIdx )
-// 	{
-// 		if (minCoords[aabbIdx].w < 1000.0f &&
-// 			(collisionPairs[collisionPairIdx].x == minCoords[aabbIdx].w ||
-// 			collisionPairs[collisionPairIdx].y == minCoords[aabbIdx].w))
-// 		{
-// 			minCoords[aabbIdx].w += 1000.0f; // Update the AABB list
-// 		}
-// 	}
-// }
-
 void main()
 {
+	// Iterate through each object in AABB list
 	uint currObjectIdx = gl_LocalInvocationID.x;
 
-	for (uint nextObjectIdx = 0u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
+	for (uint nextObjectIdx = currObjectIdx + 1u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
 	{
-		if (currObjectIdx == nextObjectIdx) continue;
-
 		sweepAxis(currObjectIdx, nextObjectIdx); // Collision pair buffer got updated.
 	}
 
