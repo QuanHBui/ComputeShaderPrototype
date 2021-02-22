@@ -36,7 +36,7 @@ int main()
 	int    numFrames           = 0;
 
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 65.0;
+	double fixedPhysicsTickInterval = 1.0 / 144.0;
 	int physicsTickCount = 0;
 	// Semi-fix timestep for physics simulation
 	// Render and physics loop
@@ -50,10 +50,10 @@ int main()
 		lastFrameTime = currentTime;
 		++numFrames;
 
-		double realPhysicsTickTime = currentTime - lastPhysicsTickTime;
-		if (realPhysicsTickTime >= fixedPhysicsTickInterval || !physicsTickCount)
+		double realPhysicsTickInterval = currentTime - lastPhysicsTickTime;
+		if (realPhysicsTickInterval >= fixedPhysicsTickInterval || !physicsTickCount)
 		{
-			pApplication->update(float(realPhysicsTickTime));
+			pApplication->update(float(realPhysicsTickInterval));
 			lastPhysicsTickTime = currentTime;
 			++physicsTickCount;
 		}

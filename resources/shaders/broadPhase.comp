@@ -71,6 +71,8 @@ void sweepX()
 	// Check for collision on the x-axis
 	int i = int(gl_LocalInvocationID.x);
 
+	if (i >= currNumColliders) return;
+
 	for (int j = 0; j < currNumColliders; ++j)
 	{
 		if (i == j) continue;
