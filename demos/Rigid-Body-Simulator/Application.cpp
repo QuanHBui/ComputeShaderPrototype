@@ -97,7 +97,7 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3( 0.5f, 6.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3( 0.5f, 5.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
 
 		for (int i = 0; i < 3; ++i)
 		{
@@ -107,21 +107,25 @@ void Application::initPhysicsWorld(Demo demo)
 		mPhysicsWorld.addStaticBody(glm::vec3( 2.0f, -2.0f, 5.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(-4.0f, -7.0f, 5.0f));
 
+		// Left wall
 		for (int j = 0; j < 20; ++j)
 		{
 			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f , -15.0f, 5.0f));
 		}
 
+		// Floor
 		for (int k = 0; k < 10; ++k)
 		{
 			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f, -13.0f + float(k) * 2.0f, 5.0f));
 		}
 
+		// Right wall
 		for (int l = 0; l < 10; ++l)
 		{
 			mPhysicsWorld.addStaticBody(glm::vec3(18.0f, -13.0f + float(l) * 2.0f, 5.0f));
 		}
 
+		// Ceiling
 		for (int m = 0; m < 20; ++m)
 		{
 			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(m) * 2.0f, 7.0f, 5.0f));

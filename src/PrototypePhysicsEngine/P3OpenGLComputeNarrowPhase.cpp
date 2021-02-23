@@ -20,7 +20,7 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 {
 	// BoxCollider and CollisionPair buffers should already on the GPU from broadphase already.
 	// Only need to allocate buffer for the manifolds
-	GLuint temp[] = { 0, 0, 0 };
+	GLuint temp[] = { 0, 0 };
 	glGenBuffers(2, temp);
 
 	mSsboIDs[Buffer::MANIFOLD]     = temp[0];
@@ -64,6 +64,8 @@ void P3OpenGLComputeNarrowPhase::step()
 
 	glDispatchCompute(GLuint(1u), GLuint(1u), GLuint(1u));
 	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
+
+	glFinish();
 
 	mpManifoldPkg->misc.x = mAtomicCounter.get();
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 
 #include "P3Common.h"
 
@@ -9,7 +10,7 @@ namespace P3
 {
 CollisionPairGpuPackage *CpuBroadPhase::step(std::vector<P3BoxCollider> const &boxColliderContainer)
 {
-	std::vector<Aabb> aabbContainer;
+	std::map<int, Aabb> aabbMap;
 
 	// Update Aabbs
 	for (int i = 0; i < boxColliderContainer.size(); ++i)
@@ -35,108 +36,89 @@ CollisionPairGpuPackage *CpuBroadPhase::step(std::vector<P3BoxCollider> const &b
 			maxZ = std::max(maxZ, boxCollider[j].z);
 		}
 
-		// Store the results
-		aabbContainer.emplace_back(glm::vec4(minX, minY, minZ, i), glm::vec4(maxX, maxY, maxZ, i));
+		// Store the results - maybe we don't have to recalculate every frame
+		aabbMap[i] = Aabb(glm::vec4(minX, minY, minZ, i), glm::vec4(maxX, maxY, maxZ, i));
 	}
 
-	// Sorting in x
-	std::sort(aabbContainer.begin(), aabbContainer.end(), [](Aabb const &a, Aabb const &b)
-		{
-			return a.mMinCoord.x < b.mMinCoord.x;
-		}
-	);
+	// Sorting in x - PROBLEM IS YOU CAN'T REALLY SORT A MAP, THERE ARE HACKY WAYS TO DO IT THOUGH.
+	//std::sort(aabbMap.begin(), aabbMap.end(), [](std::pair<int, Aabb> const &a, std::pair<int, Aabb> const &b)
+	//	{
+	//		return a.second.mMinCoord.x < b.second.mMinCoord.x;
+	//	}
+	//);
 
 	// Sweep
 	int sweepXIdx = 0;
-	for (int i = 0; i < aabbContainer.size(); ++i)
+	for (auto i = aabbMap.begin(); i != aabbMap.end(); ++i)
 	{
-		for (int j = 0; j < aabbContainer.size(); ++j)
+		for (auto j = aabbMap.begin(); j != aabbMap.end(); ++j)
 		{
 			if (i == j) continue;
 
-			if (   aabbContainer[i].mMinCoord.x < aabbContainer[j].mMaxCoord.x
-				&& aabbContainer[i].mMaxCoord.x > aabbContainer[j].mMinCoord.x )
+			if (i->second.mMinCoord.x < j->second.mMaxCoord.x && i->second.mMaxCoord.x > j->second.mMinCoord.x)
 			{
 				// For sweep x axis, we use x and y comps of collisionPkg to store the 2 indices.
-				(*mpCollisionPkg)[sweepXIdx++].x = int(aabbContainer[i].mMinCoord.w); // w comp stores object ID
-				(*mpCollisionPkg)[sweepXIdx++].y = int(aabbContainer[j].mMinCoord.w);
+				(*mpCollisionPairPkg)[sweepXIdx].x = i->first; // w comp stores object ID
+				(*mpCollisionPairPkg)[sweepXIdx++].y = j->first;
 			}
 		}
 	}
 
-
 	// Sort in y
-	std::sort(aabbContainer.begin(), aabbContainer.end(), [](Aabb const &a, Aabb const &b)
-		{
-			return a.mMinCoord.y < b.mMinCoord.y;
-		}
-	);
+	//std::sort(aabbMap.begin(), aabbMap.end(), [](Aabb const &a, Aabb const &b)
+	//	{
+	//		return a.mMinCoord.y < b.mMinCoord.y;
+	//	}
+	//);
 
 	// Sweep
 	int sweepYIdx = 0;
-	for (int i = 0; i < aabbContainer.size(); ++i)
+	for (int collisionPairIdx = 0; collisionPairIdx < sweepXIdx; ++collisionPairIdx)
 	{
-		for (int j = 0; j < aabbContainer.size(); ++j)
+		Aabb aabb_1 = aabbMap[(*mpCollisionPairPkg)[collisionPairIdx].x];
+		Aabb aabb_2 = aabbMap[(*mpCollisionPairPkg)[collisionPairIdx].y];
+
+		if (aabb_1.mMinCoord.y < aabb_2.mMaxCoord.y && aabb_1.mMaxCoord.y > aabb_2.mMinCoord.y)
 		{
-			if (i == j) continue;
-
-			for (int collisionPairIdx = 0; collisionPairIdx < sweepXIdx; ++collisionPairIdx)
-			{
-				if ((  (int(aabbContainer[i].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].x && int(aabbContainer[j].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].y)
-					|| (int(aabbContainer[j].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].x && int(aabbContainer[i].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].y))
-					&&  aabbContainer[i].mMinCoord.y < aabbContainer[j].mMaxCoord.y && aabbContainer[i].mMaxCoord.y > aabbContainer[j].mMinCoord.y)
-				{
-					// For sweep y axis, we use z and w comps of collisionPkg to store the 2 indices.
-					(*mpCollisionPkg)[sweepYIdx++].z = int(aabbContainer[i].mMinCoord.w); // w comp stores object ID
-					(*mpCollisionPkg)[sweepYIdx++].w = int(aabbContainer[j].mMinCoord.w);
-
-					break;
-				}
-			}
+			// For sweep y axis, we use z and w comps of collisionPkg to store the 2 indices.
+			(*mpCollisionPairPkg)[sweepYIdx].z = int(aabb_1.mMinCoord.w); // w comp stores object ID
+			(*mpCollisionPairPkg)[sweepYIdx++].w = int(aabb_2.mMinCoord.w);
 		}
 	}
 
 	// Sort in z
-	std::sort(aabbContainer.begin(), aabbContainer.end(), [](Aabb const &a, Aabb const &b)
-		{
-			return a.mMinCoord.z < b.mMinCoord.z;
-		}
-	);
+	//std::sort(aabbMap.begin(), aabbMap.end(), [](Aabb const &a, Aabb const &b)
+	//	{
+	//		return a.mMinCoord.z < b.mMinCoord.z;
+	//	}
+	//);
 
 	// Sweep
 	int sweepZIdx = 0;
-	for (int i = 0; i < aabbContainer.size(); ++i)
+	for (int collisionPairIdx = 0; collisionPairIdx < sweepYIdx; ++collisionPairIdx)
 	{
-		for (int j = 0; j < aabbContainer.size(); ++j)
-		{
-			if (i == j) continue;
+		Aabb aabb_1 = aabbMap[(*mpCollisionPairPkg)[collisionPairIdx].z];
+		Aabb aabb_2 = aabbMap[(*mpCollisionPairPkg)[collisionPairIdx].w];
 
-			for (int collisionPairIdx = 0; collisionPairIdx < sweepXIdx; ++collisionPairIdx)
+		if (aabb_1.mMinCoord.z < aabb_2.mMaxCoord.z && aabb_1.mMaxCoord.z > aabb_2.mMinCoord.z)
+		{
+			// Finally, for sweep z axis, we back use x and y comps of collisionPkg to store the 2 indices.
+			// Also sort ID for consistency
+			if (aabb_1.mMinCoord.w < aabb_2.mMinCoord.w)
 			{
-				if ((  (int(aabbContainer[i].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].z && int(aabbContainer[j].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].w)
-					|| (int(aabbContainer[j].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].z && int(aabbContainer[i].mMinCoord.w) == (*mpCollisionPkg)[collisionPairIdx].w))
-					&&  aabbContainer[i].mMinCoord.z < aabbContainer[j].mMaxCoord.z && aabbContainer[i].mMaxCoord.z > aabbContainer[j].mMinCoord.z)
-				{
-					// Finally, for sweep z axis, we back use x and y comps of collisionPkg to store the 2 indices.
-					// Also sort ID for consistency
-					if (aabbContainer[i].mMinCoord.w < aabbContainer[j].mMinCoord.w)
-					{
-						(*mpCollisionPkg)[sweepZIdx++].x = int(aabbContainer[j].mMinCoord.w); // w comp stores object ID
-						(*mpCollisionPkg)[sweepZIdx++].y = int(aabbContainer[i].mMinCoord.w);
-					}
-					else
-					{
-						(*mpCollisionPkg)[sweepZIdx++].x = int(aabbContainer[i].mMinCoord.w); // w comp stores object ID
-						(*mpCollisionPkg)[sweepZIdx++].y = int(aabbContainer[j].mMinCoord.w);
-					}
-					break;
-				}
+				(*mpCollisionPairPkg)[sweepZIdx].x = int(aabb_2.mMinCoord.w); // w comp stores object ID
+				(*mpCollisionPairPkg)[sweepZIdx++].y = int(aabb_1.mMinCoord.w);
+			}
+			else
+			{
+				(*mpCollisionPairPkg)[sweepZIdx].x = int(aabb_1.mMinCoord.w); // w comp stores object ID
+				(*mpCollisionPairPkg)[sweepZIdx++].y = int(aabb_2.mMinCoord.w);
 			}
 		}
 	}
 
-	mpCollisionPkg->misc.x = sweepZIdx;
+	mpCollisionPairPkg->misc.x = sweepZIdx;
 
-	return mpCollisionPkg;
+	return mpCollisionPairPkg;
 }
 }

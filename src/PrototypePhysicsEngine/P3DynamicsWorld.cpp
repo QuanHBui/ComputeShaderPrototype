@@ -47,15 +47,28 @@ void P3DynamicsWorld::detectCollisions()
 	}
 
 #ifdef BROAD_PHASE_CPU
-	mCpuBroadPhase.getPCollisionPkg()->misc.x;
 	mManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
 #else
 	mManifoldPkg = P3::sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
 #endif // BROAD_PHASE_CPU
 
 #else
+
+#ifdef BROAD_PHASE_CPU
+	BoxColliderGpuPackage boxColliderPkg;
+	for (int i = 0; i < mBoxColliderContainer.size(); ++i)
+	{
+		for (int j = 0; j < cBoxColliderVertCount; ++j)
+		{
+			boxColliderPkg.boxColliders[i][j] = mBoxColliderContainer[i].mVertices[j];
+		}
+	}
+	mManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
+#else
 	mNarrowPhase.step();
 	mManifoldPkg = *mNarrowPhase.getPManifoldPkg(); // Warning: Unnecessary copying here
+#endif // BROAD_PHASE_CPU
+
 #endif // NARROW_PHASE_CPU
 }
 

@@ -13,17 +13,15 @@ namespace P3
 class CpuBroadPhase
 {
 public:
-	CpuBroadPhase() { /*mpCollisionPkg = new CollisionPairGpuPackage(); */}
-
-	void init() { mpCollisionPkg = new CollisionPairGpuPackage(); }
+	void init() { mpCollisionPairPkg = new CollisionPairGpuPackage(); }
 	CollisionPairGpuPackage *step(std::vector<P3BoxCollider> const &);
 
-	CollisionPairGpuPackage const *getPCollisionPkg() const { return mpCollisionPkg; }
+	CollisionPairGpuPackage const *getPCollisionPkg() const { return mpCollisionPairPkg; }
 
-	~CpuBroadPhase() { delete mpCollisionPkg; }
+	~CpuBroadPhase() { delete mpCollisionPairPkg; }
 
 private:
-	CollisionPairGpuPackage *mpCollisionPkg;
+	CollisionPairGpuPackage *mpCollisionPairPkg;
 };
 }
 
