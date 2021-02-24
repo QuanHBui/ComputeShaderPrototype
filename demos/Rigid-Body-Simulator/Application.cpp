@@ -99,12 +99,12 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3( 0.5f, 5.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-6.5f, 5.0f, 5.0f), glm::vec3(0.0f));
 
-		for (int i = 0; i < 3; ++i)
-		{
-			mPhysicsWorld.addRigidBody(-1.5f, glm::vec3(2.5f + float(i) * 3.0f, 2.0f, 5.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
-		}
+		//for (int i = 0; i < 3; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(-1.5f, glm::vec3(2.5f + float(i) * 3.0f, 2.0f, 5.0f), glm::vec3(0.0f));
+		//}
 
 		mPhysicsWorld.addStaticBody(glm::vec3( 2.0f, -2.0f, 5.0f));
 		mPhysicsWorld.addStaticBody(glm::vec3(-4.0f, -7.0f, 5.0f));
@@ -415,7 +415,7 @@ void Application::renderFrame(float dt)
 		mRenderSystem.renderDebug(mPhysicsWorld.getBoxColliders(), mpManifoldPkg);
 }
 
-void Application::renderUI(double dt)
+void Application::renderUI(double dt, GLuint64 gpuTime)
 {
 	// Start imgui frame
 	ImGui_ImplOpenGL3_NewFrame();
@@ -443,6 +443,7 @@ void Application::renderUI(double dt)
 	ImGui::Text("FPS: %.3f | Frame time: %.3f ms", 1.0f / dt, dt * 1000.0f);
 	ImGui::Text("Physics Tick Rate: %.3f | Physics Tick Interval: %.3f ms",
 		1.0f / lastPhysicsTickInterval, lastPhysicsTickInterval * 1000.0f);
+	ImGui::Text("GPU time elapsed: %.3f ms", float(gpuTime / 1000000.0f));
 	ImGui::Text("Number of objects in world: %d", mPhysicsWorld.getOccupancy());
 	ImGui::Text("Number of BoxColliders in world: %d", mPhysicsWorld.getNumBoxColliders());
 

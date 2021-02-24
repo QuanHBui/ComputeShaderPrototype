@@ -52,7 +52,7 @@ public:
 	void reset();
 
 	void renderFrame(float);
-	void renderUI(double);
+	void renderUI(double, GLuint64);
 
 	void shootBall();
 

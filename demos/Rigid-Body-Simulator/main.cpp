@@ -16,6 +16,37 @@
 #include "Application.h"
 #include "WindowManager.h"
 
+// 2 query buffers: front and back
+#define QUERY_BUFFER_COUNT 2
+GLuint queryIDs[QUERY_BUFFER_COUNT] = { 0, 0 };
+GLuint queryBackBuffer = 0, queryFrontBuffer = 1;
+
+// Call this as a part of initializing the application, must be after a context has been created.
+void genQueries()
+{
+	glGenQueries(2, queryIDs);
+
+	glBeginQuery(GL_TIME_ELAPSED, queryIDs[queryFrontBuffer]);
+	glEndQuery(GL_TIME_ELAPSED);
+
+	glBeginQuery(GL_TIME_ELAPSED, queryIDs[queryBackBuffer]);
+	glEndQuery(GL_TIME_ELAPSED);
+}
+
+void swapQueryBuffers()
+{
+	if (queryBackBuffer)
+	{
+		queryBackBuffer  = 0;
+		queryFrontBuffer = 1;
+	}
+	else
+	{
+		queryBackBuffer  = 1;
+		queryFrontBuffer = 0;
+	}
+}
+
 int main()
 {
 	srand(time(NULL));
@@ -25,6 +56,8 @@ int main()
 	WindowManager *pWindowManager = new WindowManager();
 	pWindowManager->init(1920, 1080);
 	pWindowManager->setEventCallbacks(pApplication);
+
+	GLFWwindow *pCurrentGlfwWindow = pWindowManager->getHandle();
 
 	pApplication->setWindowManager(pWindowManager);
 
@@ -36,12 +69,15 @@ int main()
 	double UIFrameTimeInterval = frameTimeInterval;
 	int    numFrames           = 0;
 
+	// Semi-fix timestep for physics simulation
 	double lastPhysicsTickTime      = lastTime;
 	double fixedPhysicsTickInterval = 1.0 / 144.0;
 	int physicsTickCount = 0;
-	// Semi-fix timestep for physics simulation
+
+	GLuint64 gpuTime = 0;
+	genQueries();
+
 	// Render and physics loop
-	GLFWwindow *pCurrentGlfwWindow = pWindowManager->getHandle();
 	while (!glfwWindowShouldClose(pCurrentGlfwWindow))
 	{
 		// Measure fps and frame time
@@ -50,6 +86,9 @@ int main()
 
 		lastFrameTime = currentTime;
 		++numFrames;
+
+		// Start the query and tell OpenGL to use the back buffer to store the result
+		glBeginQuery(GL_TIME_ELAPSED, queryIDs[queryBackBuffer]);
 
 		double realPhysicsTickInterval = currentTime - lastPhysicsTickTime;
 		if (realPhysicsTickInterval >= fixedPhysicsTickInterval || !physicsTickCount)
@@ -61,15 +100,23 @@ int main()
 
 		pApplication->renderFrame(float(frameTimeInterval));
 
+		// End time query and store the result
+		glEndQuery(GL_TIME_ELAPSED);
+
 		// Show updated FPS/Frame time on UI every half a sec.
 		if (currentTime - lastTime >= 0.5)
 		{
 			UIFrameTimeInterval = 0.5 / numFrames;
 			numFrames = 0;
 			lastTime += 0.5;
+
+			// Get result from the front buffer
+			glGetQueryObjectui64v(queryIDs[queryFrontBuffer], GL_QUERY_RESULT, &gpuTime);
 		}
 
-		pApplication->renderUI(UIFrameTimeInterval);
+		pApplication->renderUI(UIFrameTimeInterval, gpuTime);
+
+		swapQueryBuffers();
 
 		// Swap front and back buffers.
 		glfwSwapBuffers(pCurrentGlfwWindow);
