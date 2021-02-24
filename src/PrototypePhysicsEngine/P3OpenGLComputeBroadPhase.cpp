@@ -116,7 +116,7 @@ void P3OpenGLComputeBroadPhase::step(std::vector<P3BoxCollider> const &boxCollid
 	glDispatchComputeIndirect(0);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	oglutils::checkGLError();
+	oglutils::quickCheckGLError();
 	//================ End of update AABBs ================//
 
 	//================== Start of SAP ==================//

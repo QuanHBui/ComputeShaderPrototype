@@ -58,7 +58,7 @@ CollisionPairGpuPackage *CpuBroadPhase::step(std::vector<P3BoxCollider> const &b
 			if (i->second.mMinCoord.x < j->second.mMaxCoord.x && i->second.mMaxCoord.x > j->second.mMinCoord.x)
 			{
 				// For sweep x axis, we use x and y comps of collisionPkg to store the 2 indices.
-				(*mpCollisionPairPkg)[sweepXIdx].x = i->first; // w comp stores object ID
+				(*mpCollisionPairPkg)[sweepXIdx].x = i->first;
 				(*mpCollisionPairPkg)[sweepXIdx++].y = j->first;
 			}
 		}

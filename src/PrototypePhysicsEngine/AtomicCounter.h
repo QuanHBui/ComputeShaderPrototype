@@ -38,7 +38,7 @@ public:
 
 	void clear()
 	{
-		glUnmapBuffer(mAtomicBufferID);
+		glUnmapNamedBuffer(mAtomicBufferID);
 		glDeleteBuffers(1, &mAtomicBufferID);
 	}
 

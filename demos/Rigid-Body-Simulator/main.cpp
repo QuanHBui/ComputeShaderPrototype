@@ -8,9 +8,10 @@
 
 #define _USE_MATH_DEFINES
 
-#include <glad/glad.h>
 #include <iostream>
 #include <time.h>
+
+#include <glad/glad.h>
 
 #include "Application.h"
 #include "WindowManager.h"

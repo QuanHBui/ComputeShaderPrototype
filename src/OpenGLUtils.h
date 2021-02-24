@@ -32,9 +32,25 @@ inline void wait(GLsync syncObj)
 	glDeleteSync(syncObj);
 }
 
-inline void checkGLError()
+inline void quickCheckGLError()
 {
 	assert(glGetError() == GL_NO_ERROR);
+}
+
+void APIENTRY debugOutputMessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+
+inline void checkAndEnableDebugOutput()
+{
+	GLint flags;
+	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+	{
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(debugOutputMessageCallback, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	}
 }
 }
 #endif // OPENGL_UTILS

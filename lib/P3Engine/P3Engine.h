@@ -173,7 +173,7 @@ namespace oglutils
 		glDeleteSync(syncObj);
 	}
 
-	inline void checkGLError()
+	inline void quickCheckGLError()
 	{
 		assert(glGetError() == GL_NO_ERROR);
 	}

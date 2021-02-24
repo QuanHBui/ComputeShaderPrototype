@@ -54,6 +54,8 @@ void Application::init()
 
 	std::cout << '\n';
 
+	oglutils::checkAndEnableDebugOutput();
+
 	initRenderSystem();
 	initPhysicsWorld(Demo::ROTATIONAL_TEST);
 	initUI();
