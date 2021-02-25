@@ -47,6 +47,7 @@ struct AngularTransform
 
 	//----------------- State variables -----------------//
 	float tempOrientation = 0.0f; // Placeholder for rotational angle
+	glm::vec3 orientationAxis{};
 	glm::quat orientation{};
 	glm::quat spin{};
 	glm::vec3 angularVelocity{};

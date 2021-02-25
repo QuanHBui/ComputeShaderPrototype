@@ -360,8 +360,6 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	float startSignedDist = 0.0f;
 	float endSignedDist   = 0.0f;
 	float lerpRatio       = 0.0f;
-	int contactPointCount = 0;
-	Manifold manifold;
 
 	// TODO: Need some sort of way to keep track of what points already got clipped out. If it already got clipped
 	//  by a plane, then it wouldn't be considered to be clipped again.
@@ -370,7 +368,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	std::unordered_set<glm::vec3> clippedVertSet;
 	constexpr int actualIndices[4] = { 1, 2, 3, 0 };
 
-	// Iterate over all the reference faces
+	// Iterate over all the faces of the reference box
 	for (int faceIdx = 0; faceIdx < cColliderFaceCount; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
@@ -383,9 +381,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 			// Iterate through vert# 1, 2, 3, 0 of the incident face
 			for (int vertIdx = 0; vertIdx < cVertCountPerFace; ++vertIdx)
 			{
-				int actualIdx = actualIndices[vertIdx];
-
-				endVertIdx = cFaces[incidentFaceIdx][actualIdx];
+				endVertIdx = cFaces[incidentFaceIdx][actualIndices[vertIdx]];
 				endVert = incidentBox[endVertIdx];
 
 				startSignedDist = getSignedDist(startVert, clipPlane);
@@ -447,11 +443,14 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 		}
 	}
 
+	int contactPointCount = 0;
+	Manifold manifold;
+
 	// Process the clipped and included sets. Once the vert got clipped, game over.
 	// Iterate through the included set, check if it's got clip in the clipped set; if not, store it as contact point
 	for (glm::vec3 const &potContactPoint : includedVertSet)
 	{
-		if (contactPointCount <= cMaxContactPointCount && clippedVertSet.find(potContactPoint) == clippedVertSet.end())
+		if (contactPointCount < cMaxContactPointCount && clippedVertSet.find(potContactPoint) == clippedVertSet.end())
 		{
 			manifold.contactPoints[contactPointCount++] = glm::vec4(potContactPoint, 1.0f);
 		}

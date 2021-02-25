@@ -10,6 +10,9 @@ precision highp float;
 #define COLLIDER_VERT_COUNT 8
 #define MAX_CONTACT_POINT_COUNT 16
 #define MAX_COLLIDER_COUNT 1024
+#define MAX_VERT_SET_COUNT 64
+#define CLIPPED_VERT_SET 0
+#define INCLUDED_VERT_SET 1
 #define FLT_MAX 9999.9f
 #define EPSILON 0.0001f
 
@@ -72,6 +75,12 @@ struct EdgeQuery
 	vec3 edgeNormal; // This edge normal points away from edgeA.
 };
 
+struct Set
+{
+	int size;
+	vec3 data[MAX_VERT_SET_COUNT];
+};
+
 /*-------------------------- Buffers ------------------------------*/
 layout(std430, binding = 0) readonly buffer in_collider_data
 {
@@ -107,6 +116,8 @@ layout(std430, binding = 2) writeonly buffer out_manifolds_data
 
 layout(binding = 0) uniform atomic_uint nextAvailableIdx;
 /*-----------------------------------------------------------------*/
+
+Set globalVertSets[2];
 
 // Signed distance of plane to an arbitrary point. Assume plane normal is already normalized.
 float getSignedDist(vec3 point, Plane plane)
@@ -390,6 +401,47 @@ void reduceContactPoints(inout Manifold manifold)
 }
 
 /**
+ * Act upon the 2 global includedVertSet and clippedVertSet that have been declared on the top of this file
+ *  Onlyinsert new data if that isn't in the set already
+ */
+void insertUniqueToSet(int setIdx, vec3 newElement)
+{
+	// Assume the new element is unique until proven otherwise
+	bool isUnique = true;
+	int currentSetSize = globalVertSets[setIdx].size;
+
+	for (int i = 0; i < currentSetSize; ++i)
+	{
+		if (newElement == globalVertSets[setIdx].data[i])
+		{
+			isUnique = false;
+			break;
+		}
+	}
+
+	if (isUnique && currentSetSize < MAX_VERT_SET_COUNT)
+	{
+		globalVertSets[setIdx].data[currentSetSize++] = newElement;
+		globalVertSets[setIdx].size = currentSetSize;
+	}
+}
+
+bool findInSet(int setIdx, vec3 element)
+{
+	int currentSetSize = globalVertSets[setIdx].size;
+
+	for (int i = 0; i < currentSetSize; ++i)
+	{
+		if (element == globalVertSets[setIdx].data[i])
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * On a high level, we are clipping the incident face on the other convex hull
  *  against the side planes of the minimizing/reference face.
  *
@@ -468,20 +520,13 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	float startSignedDist   = 0.0f;
 	float endSignedDist     = 0.0f;
 	float lerpRatio         = 0.0f;
-	int contactPointCount   = 0;
 
-	Manifold manifold;
+	globalVertSets[INCLUDED_VERT_SET].size = 0;
+	globalVertSets[CLIPPED_VERT_SET].size  = 0;
 
-	manifold.contactBoxIndicesAndContactCount = ivec4(0);
+	const int actualIndices[4] = { 1, 2, 3, 0 };
 
-	for (int i = 0; i < MAX_CONTACT_POINT_COUNT; ++i)
-	{
-		manifold.contactPoints[i] = vec4(0.0f);
-	}
-
-	manifold.contactNormal = vec4(0.0f);
-
-	// Iterate through all the reference faces
+	// Iterate through all the faces of the reference box
 	for (int faceIdx = 0; faceIdx < COLLIDER_FACE_COUNT; ++faceIdx)
 	{
 		clipPlane = getPlane(referenceBox, faceIdx);
@@ -489,56 +534,60 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 		{
 			// Start from vert# 0 of incident face
 			startVertIdx = faces[incidentFaceIdx][0];
-			startVert    = vec3(incidentBox.vertices[startVertIdx]);
+			startVert    = incidentBox.vertices[startVertIdx].xyz;
 
-			// Iterate through vert# 1, 2, 3 of incident face
-			for (int vertIdx = 1; vertIdx < VERT_COUNT_PER_FACE; ++vertIdx)
+			// Iterate through vert# 1, 2, 3, 0 of incident face
+			for (int vertIdx = 0; vertIdx < VERT_COUNT_PER_FACE; ++vertIdx)
 			{
-				if (contactPointCount >= MAX_CONTACT_POINT_COUNT) break;
-
-				endVertIdx = faces[incidentFaceIdx][vertIdx];
-				endVert = vec3(incidentBox.vertices[endVertIdx]);
+				endVertIdx = faces[incidentFaceIdx][actualIndices[vertIdx]];
+				endVert = incidentBox.vertices[endVertIdx].xyz;
 
 				startSignedDist = getSignedDist(startVert, clipPlane);
 				endSignedDist   = getSignedDist(endVert, clipPlane);
 
 				// If start on the positive side and end on the negative side, keep end and
 				//  lerp the intersection.
-				if (sign(startSignedDist) == 1.0f && sign(endSignedDist) == -1.0f)
+				if (startSignedDist >= EPSILON && endSignedDist < -EPSILON)
 				{
-					if (sign(getSignedDist(endVert, referencePlane)) == -1.0f)
+					projPointOntoRefPlane = projectPointOntoPlane(startVert, referencePlane);
+					insertUniqueToSet(CLIPPED_VERT_SET, projPointOntoRefPlane);
+
+					if (getSignedDist(endVert, referencePlane) <= -EPSILON)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
-						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
+						insertUniqueToSet(INCLUDED_VERT_SET, projPointOntoRefPlane);
 					}
 
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = mix(startVert, endVert, lerpRatio);
 
-					if (sign(getSignedDist(lerpIntersectPoint, referencePlane)) == -1.0f)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -EPSILON)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
-						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
+						insertUniqueToSet(INCLUDED_VERT_SET, projPointOntoRefPlane);
 					}
 				}
 				// Else if both start and end on the negative side, keep only the end.
-				else if (   sign(startSignedDist) == -1.0f && sign(endSignedDist) == -1.0f
-						 && sign(getSignedDist(endVert, referencePlane)) < -1.0f )
+				else if (   startSignedDist < -EPSILON && endSignedDist < -EPSILON
+						 && getSignedDist(endVert, referencePlane) <= -EPSILON )
 				{
 					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
-					manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
+					insertUniqueToSet(INCLUDED_VERT_SET, projPointOntoRefPlane);
 				}
 				// Else if the start on the negative side and end on the positive side,
 				//  lerp the intersection.
-				else if (sign(startSignedDist) == -1.0f && sign(endSignedDist) == 1.0f)
+				else if (startSignedDist < -EPSILON && endSignedDist >= EPSILON)
 				{
+					projPointOntoRefPlane = projectPointOntoPlane(endVert, referencePlane);
+					insertUniqueToSet(CLIPPED_VERT_SET, projPointOntoRefPlane);
+
 					lerpRatio = startSignedDist / (startSignedDist - endSignedDist);
 					lerpIntersectPoint = mix(startVert, endVert, lerpRatio);
 
-					if (sign(getSignedDist(lerpIntersectPoint, referencePlane)) == -1.0f)
+					if (getSignedDist(lerpIntersectPoint, referencePlane) <= -EPSILON)
 					{
 						projPointOntoRefPlane = projectPointOntoPlane(lerpIntersectPoint, referencePlane);
-						manifold.contactPoints[contactPointCount++] = vec4(projPointOntoRefPlane, 0.0f);
+						insertUniqueToSet(INCLUDED_VERT_SET, projPointOntoRefPlane);
 					}
 				}
 
@@ -550,16 +599,31 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 		}
 	}
 
+	int contactPointCount = 0;
+	Manifold manifold;
+
+	manifold.contactBoxIndicesAndContactCount = ivec4(0);
+
+	for (int i = 0; i < globalVertSets[INCLUDED_VERT_SET].size; ++i)
+	{
+		vec3 contactPoint = globalVertSets[INCLUDED_VERT_SET].data[i];
+
+		if (contactPointCount < MAX_CONTACT_POINT_COUNT && !findInSet(CLIPPED_VERT_SET, contactPoint))
+		{
+			manifold.contactPoints[contactPointCount++] = vec4(contactPoint, 1.0f);
+		}
+	}
+
 	// Set reference and incident box indices, contact point count, and contact normal.
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
 	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation);
 
-	if (contactPointCount > 4)
-	{
-		reduceContactPoints(manifold);
-	}
+//	if (contactPointCount > 4)
+//	{
+//		reduceContactPoints(manifold);
+//	}
 
 	return manifold;
 }
@@ -580,11 +644,6 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	Manifold manifold;
 
 	manifold.contactBoxIndicesAndContactCount = ivec4(0);
-
-	for (int i = 0; i < MAX_CONTACT_POINT_COUNT; ++i)
-	{
-		manifold.contactPoints[i] = vec4(0.0f);
-	}
 
 	manifold.contactNormal = vec4(0.0f);
 

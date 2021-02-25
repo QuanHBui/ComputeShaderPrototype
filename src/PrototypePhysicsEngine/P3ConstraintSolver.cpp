@@ -12,7 +12,7 @@ void P3ConstraintSolver::solve(
 {
 	// Prototype temporal coherence, keep the old values for 4 physics ticks, depending on how fast the objects are moving.
 	++mResetCounter;
-	if (mResetCounter >= 1)
+	if (mResetCounter >= 2)
 	{
 		assert(rigidLinearTransformContainer.size() == rigidAngularTransformContainer.size()); // This should always be the case.
 
@@ -51,9 +51,9 @@ void P3ConstraintSolver::solve(
 		glm::vec3 prevR{};
 
 		// Iterate through each contact points
-		for (int contactPointIdx = 0
+		for ( int contactPointIdx = 0
 			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
-			; ++contactPointIdx)
+			; ++contactPointIdx )
 		{
 			glm::vec3 contactPointPos = manifold.contactPoints[contactPointIdx];
 

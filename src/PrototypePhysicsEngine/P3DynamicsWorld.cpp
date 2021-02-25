@@ -263,10 +263,6 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	{
 		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
 		linearTransform.velocity += solveLinearImpulseContainer[i];
-
-		//if (solveLinearImpulseContainer[i] != glm::vec3(0.0f))
-		//	linearTransform.velocity = glm::vec3(0.0f);
-
 		linearTransform.position += dt * linearTransform.velocity;
 
 		mBoxColliderCtmContainer[i] = glm::translate(linearTransform.position);
@@ -276,12 +272,9 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	for (int j = 0; j < mRigidAngularTransformContainer.size(); ++j)
 	{
 		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
-		angularTransform.angularVelocity  += solveAngularImpulseContainer[j];
-
-		//if (solveAngularImpulseContainer[j] != glm::vec3(0.0f))
-		//	angularTransform.angularVelocity = glm::vec3(0.0f);
-
-		angularTransform.tempOrientation  += dt * glm::length(angularTransform.angularVelocity);
+		angularTransform.angularVelocity += solveAngularImpulseContainer[j];
+		angularTransform.orientationAxis += dt * angularTransform.angularVelocity;
+		angularTransform.tempOrientation += dt * glm::length(angularTransform.orientationAxis);
 
 		if (angularTransform.angularVelocity == glm::vec3(0.0f))
 		{
@@ -289,7 +282,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		}
 		else
 		{
-			mBoxColliderCtmContainer[j] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.angularVelocity));
+			mBoxColliderCtmContainer[j] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.orientationAxis));
 		}
 	}
 

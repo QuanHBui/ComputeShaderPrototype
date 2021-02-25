@@ -93,7 +93,7 @@ int main()
 		double realPhysicsTickInterval = currentTime - lastPhysicsTickTime;
 		if (realPhysicsTickInterval >= fixedPhysicsTickInterval || !physicsTickCount)
 		{
-			pApplication->update(float(realPhysicsTickInterval));
+			pApplication->update(float(fixedPhysicsTickInterval));
 			lastPhysicsTickTime = currentTime;
 			++physicsTickCount;
 		}

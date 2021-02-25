@@ -12,7 +12,7 @@ struct ManifoldGpuPackage;
  */
 namespace P3
 {
-	ManifoldGpuPackage sat(BoxColliderGpuPackage const &, const CollisionPairGpuPackage *);
+ManifoldGpuPackage sat(BoxColliderGpuPackage const &, const CollisionPairGpuPackage *);
 }
 
 #endif // P3_SAT_H
