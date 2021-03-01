@@ -47,9 +47,9 @@ void P3DynamicsWorld::detectCollisions()
 	}
 
 #ifdef BROAD_PHASE_CPU
-	mManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
+	mpManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
 #else
-	mManifoldPkg = P3::sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
+	mpManifoldPkg = P3::sat(boxColliderPkg, mBroadPhase.getPCollisionPairPkg());
 #endif // BROAD_PHASE_CPU
 
 #else
@@ -63,10 +63,10 @@ void P3DynamicsWorld::detectCollisions()
 			boxColliderPkg.boxColliders[i][j] = mBoxColliderContainer[i].mVertices[j];
 		}
 	}
-	mManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
+	mpManifoldPkg = P3::sat(boxColliderPkg, mCpuBroadPhase.getPCollisionPkg());
 #else
 	mNarrowPhase.step();
-	mManifoldPkg = *mNarrowPhase.getPManifoldPkg(); // Warning: Unnecessary copying here
+	mpManifoldPkg = mNarrowPhase.getPManifoldPkg(); // Warning: Unnecessary copying here
 #endif // BROAD_PHASE_CPU
 
 #endif // NARROW_PHASE_CPU
@@ -238,18 +238,22 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// Solve constraints - produces final impulses at certain contact points
 #ifdef NARROW_PHASE_CPU
 	mConstraintSolver.solve(
-		mManifoldPkg,
+		*mpManifoldPkg,
 		mBoxColliderContainer,
 		mRigidLinearTransformContainer,
-		mRigidAngularTransformContainer
+		mRigidAngularTransformContainer,
+		mStaticLinearTransformContainer,
+		mStaticAngularTransformContainer
 	);
 #else
 	// TODO: Use the implementation on the GPU
 	mConstraintSolver.solve(
-		mManifoldPkg,
+		*mpManifoldPkg,
 		mBoxColliderContainer,
 		mRigidLinearTransformContainer,
-		mRigidAngularTransformContainer
+		mRigidAngularTransformContainer,
+		mStaticLinearTransformContainer,
+		mStaticAngularTransformContainer
 	);
 #endif
 

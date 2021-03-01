@@ -1,5 +1,7 @@
 #include "P3CpuNarrowPhase.h"
 
+#include "P3Sat.h"
+
 #define EPSILON 0.000001f
 
 // We are going old school
@@ -188,4 +190,12 @@ bool pointInTriTest(glm::vec3 const &v0,
 	glm::vec3 const &u0, glm::vec3 const &u1, glm::vec3 const &u2)
 {
 	return false;
+}
+
+namespace P3
+{
+ManifoldGpuPackage *CpuNarrowPhase::step()
+{
+	return nullptr;
+}
 }

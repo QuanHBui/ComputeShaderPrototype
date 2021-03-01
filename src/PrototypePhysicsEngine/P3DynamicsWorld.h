@@ -99,7 +99,7 @@ public:
 #endif // BROAD_PHASE_CPU
 	}
 
-	ManifoldGpuPackage const *getPManifoldPkg() const
+	ManifoldGpuPackage *getPManifoldPkg()
 	{
 #ifdef NARROW_PHASE_CPU
 		return &mManifoldPkg;
@@ -133,7 +133,7 @@ private:
 
 	//----------------- Data package optimized for the GPU -----------------//
 	LinearTransformGpuPackage mLinearTransformPkg; // For rigid and kinematic bodies
-	ManifoldGpuPackage mManifoldPkg;
+	ManifoldGpuPackage *mpManifoldPkg;
 
 	//----------------- Map of index to rigid body -----------------//
 	// @reference: https://austinmorlan.com/posts/entity_component_system/

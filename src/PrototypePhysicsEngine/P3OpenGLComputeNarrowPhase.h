@@ -23,7 +23,7 @@ public:
 
 	void step();
 
-	const ManifoldGpuPackage *getPManifoldPkg() const { return mpManifoldPkg; }
+	ManifoldGpuPackage *getPManifoldPkg() { return mpManifoldPkg; }
 	
 	void reset();
 

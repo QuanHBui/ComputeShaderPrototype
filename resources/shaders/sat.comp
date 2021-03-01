@@ -45,10 +45,21 @@ struct BoxCollider
 	vec4 vertices[COLLIDER_VERT_COUNT];
 };
 
+struct Contact
+{
+	vec4 position;
+	vec4 normal;
+	vec4 referenceRelativePosition;
+	vec4 incidentRelativePosition;
+	vec4 normalTangentBiasImpulses;
+	vec4 normalTangentMassesBias;
+};
+
 struct Manifold
 {
 	ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
 	vec4 contactPoints[MAX_CONTACT_POINT_COUNT];
+	Contact contacts[MAX_CONTACT_POINT_COUNT];
 	vec4 contactNormal; // w stores the penetration depth.
 };
 
@@ -620,10 +631,10 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
 	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation);
 
-//	if (contactPointCount > 4)
-//	{
-//		reduceContactPoints(manifold);
-//	}
+	if (contactPointCount > 4)
+	{
+		reduceContactPoints(manifold);
+	}
 
 	return manifold;
 }

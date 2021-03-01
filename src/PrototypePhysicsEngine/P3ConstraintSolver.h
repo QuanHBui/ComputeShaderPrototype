@@ -45,6 +45,8 @@ public:
 	void solve( ManifoldGpuPackage const &,
 				std::vector<P3BoxCollider> const &,
 				std::vector<LinearTransform> const &,
+				std::vector<AngularTransform> const &,
+				std::vector<LinearTransform> const &,
 				std::vector<AngularTransform> const & );
 	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
 	void solve();
@@ -57,6 +59,8 @@ public:
 	~P3ConstraintSolver() {}
 
 private:
+	void preStep(LinearTransform *, AngularTransform *, LinearTransform *, AngularTransform *);
+
 	GLuint mBoxCollidersID = 0u, mManifoldsID = 0u;
 
 	std::vector<glm::vec3> mLinearImpulseContainer;

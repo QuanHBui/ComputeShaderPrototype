@@ -15,6 +15,8 @@
 
 #include <glm/glm.hpp>
 
+#include "P3NarrowPhaseCommon.h"
+
 bool coplanarTriTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 						glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 						glm::vec3 const &);
@@ -30,5 +32,23 @@ void computeIntersectInterval(float, float, float,
 bool edgeEdgeTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool edgeTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
 bool pointInTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
+
+
+namespace P3
+{
+class CpuNarrowPhase
+{
+	void init() { mpManifoldPkg = new ManifoldGpuPackage(); }
+
+	ManifoldGpuPackage *step();
+
+	ManifoldGpuPackage const *getPManifoldPkg() const { return mpManifoldPkg; }
+
+	~CpuNarrowPhase() { delete mpManifoldPkg; }
+
+private:
+	ManifoldGpuPackage *mpManifoldPkg;
+};
+}
 
 #endif // P3_CPU_NARROW_PHASE_H
