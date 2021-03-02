@@ -58,7 +58,6 @@ struct Contact
 struct Manifold
 {
 	ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
-	vec4 contactPoints[MAX_CONTACT_POINT_COUNT];
 	Contact contacts[MAX_CONTACT_POINT_COUNT];
 	vec4 contactNormal; // w stores the penetration depth.
 };
@@ -332,7 +331,7 @@ void reduceContactPoints(inout Manifold manifold)
 
 	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
 	{
-		float separation = dot(manifold.contactPoints[i].xyz, -manifold.contactNormal.xyz);
+		float separation = dot(manifold.contacts[i].position.xyz, -manifold.contactNormal.xyz);
 
 		if (separation > largestSeparation)
 		{
@@ -341,7 +340,7 @@ void reduceContactPoints(inout Manifold manifold)
 		}
 	}
 
-	vec3 a = manifold.contactPoints[firstContactIdx].xyz;
+	vec3 a = manifold.contacts[firstContactIdx].position.xyz;
 
 	// Second contact point - find the contact point farthest away from the first point
 	int secondContactIdx = -1;
@@ -351,7 +350,7 @@ void reduceContactPoints(inout Manifold manifold)
 	{
 		if (j == firstContactIdx) continue;
 
-		float separation = length(manifold.contactPoints[j].xyz - a);
+		float separation = length(manifold.contacts[j].position.xyz - a);
 
 		if (separation > largestSeparation)
 		{
@@ -360,7 +359,7 @@ void reduceContactPoints(inout Manifold manifold)
 		}
 	}
 
-	vec3 b = vec3(manifold.contactPoints[secondContactIdx]);
+	vec3 b = vec3(manifold.contacts[secondContactIdx].position);
 
 	// Third contact point - find the contact point that maximizes the triangle area
 	int thirdContactIdx = -1;
@@ -370,7 +369,7 @@ void reduceContactPoints(inout Manifold manifold)
 	{
 		if (k == firstContactIdx || k == secondContactIdx) continue;
 
-		vec3 potC = manifold.contactPoints[k].xyz;
+		vec3 potC = manifold.contacts[k].position.xyz;
 		float area = 0.5f * dot(cross(a - potC, b - potC), vec3(manifold.contactNormal));
 
 		if (area > largestArea)
@@ -380,7 +379,7 @@ void reduceContactPoints(inout Manifold manifold)
 		}
 	}
 
-	vec3 c = manifold.contactPoints[thirdContactIdx].xyz;
+	vec3 c = manifold.contacts[thirdContactIdx].position.xyz;
 
 	// Fourth contact point - find the contact point that maximizes the rectangle area
 	int fourthContactIdx = -1;
@@ -390,7 +389,7 @@ void reduceContactPoints(inout Manifold manifold)
 	{
 		if (l == firstContactIdx || l == secondContactIdx || l == thirdContactIdx) continue;
 
-		vec3 potD = manifold.contactPoints[l].xyz;
+		vec3 potD = manifold.contacts[l].position.xyz;
 		float area = 0.5f * dot(cross(a - potD, b - potD), manifold.contactNormal.xyz);
 
 		// Interested in most negative area, really depends on the winding of the triangle
@@ -401,13 +400,13 @@ void reduceContactPoints(inout Manifold manifold)
 		}
 	}
 
-	vec3 d = manifold.contactPoints[fourthContactIdx].xyz;
+	vec3 d = manifold.contacts[fourthContactIdx].position.xyz;
 
 	// The w component could be anything really.
-	manifold.contactPoints[0] = vec4(a, 1.0f);
-	manifold.contactPoints[1] = vec4(b, 1.0f);
-	manifold.contactPoints[2] = vec4(c, 1.0f);
-	manifold.contactPoints[3] = vec4(d, 1.0f);
+	manifold.contacts[0].position = vec4(a, 1.0f);
+	manifold.contacts[1].position = vec4(b, 1.0f);
+	manifold.contacts[2].position = vec4(c, 1.0f);
+	manifold.contacts[3].position = vec4(d, 1.0f);
 	manifold.contactBoxIndicesAndContactCount.z = 4;
 }
 
@@ -621,7 +620,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 
 		if (contactPointCount < MAX_CONTACT_POINT_COUNT && !findInSet(CLIPPED_VERT_SET, contactPoint))
 		{
-			manifold.contactPoints[contactPointCount++] = vec4(contactPoint, 1.0f);
+			manifold.contacts[contactPointCount++].position = vec4(contactPoint, 1.0f);
 		}
 	}
 
@@ -629,7 +628,7 @@ Manifold createFaceContact( FaceQuery faceQueryA, FaceQuery faceQueryB,
 	manifold.contactBoxIndicesAndContactCount.x = referenceBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.y = incidentBoxIdx;
 	manifold.contactBoxIndicesAndContactCount.z = contactPointCount;
-	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation);
+	manifold.contactNormal = vec4(referencePlane.normal, referenceSeparation); // TODO: Contact rework
 
 	if (contactPointCount > 4)
 	{
@@ -693,7 +692,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	vec3 closestPointB = edgeQuery.pointsB[0] + t * edgeQuery.edgeDirB;
 
 	// Choose the point in the middle of the two closest points above as the edge contact point
-	manifold.contactPoints[0] = vec4(0.5f * (closestPointB + closestPointA), 0.0f);
+	manifold.contacts[0].position = vec4(0.5f * (closestPointB + closestPointA), 0.0f);
 
 	// Set the collider pair indices, contact count, and the contact normal in the manifold
 	manifold.contactBoxIndicesAndContactCount.x = boxAIdx;

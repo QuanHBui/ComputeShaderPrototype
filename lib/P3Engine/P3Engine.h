@@ -703,7 +703,7 @@ public:
 
 	CollisionPairGpuPackage const *getPCollisionPairPkg() const
 	{
-		return mBroadPhase.getPCollisionPairPkg();
+		return mGpuBroadPhase.getPCollisionPairPkg();
 	}
 
 	ManifoldGpuPackage const *getPManifoldPkg() const
@@ -711,7 +711,7 @@ public:
 #ifdef NARROW_PHASE_CPU
 		return &mManifoldPkg;
 #else
-		return mNarrowPhase.getPManifoldPkg();
+		return mGpuNarrowPhase.getPManifoldPkg();
 #endif
 	}
 
@@ -749,8 +749,8 @@ private:
 
 	//--------------------- Physics pipeline ---------------------//
 	// Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
-	P3OpenGLComputeBroadPhase mBroadPhase;
-	P3OpenGLComputeNarrowPhase mNarrowPhase;
+	P3OpenGLComputeBroadPhase mGpuBroadPhase;
+	P3OpenGLComputeNarrowPhase mGpuNarrowPhase;
 	P3ConstraintSolver mConstraintSolver; // Produces forces to make sure things don't phase past each other
 	P3Integrator mIntegrator;             // Actually integrates the force vector and apply to linear transform
 };

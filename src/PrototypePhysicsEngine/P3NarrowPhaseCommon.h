@@ -19,7 +19,6 @@ struct Contact
 struct Manifold
 {
 	glm::ivec4 contactBoxIndicesAndContactCount{}; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
-	glm::vec4 contactPoints[cMaxContactPointCount]{};
 	Contact contacts[cMaxContactPointCount];
 	glm::vec4 contactNormal{}; // w stores the penetration depth.
 };

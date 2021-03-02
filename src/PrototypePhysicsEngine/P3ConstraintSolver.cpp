@@ -83,7 +83,7 @@ void P3ConstraintSolver::solve(
 			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
 			; ++contactPointIdx )
 		{
-			glm::vec3 contactPointPos = manifold.contactPoints[contactPointIdx];
+			glm::vec3 contactPointPos = manifold.contacts[contactPointIdx].position;
 
 			// Relative positions of the contact point to the 2 bodies
 			glm::vec3 r_1 = contactPointPos - pReferenceLinearTransform->position;

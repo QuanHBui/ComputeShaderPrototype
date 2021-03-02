@@ -229,7 +229,7 @@ void reduceContactPoints(Manifold &manifold)
 
 	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
 	{
-		float separation = glm::dot(glm::vec3(manifold.contactPoints[i]), -glm::vec3(manifold.contactNormal));
+		float separation = glm::dot(glm::vec3(manifold.contacts[i].position), -glm::vec3(manifold.contactNormal));
 
 		if (separation > largestSeparation)
 		{
@@ -239,7 +239,7 @@ void reduceContactPoints(Manifold &manifold)
 	}
 
 	assert(firstContactIdx > -1);
-	glm::vec3 a = manifold.contactPoints[firstContactIdx];
+	glm::vec3 a = manifold.contacts[firstContactIdx].position;
 
 	// Second contact point - find the contact point farthest away from the first point
 	int secondContactIdx = -1;
@@ -249,7 +249,7 @@ void reduceContactPoints(Manifold &manifold)
 	{
 		if (j == firstContactIdx) continue;
 
-		float separation = glm::length(glm::vec3(manifold.contactPoints[j]) - a);
+		float separation = glm::length(glm::vec3(manifold.contacts[j].position) - a);
 
 		if (separation > largestSeparation)
 		{
@@ -259,7 +259,7 @@ void reduceContactPoints(Manifold &manifold)
 	}
 
 	assert(secondContactIdx > -1);
-	glm::vec3 b = manifold.contactPoints[secondContactIdx];
+	glm::vec3 b = manifold.contacts[secondContactIdx].position;
 
 	// Third contact point - find the contact point that maximizes the triangle area
 	int thirdContactIdx = -1;
@@ -269,7 +269,7 @@ void reduceContactPoints(Manifold &manifold)
 	{
 		if (k == firstContactIdx || k == secondContactIdx) continue;
 
-		glm::vec3 potC = manifold.contactPoints[k];
+		glm::vec3 potC = manifold.contacts[k].position;
 		float area = 0.5f * glm::dot(glm::cross(a - potC, b - potC), glm::vec3(manifold.contactNormal));
 
 		if (area > largestArea)
@@ -280,7 +280,7 @@ void reduceContactPoints(Manifold &manifold)
 	}
 
 	assert(thirdContactIdx > -1);
-	glm::vec3 c = manifold.contactPoints[thirdContactIdx];
+	glm::vec3 c = manifold.contacts[thirdContactIdx].position;
 
 	// Fourth contact point - find the contact point that maximizes the rectangle area
 	int fourthContactIdx = -1;
@@ -290,7 +290,7 @@ void reduceContactPoints(Manifold &manifold)
 	{
 		if (l == firstContactIdx || l == secondContactIdx || l == thirdContactIdx) continue;
 
-		glm::vec3 potD = manifold.contactPoints[l];
+		glm::vec3 potD = manifold.contacts[l].position;
 		float area = 0.5f * glm::dot(glm::cross(a - potD, b - potD), glm::vec3(manifold.contactNormal));
 
 		// Interested in most negative area, really depends on the winding of the triangle
@@ -302,13 +302,13 @@ void reduceContactPoints(Manifold &manifold)
 	}
 
 	assert(fourthContactIdx > -1);
-	glm::vec3 d = manifold.contactPoints[fourthContactIdx];
+	glm::vec3 d = manifold.contacts[fourthContactIdx].position;
 
 	// The w component could be anything really.
-	manifold.contactPoints[0] = glm::vec4(a, 1.0f);
-	manifold.contactPoints[1] = glm::vec4(b, 1.0f);
-	manifold.contactPoints[2] = glm::vec4(c, 1.0f);
-	manifold.contactPoints[3] = glm::vec4(d, 1.0f);
+	manifold.contacts[0].position = glm::vec4(a, 1.0f);
+	manifold.contacts[1].position = glm::vec4(b, 1.0f);
+	manifold.contacts[2].position = glm::vec4(c, 1.0f);
+	manifold.contacts[3].position = glm::vec4(d, 1.0f);
 	manifold.contactBoxIndicesAndContactCount.z = 4;
 }
 
@@ -452,7 +452,7 @@ Manifold createFaceContact( FaceQuery const &faceQueryA, FaceQuery const &faceQu
 	{
 		if (contactPointCount < cMaxContactPointCount && clippedVertSet.find(potContactPoint) == clippedVertSet.end())
 		{
-			manifold.contactPoints[contactPointCount++] = glm::vec4(potContactPoint, 1.0f);
+			manifold.contacts[contactPointCount++].position = glm::vec4(potContactPoint, 1.0f);
 		}
 	}
 
@@ -505,7 +505,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	glm::vec3 closestPointB = edgeQuery.pointsB[0] + t * edgeQuery.edgeDirB;
 
 	// Choose the point in the middle of the two closest points above as the edge contact point
-	manifold.contactPoints[0] = glm::vec4(0.5f * (closestPointB + closestPointA), 0.0f);
+	manifold.contacts[0].position = glm::vec4(0.5f * (closestPointB + closestPointA), 0.0f);
 
 	// Set the collider pair indices, contact count, and the contact normal in the manifold
 	manifold.contactBoxIndicesAndContactCount.x = boxAIdx;
@@ -517,9 +517,10 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 }
 
 // The size of the collisionPairs buffer can be sent here for a more elegant solution.
-ManifoldGpuPackage P3::sat(BoxColliderGpuPackage const &boxColliderPkg, const CollisionPairGpuPackage *pCollisionPairPkg)
+void P3::sat( ManifoldGpuPackage *pManifoldPkg,
+			  BoxColliderGpuPackage const &boxColliderPkg,
+			  const CollisionPairGpuPackage *pCollisionPairPkg )
 {
-	ManifoldGpuPackage manifoldPkg;
 	int availableIdx = 0;
 	int boxAIdx = -1;
 	int boxBIdx = -1;
@@ -566,10 +567,8 @@ ManifoldGpuPackage P3::sat(BoxColliderGpuPackage const &boxColliderPkg, const Co
 		//}
 		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
-		manifoldPkg.manifolds[availableIdx++] = manifold;
+		pManifoldPkg->manifolds[availableIdx++] = manifold;
 	}
 
-	manifoldPkg.misc.x = availableIdx;
-
-	return manifoldPkg;
+	pManifoldPkg->misc.x = availableIdx;
 }

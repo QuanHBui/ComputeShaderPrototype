@@ -17,6 +17,10 @@
 
 #include "P3NarrowPhaseCommon.h"
 
+struct BoxColliderGpuPackage;
+struct CollisionPairGpuPackage;
+struct ManifoldGpuPackage;
+
 bool coplanarTriTriTest(glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 						glm::vec3 const &, glm::vec3 const &, glm::vec3 const &,
 						glm::vec3 const &);
@@ -38,9 +42,10 @@ namespace P3
 {
 class CpuNarrowPhase
 {
+public:
 	void init() { mpManifoldPkg = new ManifoldGpuPackage(); }
 
-	ManifoldGpuPackage *step();
+	ManifoldGpuPackage *step(BoxColliderGpuPackage const &, const CollisionPairGpuPackage *);
 
 	ManifoldGpuPackage const *getPManifoldPkg() const { return mpManifoldPkg; }
 

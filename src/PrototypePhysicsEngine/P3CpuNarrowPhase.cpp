@@ -194,8 +194,11 @@ bool pointInTriTest(glm::vec3 const &v0,
 
 namespace P3
 {
-ManifoldGpuPackage *CpuNarrowPhase::step()
+ManifoldGpuPackage *CpuNarrowPhase::step( BoxColliderGpuPackage const &boxColliderPkg,
+										  const CollisionPairGpuPackage *pCollisionPairPkg )
 {
-	return nullptr;
+	sat(mpManifoldPkg, boxColliderPkg, pCollisionPairPkg);
+
+	return mpManifoldPkg;
 }
 }

@@ -150,9 +150,9 @@ void RenderSystem::renderDebug( std::vector<P3BoxCollider> const &boxColliders,
 		{
 			assert(k < cMaxContactPointCount); // Prob move this to the for loop evaluation later for better fail-safe.
 
-			batchedContactPoints[contactPointIdx++]  = manifold.contactPoints[k];
-			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k];
-			batchedContactNormals[contacNormalIdx++] = manifold.contactPoints[k]
+			batchedContactPoints[contactPointIdx++]  = manifold.contacts[k].position;
+			batchedContactNormals[contacNormalIdx++] = manifold.contacts[k].position;
+			batchedContactNormals[contacNormalIdx++] = manifold.contacts[k].position
 													 + glm::vec4((1.1f * manifold.contactNormal.w) * glm::vec3(manifold.contactNormal), 1.0f);
 		}
 	}
