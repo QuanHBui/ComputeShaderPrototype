@@ -48,7 +48,7 @@ struct BoxCollider
 struct Contact
 {
 	vec4 position;
-	vec4 normal;
+	vec4 separation;
 	vec4 referenceRelativePosition;
 	vec4 incidentRelativePosition;
 	vec4 normalTangentBiasImpulses;
@@ -60,6 +60,8 @@ struct Manifold
 	ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
 	Contact contacts[MAX_CONTACT_POINT_COUNT];
 	vec4 contactNormal; // w stores the penetration depth.
+	vec4 contactTangents[2];
+	vec4 frictionalRestitution;
 };
 
 struct Plane
@@ -331,7 +333,7 @@ void reduceContactPoints(inout Manifold manifold)
 
 	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
 	{
-		float separation = dot(manifold.contacts[i].position.xyz, -manifold.contactNormal.xyz);
+		float separation = dot(manifold.contacts[i].position.xyz, manifold.contactNormal.xyz);
 
 		if (separation > largestSeparation)
 		{

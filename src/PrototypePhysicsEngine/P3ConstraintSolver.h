@@ -41,15 +41,25 @@ public:
 		}
 	};
 
+	void preSolve(ManifoldGpuPackage &,
+		std::vector<LinearTransform> &,
+		std::vector<AngularTransform> &,
+		std::vector<LinearTransform> &,
+		std::vector<AngularTransform> &,
+		float );
+
 	// If the solver's implementation resides on the CPU, returns the offset
-	void solve( ManifoldGpuPackage const &,
-				std::vector<P3BoxCollider> const &,
-				std::vector<LinearTransform> const &,
-				std::vector<AngularTransform> const &,
-				std::vector<LinearTransform> const &,
-				std::vector<AngularTransform> const & );
+	void solve( ManifoldGpuPackage &,
+				std::vector<LinearTransform> &,
+				std::vector<AngularTransform> &,
+				std::vector<LinearTransform> &,
+				std::vector<AngularTransform> & );
 	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
-	void solve();
+	void iterativeSolve( ManifoldGpuPackage &,
+						 std::vector<LinearTransform> &,
+						 std::vector<AngularTransform> &,
+						 std::vector<LinearTransform> &,
+						 std::vector<AngularTransform> & );
 
 	std::vector<glm::vec3> const &getLinearImpulseContainer() const { return mLinearImpulseContainer; }
 	std::vector<glm::vec3> const &getAngularImpulseContainer() const { return mAngularImpulseContainer; }
@@ -59,7 +69,33 @@ public:
 	~P3ConstraintSolver() {}
 
 private:
-	void preStep(LinearTransform *, AngularTransform *, LinearTransform *, AngularTransform *);
+	LinearTransform &getLinearTransform( int index,
+										 std::vector<LinearTransform> &rigidLinearTransformContainer,
+										 std::vector<LinearTransform> &staticLinearTransformContainer )
+	{
+		if (index >= rigidLinearTransformContainer.size())
+		{
+			return staticLinearTransformContainer[index - rigidLinearTransformContainer.size()];
+		}
+		else
+		{
+			return rigidLinearTransformContainer[index];
+		}
+	}
+
+	AngularTransform &getAngularTransform( int index,
+										   std::vector<AngularTransform> &rigidAngularTransformContainer,
+										   std::vector<AngularTransform> &staticAngularTransformContainer )
+	{
+		if (index >= rigidAngularTransformContainer.size())
+		{
+			return staticAngularTransformContainer[index - rigidAngularTransformContainer.size()];
+		}
+		else
+		{
+			return rigidAngularTransformContainer[index];
+		}
+	}
 
 	GLuint mBoxCollidersID = 0u, mManifoldsID = 0u;
 

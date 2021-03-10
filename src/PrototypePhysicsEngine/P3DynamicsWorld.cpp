@@ -238,9 +238,17 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 
 	// Solve constraints - produces final impulses at certain contact points
 #ifdef NARROW_PHASE_CPU
-	mConstraintSolver.solve(
+	mConstraintSolver.preSolve(
 		*mpManifoldPkg,
-		mBoxColliderContainer,
+		mRigidLinearTransformContainer,
+		mRigidAngularTransformContainer,
+		mStaticLinearTransformContainer,
+		mStaticAngularTransformContainer,
+		dt
+	);
+
+	mConstraintSolver.iterativeSolve(
+		*mpManifoldPkg,
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,
@@ -248,9 +256,17 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	);
 #else
 	// TODO: Use the implementation on the GPU
-	mConstraintSolver.solve(
+	mConstraintSolver.preSolve(
 		*mpManifoldPkg,
-		mBoxColliderContainer,
+		mRigidLinearTransformContainer,
+		mRigidAngularTransformContainer,
+		mStaticLinearTransformContainer,
+		mStaticAngularTransformContainer,
+		dt
+	);
+
+	mConstraintSolver.iterativeSolve(
+		*mpManifoldPkg,
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,

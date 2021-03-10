@@ -229,7 +229,7 @@ void reduceContactPoints(Manifold &manifold)
 
 	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
 	{
-		float separation = glm::dot(glm::vec3(manifold.contacts[i].position), -glm::vec3(manifold.contactNormal));
+		float separation = glm::dot(glm::vec3(manifold.contacts[i].position), glm::vec3(manifold.contactNormal));
 
 		if (separation > largestSeparation)
 		{
