@@ -71,12 +71,14 @@ void sweepX()
 	// Check for collision on the x-axis
 	int i = int(gl_LocalInvocationID.x);
 
-	if (i >= currNumColliders) return;
-
-	for (int j = 0; j < currNumColliders; ++j)
+	if (i >= currNumColliders)
 	{
-		if (i == j) continue;
+		barrier();
+		return;
+	}
 
+	for (int j = i + 1; j < currNumColliders; ++j)
+	{
 		if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].x)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx_1);
@@ -94,7 +96,10 @@ void sweepY()
 {
 	uint collisionPairIdx = gl_LocalInvocationID.x;
 
-	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1)) return;
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1))
+	{
+		return;
+	}
 
 	// Look through the previous collision pair buffer
 	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].x;
@@ -119,7 +124,10 @@ void sweepZ()
 {
 	uint collisionPairIdx = gl_LocalInvocationID.x;
 
-	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2)) return;
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2))
+	{
+		return;
+	}
 
 	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].z;
 	int boxColliderIdx_2 = collisionPairs[collisionPairIdx].w;
@@ -186,100 +194,101 @@ void main()
 		maxCoords[colliderIdx] = vec4(maxX, maxY, maxZ, colliderIdx);
 
 		boxIdxToAabbIdx[colliderIdx] = int(colliderIdx);
+		memoryBarrierShared();
 	}
 
 	syncStorageBuffer(); //=======================================================//
 
 	// Sort x
-	bool isEven = false;
-	for (int i = 0; i < 2 * currNumColliders; ++i)
-	{
-		// Figure what index pair we are looking at
-		uint j = gl_LocalInvocationID.x;
-		uint k = gl_LocalInvocationID.x + 1;
-
-		// If either index is bigger than the buffer size, we let the compute unit idle
-		if (j >= currNumColliders || k >= currNumColliders) continue;
-
-		//--------------- Check to see if we are doing odd pair or even pair ---------------//
-		// If we are doing odd, the starting index must be even
-		if (isEven == false && j % 2 != 0) continue;
-
-		// If we are doing even, the starting index must be odd
-		else if (isEven == true && j % 2 == 0) continue;
-
-		if (minCoords[j].x > minCoords[k].x)
-		{
-			swap(j, k);
-		}
-
-		isEven = !isEven;
-		syncStorageBuffer(); //=======================================================//
-	}
-
-	barrier(); //=======================================================//
+//	bool isEven = false;
+//	for (int i = 0; i < 2 * currNumColliders; ++i)
+//	{
+//		// Figure what index pair we are looking at
+//		uint j = gl_LocalInvocationID.x;
+//		uint k = gl_LocalInvocationID.x + 1;
+//
+//		// If either index is bigger than the buffer size, we let the compute unit idle
+//		if (j >= currNumColliders || k >= currNumColliders) continue;
+//
+//		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+//		// If we are doing odd, the starting index must be even
+//		if (isEven == false && j % 2 != 0) continue;
+//
+//		// If we are doing even, the starting index must be odd
+//		else if (isEven == true && j % 2 == 0) continue;
+//
+//		if (minCoords[j].x > minCoords[k].x)
+//		{
+//			swap(j, k);
+//		}
+//
+//		isEven = !isEven;
+//		syncStorageBuffer(); //=======================================================//
+//	}
+//
+//	barrier(); //=======================================================//
 
 	sweepX();
 
 	// Sort y
-	isEven = false;
-	for (int i = 0; i < currNumColliders; ++i)
-	{
-		// Figure what index pair we are looking at
-		uint j = gl_LocalInvocationID.x;
-		uint k = gl_LocalInvocationID.x + 1;
-
-		// If either index is bigger than the buffer size, we let the compute unit idle
-		if (j >= currNumColliders || k >= currNumColliders) continue;
-
-		//--------------- Check to see if we are doing odd pair or even pair ---------------//
-		// If we are doing odd, the starting index must be even
-		if (isEven == false && j % 2 != 0) continue;
-
-		// If we are doing even, the starting index must be odd
-		else if (isEven == true && j % 2 == 0) continue;
-
-		if (minCoords[j].y > minCoords[k].y)
-		{
-			swap(j, k);
-		}
-
-		isEven = !isEven;
-		syncStorageBuffer(); //=======================================================//
-	}
-
-	barrier(); //=======================================================//
-
+//	isEven = false;
+//	for (int i = 0; i < currNumColliders; ++i)
+//	{
+//		// Figure what index pair we are looking at
+//		uint j = gl_LocalInvocationID.x;
+//		uint k = gl_LocalInvocationID.x + 1;
+//
+//		// If either index is bigger than the buffer size, we let the compute unit idle
+//		if (j >= currNumColliders || k >= currNumColliders) continue;
+//
+//		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+//		// If we are doing odd, the starting index must be even
+//		if (isEven == false && j % 2 != 0) continue;
+//
+//		// If we are doing even, the starting index must be odd
+//		else if (isEven == true && j % 2 == 0) continue;
+//
+//		if (minCoords[j].y > minCoords[k].y)
+//		{
+//			swap(j, k);
+//		}
+//
+//		isEven = !isEven;
+//		syncStorageBuffer(); //=======================================================//
+//	}
+//
+//	barrier(); //=======================================================//
+//
 	sweepY();
 
 	// Sort z
-	isEven = false;
-	for (int i = 0; i < currNumColliders; ++i)
-	{
-		// Figure what index pair we are looking at
-		uint j = gl_LocalInvocationID.x;
-		uint k = gl_LocalInvocationID.x + 1;
-
-		// If either index is bigger than the buffer size, we let the compute unit idle
-		if (j >= currNumColliders || k >= currNumColliders) continue;
-
-		//--------------- Check to see if we are doing odd pair or even pair ---------------//
-		// If we are doing odd, the starting index must be even
-		if (isEven == false && j % 2 != 0) continue;
-
-		// If we are doing even, the starting index must be odd
-		else if (isEven == true && j % 2 == 0) continue;
-
-		if (minCoords[j].z > minCoords[k].z)
-		{
-			swap(j, k);
-		}
-
-		isEven = !isEven;
-		syncStorageBuffer(); //=======================================================//
-	}
-
-	barrier(); //=======================================================//
+//	isEven = false;
+//	for (int i = 0; i < currNumColliders; ++i)
+//	{
+//		// Figure what index pair we are looking at
+//		uint j = gl_LocalInvocationID.x;
+//		uint k = gl_LocalInvocationID.x + 1;
+//
+//		// If either index is bigger than the buffer size, we let the compute unit idle
+//		if (j >= currNumColliders || k >= currNumColliders) continue;
+//
+//		//--------------- Check to see if we are doing odd pair or even pair ---------------//
+//		// If we are doing odd, the starting index must be even
+//		if (isEven == false && j % 2 != 0) continue;
+//
+//		// If we are doing even, the starting index must be odd
+//		else if (isEven == true && j % 2 == 0) continue;
+//
+//		if (minCoords[j].z > minCoords[k].z)
+//		{
+//			swap(j, k);
+//		}
+//
+//		isEven = !isEven;
+//		syncStorageBuffer(); //=======================================================//
+//	}
+//
+//	barrier(); //=======================================================//
 
 	sweepZ();
 }

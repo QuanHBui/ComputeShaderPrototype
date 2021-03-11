@@ -6,7 +6,7 @@
 
 constexpr float cBaumgarteFactor = 0.1f;
 constexpr float cPenetrationSlop = 0.05f;
-constexpr int cIterationCount = 25;
+constexpr int cIterationCount = 10;
 
 // http://box2d.org/2014/02/computing-a-basis/
 void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
@@ -33,7 +33,7 @@ void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
 	c = glm::vec4(cVec3, 0.0f);
 }
 
-// Heavily inspired by q3 physics engine by Randy Gaul
+// Heavily inspired by qu3e physics engine by Randy Gaul
 void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 								  std::vector<LinearTransform> &rigidLinearTransformContainer,
 								  std::vector<AngularTransform> &rigidAngularTransformContainer,
@@ -206,25 +206,6 @@ void P3ConstraintSolver::iterativeSolve( ManifoldGpuPackage &manifoldPkg,
 										 std::vector<LinearTransform> &staticLinearTransformContainer,
 										 std::vector<AngularTransform> &staticAngularTransformContainer )
 {
-	// Prototype temporal coherence, keep the old values for 4 physics ticks, depending on how fast the objects are moving.
-	++mResetCounter;
-	if (mResetCounter >= 2)
-	{
-		assert(rigidLinearTransformContainer.size() == rigidAngularTransformContainer.size()); // This should always be the case.
-
-		// Might want to make sure the size of the rigidLinearTransform and mLinearImpulseContainer are roughly the same size.
-		for (int i = 0; i < rigidLinearTransformContainer.size(); ++i)
-		{
-			mLinearImpulseContainer[i] = glm::vec3(0.0f);
-		}
-		for (int j = 0; j < rigidAngularTransformContainer.size(); ++j)
-		{
-			mAngularImpulseContainer[j] = glm::vec3(0.0f);
-		}
-
-		mResetCounter = 0;
-	}
-
 	for (int iteration = 0; mResetCounter == 0 && iteration < cIterationCount; ++iteration)
 	{
 		for (int k = 0; k < manifoldPkg.misc.x; ++k)

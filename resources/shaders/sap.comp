@@ -93,8 +93,10 @@ void main()
 	// Iterate through each object in AABB list
 	uint currObjectIdx = gl_LocalInvocationID.x;
 
-	for (uint nextObjectIdx = currObjectIdx + 1u; nextObjectIdx < currNumColliders; ++nextObjectIdx)
+	for (uint nextObjectIdx = 0; nextObjectIdx < currNumColliders; ++nextObjectIdx)
 	{
+		if (nextObjectIdx == currObjectIdx) continue;
+
 		sweepAxis(currObjectIdx, nextObjectIdx); // Collision pair buffer got updated.
 	}
 

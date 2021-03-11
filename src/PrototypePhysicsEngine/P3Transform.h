@@ -42,8 +42,8 @@ struct LinearTransformGpuPackage
 struct AngularTransform
 {
 	//----------------- Constant quantities -----------------//
-	float inertia = 0.0f;
-	float inverseInertia = 0.0f;
+	glm::mat3 inertia{1.0f};
+	glm::mat3 inverseInertia{1.0f};
 
 	//----------------- State variables -----------------//
 	float tempOrientation = 0.0f; // Placeholder for rotational angle

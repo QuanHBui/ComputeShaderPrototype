@@ -274,16 +274,12 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	);
 #endif
 
-	std::vector<glm::vec3> const &solveLinearImpulseContainer  = mConstraintSolver.getLinearImpulseContainer();
-	std::vector<glm::vec3> const &solveAngularImpulseContainer = mConstraintSolver.getAngularImpulseContainer();
-
 	// Apply final linear transforms
 	// There must be a better way to connect linear transforms and hit boxes.
 	// First wipe - linear transforms
 	for (int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
 	{
 		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
-		linearTransform.velocity += solveLinearImpulseContainer[i];
 		linearTransform.position += dt * linearTransform.velocity;
 
 		mBoxColliderCtmContainer[i] = glm::translate(linearTransform.position);
@@ -293,7 +289,6 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	for (int j = 0; j < mRigidAngularTransformContainer.size(); ++j)
 	{
 		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
-		angularTransform.angularVelocity += solveAngularImpulseContainer[j];
 		angularTransform.orientationAxis += dt * angularTransform.angularVelocity;
 		angularTransform.tempOrientation += dt * glm::length(angularTransform.orientationAxis);
 
@@ -441,6 +436,8 @@ int P3DynamicsWorld::addStaticBody(glm::vec3 const &position)
 	mBoxColliderContainer.back().update(glm::translate(position));
 
 	mStaticAngularTransformContainer.emplace_back();
+	mStaticAngularTransformContainer.back().inertia = glm::mat3(std::numeric_limits<float>::max());
+	mStaticAngularTransformContainer.back().inverseInertia = glm::mat3(0.0f);
 
 	mBoxColliderCtmContainer.emplace_back(glm::translate(position));
 
