@@ -233,7 +233,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// Apply forces
 	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
 	{
-		linearTransform.velocity.y -= 4.0f * dt;
+		linearTransform.velocity.y -= 9.0f * dt;
 	}
 
 	// Solve constraints - produces final impulses at certain contact points
@@ -306,6 +306,10 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	{
 		mBoxColliderContainer[m].update(mBoxColliderCtmContainer[m]);
 	}
+
+#ifndef CPU_NARROW_PHASE
+	mGpuNarrowPhase.swapBuffers();
+#endif
 }
 
 glm::vec3 P3DynamicsWorld::castRay(glm::vec3 const &start, glm::vec3 const &direction)

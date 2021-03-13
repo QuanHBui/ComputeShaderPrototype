@@ -15,6 +15,7 @@ precision highp float;
 #define INCLUDED_VERT_SET 1
 #define FLT_MAX 9999.9f
 #define EPSILON 0.0001f
+#define PERSISTENT_THRESHOLD_SQ 2.0f
 
 layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
@@ -107,10 +108,16 @@ layout(std430, binding = 1) readonly buffer in_collision_pair_data
 };
 
 // This is the out buffer that we are going to append to
-layout(std430, binding = 2) writeonly buffer out_manifolds_data
+layout(std430, binding = 2) writeonly buffer out_manifold_data
 {
 	ivec4 manifoldMisc;
 	Manifold manifolds[MAX_COLLIDER_COUNT];
+};
+
+layout(std430, binding = 3) readonly buffer back_buffer_manifold_data
+{
+	ivec4 oldManifoldMisc;
+	Manifold oldManifolds[MAX_COLLIDER_COUNT];
 };
 
 //layout(std430, binding = 3) writeonly buffer experimental_out_buffer
@@ -183,6 +190,12 @@ Plane getPlane(BoxCollider box, int faceIdx)
 	return plane;
 }
 
+// Find the center of mass of a box collider
+vec3 getCOM(BoxCollider boxCollider)
+{
+	return 0.5f * (boxCollider.vertices[5].xyz + boxCollider.vertices[3].xyz);
+}
+
 /**
  * Build a plane for each face & find the support point in the opposite normal
  *  direction on the other hull. Once support point is found, the distance
@@ -251,7 +264,7 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 	// Somehow we obtain the cross edge. In the case of the box, we can use edge 3 - 5.
 	// The point in the middle of the cross edge is the center of the box. If not, it's only
 	//  the direction of the box center from the current vertA that we care about.
-	vec3 centerA = 0.5f * (boxA.vertices[5].xyz + boxA.vertices[3].xyz);
+	vec3 centerA = getCOM(boxA);
 
 	for (int edgeIdxA = 0; edgeIdxA < COLLIDER_EDGE_COUNT; ++edgeIdxA)
 	{
@@ -333,7 +346,7 @@ void reduceContactPoints(inout Manifold manifold)
 
 	for (int i = 0; i < manifold.contactBoxIndicesAndContactCount.z; ++i)
 	{
-		float separation = dot(manifold.contacts[i].position.xyz, manifold.contactNormal.xyz);
+		float separation = dot(manifold.contacts[i].position.xyz, -manifold.contactNormal.xyz);
 
 		if (separation > largestSeparation)
 		{
@@ -753,13 +766,60 @@ void separatingAxisTest(uint collisionPairIdx)
 	manifolds[availableIdx] = manifold;
 }
 
+void validateOldManifold(uint manifoldIdx)
+{
+	if (manifoldIdx >= oldManifoldMisc.x) return;
+
+	Manifold manifold = oldManifolds[manifoldIdx];
+
+	int validContactCount = 0;
+	Contact validContacts[4];
+
+	for (int contactIdx = 0; contactIdx < manifold.contactBoxIndicesAndContactCount.z; ++contactIdx)
+	{
+		Contact contact = manifold.contacts[contactIdx];
+
+		BoxCollider referenceBox = boxColliders[manifold.contactBoxIndicesAndContactCount.x];
+		BoxCollider incidentBox  = boxColliders[manifold.contactBoxIndicesAndContactCount.y];
+
+		vec3 currentGlobalReferencePos = getCOM(referenceBox) + contact.referenceRelativePosition.xyz;
+		vec3 currentGlobalIncidentPos  = getCOM(incidentBox) + contact.incidentRelativePosition.xyz;
+
+		vec3 rReferenceIncident = currentGlobalIncidentPos - currentGlobalReferencePos;
+
+		vec3 rReference = contact.position.xyz - currentGlobalReferencePos;
+		vec3 rIncident  = contact.position.xyz - currentGlobalIncidentPos;
+
+		bool stillOverlapping = dot(manifold.contactNormal.xyz, rReferenceIncident) <= 0.0f;
+
+		bool rReferenceCloseEnough = dot(rReference, rReference) < PERSISTENT_THRESHOLD_SQ;
+		bool rIncidentCloseEnough  = dot(rIncident, rIncident) < PERSISTENT_THRESHOLD_SQ;
+
+		if (rReferenceCloseEnough && rIncidentCloseEnough)
+		{
+			validContacts[validContactCount++] = contact;
+		}
+	}
+
+	// Might want to remove the manifold entirely if the number of valid contact count is zero.
+	for (int validContactIdx = 0; validContactIdx < validContactCount; ++validContactIdx)
+	{
+		manifold.contacts[validContactIdx] = validContacts[validContactIdx];
+	}
+
+	manifold.contactBoxIndicesAndContactCount.z = validContactCount;
+}
+
 // 1 global invocation = 1 collision pair
 void main()
 {
-	uint collisionPairIdx = gl_GlobalInvocationID.x;
+	uint someIdx = gl_GlobalInvocationID.x;
 
-	if (collisionPairIdx < collisionPairMisc.x)
+	// Validate or invalidate the old contact manifolds
+	validateOldManifold(someIdx);
+
+	if (someIdx < collisionPairMisc.x)
 	{
-		separatingAxisTest(collisionPairIdx);
+		separatingAxisTest(someIdx);
 	}
 }

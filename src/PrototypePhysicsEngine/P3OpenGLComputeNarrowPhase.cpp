@@ -21,33 +21,36 @@ void P3OpenGLComputeNarrowPhase::initGpuBuffers()
 	// BoxCollider and CollisionPair buffers should already on the GPU from broadphase already.
 	// Only need to allocate buffer for the manifolds
 	GLuint temp[] = { 0, 0 };
-	glGenBuffers(2, temp);
+	glGenBuffers(cNarrowPhaseSsboCount, temp);
 
-	mSsboIDs[Buffer::MANIFOLD]     = temp[0];
-	mSsboIDs[Buffer::EXPERIMENTAL] = temp[1];
+	mSsboIDs[Buffer::MANIFOLD_FRONT] = temp[0];
+	mSsboIDs[Buffer::MANIFOLD_BACK]  = temp[1];
 
 	GLbitfield mapFlags = GL_MAP_READ_BIT
 						| GL_MAP_PERSISTENT_BIT
 						| GL_MAP_COHERENT_BIT;
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::MANIFOLD]);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::MANIFOLD_FRONT]);
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(ManifoldGpuPackage), nullptr, mapFlags);
 
 	// The pointer prob is pointing to pinned memory.
-	mpManifoldPkg = static_cast<ManifoldGpuPackage *>(glMapBufferRange(
+	mpManifoldPkg[0] = static_cast<ManifoldGpuPackage *>(glMapBufferRange(
 		GL_SHADER_STORAGE_BUFFER,
 		0,
 		sizeof(ManifoldGpuPackage),
 		mapFlags
 	));
 
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::EXPERIMENTAL]);
-	//glBufferStorage(
-	//	GL_SHADER_STORAGE_BUFFER,
-	//	sizeof(ManifoldPackage),
-	//	nullptr,
-	//	0
-	//);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboIDs[Buffer::MANIFOLD_BACK]);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(ManifoldGpuPackage), nullptr, mapFlags);
+
+	// The pointer prob is pointing to pinned memory.
+	mpManifoldPkg[1] = static_cast<ManifoldGpuPackage *>(glMapBufferRange(
+		GL_SHADER_STORAGE_BUFFER,
+		0,
+		sizeof(ManifoldGpuPackage),
+		mapFlags
+	));
 }
 
 void P3OpenGLComputeNarrowPhase::step()
@@ -57,8 +60,8 @@ void P3OpenGLComputeNarrowPhase::step()
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mSsboIDs[Buffer::BOX_COLLIDER]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mSsboIDs[Buffer::COLLISION_PAIR]);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSsboIDs[Buffer::MANIFOLD]);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDs[Buffer::EXPERIMENTAL]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSsboIDs[Buffer::MANIFOLD_FRONT]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSsboIDs[Buffer::MANIFOLD_BACK]);
 
 	mAtomicCounter.bindTo(0);
 
@@ -67,7 +70,8 @@ void P3OpenGLComputeNarrowPhase::step()
 
 	glFinish();
 
-	mpManifoldPkg->misc.x = mAtomicCounter.get();
+	// The front buffer always has the final result, the back buffer should have the previous results
+	mpManifoldPkg[mFrontBufferIdx]->misc.x = mAtomicCounter.get();
 
 	mAtomicCounter.reset();
 	glUseProgram(0u);

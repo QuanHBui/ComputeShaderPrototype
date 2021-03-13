@@ -99,14 +99,12 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-13.5f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
 		for (int h = 0; h < 6; ++h)
 		{
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -9.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, 19.0f, 6.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-14.0f, 19.0f, 6.5f), glm::vec3(0.0f, 0.0f, 0.0f));
 
 		for (int i = 0; i < 3; ++i)
 		{

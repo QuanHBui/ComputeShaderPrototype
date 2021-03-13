@@ -11,7 +11,7 @@
 #include "P3Common.h"
 
 constexpr uint16_t cNarrowPhaseComputeProgramCount = 1u;
-constexpr GLsizei cNarrowPhaseSsboCount = 1u;
+constexpr GLsizei cNarrowPhaseSsboCount = 2u;
 
 struct BoundingVolume;
 struct ManifoldGpuPackage;
@@ -23,8 +23,18 @@ public:
 
 	void step();
 
-	ManifoldGpuPackage *getPManifoldPkg() { return mpManifoldPkg; }
+	ManifoldGpuPackage *getPManifoldPkg() { return mpManifoldPkg[mFrontBufferIdx]; }
 	
+	// Only call this if you know what you are doing
+	void swapBuffers()
+	{
+		mFrontBufferIdx = !mFrontBufferIdx;
+
+		GLuint temp = mSsboIDs[Buffer::MANIFOLD_FRONT];
+		mSsboIDs[Buffer::MANIFOLD_FRONT] = mSsboIDs[Buffer::MANIFOLD_BACK];
+		mSsboIDs[Buffer::MANIFOLD_BACK]  = temp;
+	}
+
 	void reset();
 
 	~P3OpenGLComputeNarrowPhase()
@@ -48,10 +58,10 @@ private:
 
 	enum class Buffer
 	{
-		EXPERIMENTAL,
 		BOX_COLLIDER,
 		COLLISION_PAIR,
-		MANIFOLD
+		MANIFOLD_FRONT,
+		MANIFOLD_BACK
 	};
 
 	GLuint mComputeProgramIDs[cNarrowPhaseComputeProgramCount]{};
@@ -59,7 +69,9 @@ private:
 	std::unordered_map<Buffer, GLuint> mSsboIDs{};
 
 	AtomicCounter mAtomicCounter{};
-	ManifoldGpuPackage *mpManifoldPkg; // Stores the results from last physics tick
+	ManifoldGpuPackage *mpManifoldPkg[2]; // Stores the results from last physics tick
+
+	int mFrontBufferIdx = 0;
 };
 
 #endif // P3_OPENGL_COMPUTE_NARROW_PHASE_H

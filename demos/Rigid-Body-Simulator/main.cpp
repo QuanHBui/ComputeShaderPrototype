@@ -71,7 +71,7 @@ int main()
 
 	// Semi-fix timestep for physics simulation
 	double lastPhysicsTickTime      = lastTime;
-	double fixedPhysicsTickInterval = 1.0 / 144.0;
+	double fixedPhysicsTickInterval = 1.0 / 60.0;
 	int physicsTickCount = 0;
 
 	GLuint64 gpuTime = 0;
@@ -98,10 +98,10 @@ int main()
 			++physicsTickCount;
 		}
 
-		pApplication->renderFrame(float(frameTimeInterval));
-
 		// End time query and store the result
 		glEndQuery(GL_TIME_ELAPSED);
+
+		pApplication->renderFrame(float(frameTimeInterval));
 
 		// Show updated FPS/Frame time on UI every half a sec.
 		if (currentTime - lastTime >= 0.5)

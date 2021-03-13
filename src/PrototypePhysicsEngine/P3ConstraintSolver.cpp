@@ -5,8 +5,8 @@
 #include "P3Transform.h"
 
 constexpr float cBaumgarteFactor = 0.1f;
-constexpr float cPenetrationSlop = 0.05f;
-constexpr int cIterationCount = 10;
+constexpr float cPenetrationSlop = 0.001f;
+constexpr int cIterationCount = 25;
 
 // http://box2d.org/2014/02/computing-a-basis/
 void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
@@ -35,11 +35,11 @@ void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
 
 // Heavily inspired by qu3e physics engine by Randy Gaul
 void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
-								  std::vector<LinearTransform> &rigidLinearTransformContainer,
-								  std::vector<AngularTransform> &rigidAngularTransformContainer,
-								  std::vector<LinearTransform> &staticLinearTransformContainer,
-								  std::vector<AngularTransform> &staticAngularTransformContainer,
-								  float dt )
+								   std::vector<LinearTransform> &rigidLinearTransformContainer,
+								   std::vector<AngularTransform> &rigidAngularTransformContainer,
+								   std::vector<LinearTransform> &staticLinearTransformContainer,
+								   std::vector<AngularTransform> &staticAngularTransformContainer,
+								   float dt )
 {
 	// Then solve contact constraints - Iterate through all manifolds
 	for (int i = 0; i < manifoldPkg.misc.x; ++i)
@@ -48,58 +48,94 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 		glm::vec3 finalAngularImpulse{};
 
 		Manifold &manifold  = manifoldPkg.manifolds[i];
+
+		if (manifold.frictionRestitution.x <= 0.0f)
+			manifold.frictionRestitution.x = 10.0f;
+
+		if (manifold.frictionRestitution.y <= 0.0f)
+			manifold.frictionRestitution.y = 0.1f;
+
 		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
 		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
 
-		LinearTransform const &referenceLinearTransform   = getLinearTransform(referenceBoxIdx, rigidLinearTransformContainer, staticLinearTransformContainer);
-		AngularTransform const &referenceAngularTransform = getAngularTransform(referenceBoxIdx, rigidAngularTransformContainer, staticAngularTransformContainer);
+		LinearTransform &referenceLinearTransform   = getLinearTransform(referenceBoxIdx, rigidLinearTransformContainer, staticLinearTransformContainer);
+		AngularTransform &referenceAngularTransform = getAngularTransform(referenceBoxIdx, rigidAngularTransformContainer, staticAngularTransformContainer);
 
-		LinearTransform const &incidentLinearTransform   = getLinearTransform(incidentBoxIdx, rigidLinearTransformContainer, staticLinearTransformContainer);
-		AngularTransform const &incidentAngularTransform = getAngularTransform(incidentBoxIdx, rigidAngularTransformContainer, staticAngularTransformContainer);
+		LinearTransform &incidentLinearTransform   = getLinearTransform(incidentBoxIdx, rigidLinearTransformContainer, staticLinearTransformContainer);
+		AngularTransform &incidentAngularTransform = getAngularTransform(incidentBoxIdx, rigidAngularTransformContainer, staticAngularTransformContainer);
 
 		// Compute the basis
 		computeBasis(manifold.contactNormal, manifold.contactTangents[0], manifold.contactTangents[1]);
+
+		glm::vec3 vA = referenceLinearTransform.velocity;
+		glm::vec3 wA = referenceAngularTransform.angularVelocity;
+		glm::vec3 vB = incidentLinearTransform.velocity;
+		glm::vec3 wB = incidentAngularTransform.angularVelocity;
 
 		// Iterate through each contact points
 		for (int contactPointIdx = 0
 			; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
 			; ++contactPointIdx)
 		{
-			Contact *pContact = manifold.contacts + contactPointIdx;
+			Contact &contact = manifold.contacts[contactPointIdx];
 
 			glm::vec3 contactPointPos = manifold.contacts[contactPointIdx].position;
 
 			// Relative positions of the contact point to the 2 bodies
-			pContact->referenceRelativePosition = pContact->position - glm::vec4(referenceLinearTransform.position, 0.0f);
-			pContact->incidentRelativePosition  = pContact->position - glm::vec4(incidentLinearTransform.position, 0.0f);
+			contact.referenceRelativePosition = contact.position - glm::vec4(referenceLinearTransform.position, 0.0f);
+			contact.incidentRelativePosition  = contact.position - glm::vec4(incidentLinearTransform.position, 0.0f);
 
 			// Precalculate J M^-1 JT for contact and friction constraint
-			glm::vec3 referenceRelativePosCrossNormal = glm::cross(glm::vec3(pContact->referenceRelativePosition), glm::vec3(manifold.contactNormal));
-			glm::vec3 incidentRelativePosCrossNormal  = glm::cross(glm::vec3(pContact->incidentRelativePosition), glm::vec3(manifold.contactNormal));
+			glm::vec3 referenceRelativePosCrossNormal = glm::cross(glm::vec3(contact.referenceRelativePosition), glm::vec3(manifold.contactNormal));
+			glm::vec3 incidentRelativePosCrossNormal  = glm::cross(glm::vec3(contact.incidentRelativePosition), glm::vec3(manifold.contactNormal));
 
 			float normalTotalInverseMass  = referenceLinearTransform.inverseMass + incidentLinearTransform.inverseMass;
 			float tangentInverseMasses[2] = { normalTotalInverseMass, normalTotalInverseMass };
 
-			// TODO: Turn inertia to moment of inertia tensor
 			normalTotalInverseMass += glm::dot(referenceRelativePosCrossNormal, referenceAngularTransform.inverseInertia * referenceRelativePosCrossNormal)
 				+ glm::dot(incidentRelativePosCrossNormal, incidentAngularTransform.inverseInertia * incidentRelativePosCrossNormal);
 
-			pContact->normalTangentMassesBias.x = 1.0f / normalTotalInverseMass;
+			contact.normalTangentMassesBias.x = 1.0f / normalTotalInverseMass;
 
 			// Compute the inverse masses in the 2 tangent components
 			for (int j = 0; j < 2; ++j)
 			{
-				glm::vec3 referenceRelativePosCrossTangent = glm::cross(glm::vec3(manifold.contactTangents[j]), glm::vec3(pContact->referenceRelativePosition));
-				glm::vec3 incidentRelativePosCrossTangent  = glm::cross(glm::vec3(manifold.contactTangents[j]), glm::vec3(pContact->incidentRelativePosition));
+				glm::vec3 referenceRelativePosCrossTangent = glm::cross(glm::vec3(manifold.contactTangents[j]), glm::vec3(contact.referenceRelativePosition));
+				glm::vec3 incidentRelativePosCrossTangent  = glm::cross(glm::vec3(manifold.contactTangents[j]), glm::vec3(contact.incidentRelativePosition));
 				tangentInverseMasses[j] += glm::dot(referenceRelativePosCrossTangent, referenceAngularTransform.inverseInertia * referenceRelativePosCrossTangent)
 					+ glm::dot(incidentRelativePosCrossTangent, incidentAngularTransform.inverseInertia * incidentRelativePosCrossTangent);
-				pContact->normalTangentMassesBias[j + 1] = 1.0f / tangentInverseMasses[j];
+				contact.normalTangentMassesBias[j + 1] = 1.0f / tangentInverseMasses[j];
 			}
 
 			// Precalculate the bias factor
-			pContact->normalTangentMassesBias.w = -cBaumgarteFactor * (1.0f / dt) * std::min(0.0f, manifold.contactNormal.w + cPenetrationSlop);
+			contact.normalTangentMassesBias.w = -cBaumgarteFactor * std::min(0.0f, manifold.contactNormal.w + cPenetrationSlop) / dt;
 
-			// TODO: Warm start
+			// Warm start
+			glm::vec3 oldP = glm::vec3(manifold.contactNormal) * contact.normalTangentBiasImpulses.x;
+
+			// Friction
+			oldP += glm::vec3(manifold.contactTangents[0]) * contact.normalTangentBiasImpulses.y;
+			oldP += glm::vec3(manifold.contactTangents[1]) * contact.normalTangentBiasImpulses.z;
+
+			vA -= oldP * referenceLinearTransform.inverseMass;
+			wA -= referenceAngularTransform.inverseInertia * glm::cross(glm::vec3(contact.referenceRelativePosition), oldP);
+
+			vB += oldP * incidentLinearTransform.inverseMass;
+			wB += incidentAngularTransform.inverseInertia * glm::cross(glm::vec3(contact.incidentRelativePosition), oldP);
+
+			// Restitution bias
+			float dv = glm::dot(vB + glm::cross(wB, glm::vec3(contact.incidentRelativePosition)) - vA - glm::cross(wA, glm::vec3(contact.referenceRelativePosition))
+				, glm::vec3(manifold.contactNormal));
+
+			if (dv < -1.0f)
+			{
+				contact.normalTangentMassesBias.w += -(manifold.frictionRestitution.y) * dv;
+			}
+
+			referenceLinearTransform.velocity = vA;
+			referenceAngularTransform.angularVelocity = wA;
+			incidentLinearTransform.velocity = vB;
+			incidentAngularTransform.angularVelocity = wB;
 		}
 	}
 }
