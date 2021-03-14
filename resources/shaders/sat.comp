@@ -15,7 +15,7 @@ precision highp float;
 #define INCLUDED_VERT_SET 1
 #define FLT_MAX 9999.9f
 #define EPSILON 0.0001f
-#define PERSISTENT_THRESHOLD_SQ 2.0f
+#define PERSISTENT_THRESHOLD_SQ 6.0f
 
 layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
@@ -108,7 +108,7 @@ layout(std430, binding = 1) readonly buffer in_collision_pair_data
 };
 
 // This is the out buffer that we are going to append to
-layout(std430, binding = 2) writeonly buffer out_manifold_data
+layout(std430, binding = 2) coherent buffer out_manifold_data
 {
 	ivec4 manifoldMisc;
 	Manifold manifolds[MAX_COLLIDER_COUNT];
@@ -718,6 +718,50 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	return manifold;
 }
 
+// I hope the reference box ID and incident box ID stay consistent
+bool validateNewManifold(Manifold newManifold)
+{
+	// Find any existing manifold
+	for (int i = 0; i < atomicCounter(nextAvailableIdx); ++i)
+	{
+		Manifold currentCheckingManifold = manifolds[i];
+
+		// Assume each manifold is unique
+		if (newManifold.contactBoxIndicesAndContactCount.xy == currentCheckingManifold.contactBoxIndicesAndContactCount.xy)
+		{
+			for (int j = 0; j < newManifold.contactBoxIndicesAndContactCount.z; ++j)
+			{
+				Contact newContact = newManifold.contacts[j];
+
+				for (int l = 0; l < currentCheckingManifold.contactBoxIndicesAndContactCount.z; ++l)
+				{
+					Contact existingContact = currentCheckingManifold.contacts[l];
+
+					vec3 r = newContact.position.xyz - existingContact.position.xyz;
+
+					// Proximity check
+					if (dot(r, r) > PERSISTENT_THRESHOLD_SQ)
+					{
+						currentCheckingManifold.contacts[currentCheckingManifold.contactBoxIndicesAndContactCount.z++] = newContact;
+					}
+				}
+			}
+
+			if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
+			{
+				reduceContactPoints(currentCheckingManifold);
+			}
+
+			// This is terrible.
+			manifolds[i] = currentCheckingManifold;
+
+			return false;
+		}
+	}
+
+	return true;
+}
+
 // This function will create and append to the manifold buffer.
 // We are trying to find the closest feature that defines the contact type, face-face or edge-edge.
 //  If the closest feature is a face-face, then we create a face contact.
@@ -761,9 +805,12 @@ void separatingAxisTest(uint collisionPairIdx)
 
 	manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
-	uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
-	memoryBarrierAtomicCounter();
-	manifolds[availableIdx] = manifold;
+	if (validateNewManifold(manifold))
+	{
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		memoryBarrierAtomicCounter();
+		manifolds[availableIdx] = manifold;
+	}
 }
 
 void validateOldManifold(uint manifoldIdx)
@@ -795,19 +842,26 @@ void validateOldManifold(uint manifoldIdx)
 		bool rReferenceCloseEnough = dot(rReference, rReference) < PERSISTENT_THRESHOLD_SQ;
 		bool rIncidentCloseEnough  = dot(rIncident, rIncident) < PERSISTENT_THRESHOLD_SQ;
 
-		if (rReferenceCloseEnough && rIncidentCloseEnough)
+		if (stillOverlapping && rReferenceCloseEnough && rIncidentCloseEnough)
 		{
 			validContacts[validContactCount++] = contact;
 		}
 	}
 
-	// Might want to remove the manifold entirely if the number of valid contact count is zero.
-	for (int validContactIdx = 0; validContactIdx < validContactCount; ++validContactIdx)
+	// Remove the manifold entirely if the number of valid contact count is zero.
+	if (validContactCount > 0)
 	{
-		manifold.contacts[validContactIdx] = validContacts[validContactIdx];
-	}
+		for (int validContactIdx = 0; validContactIdx < validContactCount; ++validContactIdx)
+		{
+			manifold.contacts[validContactIdx] = validContacts[validContactIdx];
+		}
 
-	manifold.contactBoxIndicesAndContactCount.z = validContactCount;
+		manifold.contactBoxIndicesAndContactCount.z = validContactCount;
+
+		uint availableIdx = atomicCounterIncrement(nextAvailableIdx);
+		memoryBarrierAtomicCounter();
+		manifolds[availableIdx] = manifold;
+	}
 }
 
 // 1 global invocation = 1 collision pair
@@ -817,6 +871,9 @@ void main()
 
 	// Validate or invalidate the old contact manifolds
 	validateOldManifold(someIdx);
+
+	barrier();
+	memoryBarrierBuffer();
 
 	if (someIdx < collisionPairMisc.x)
 	{
