@@ -721,7 +721,7 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 // I hope the reference box ID and incident box ID stay consistent
 bool validateNewManifold(Manifold newManifold)
 {
-	// Find any existing manifold
+	// Find any existing manifold - potential data race here
 	for (int i = 0; i < atomicCounter(nextAvailableIdx); ++i)
 	{
 		Manifold currentCheckingManifold = manifolds[i];

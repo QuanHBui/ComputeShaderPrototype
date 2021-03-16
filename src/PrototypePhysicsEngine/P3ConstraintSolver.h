@@ -41,12 +41,13 @@ public:
 		}
 	};
 
-	void preSolve(ManifoldGpuPackage &,
-		std::vector<LinearTransform> &,
-		std::vector<AngularTransform> &,
-		std::vector<LinearTransform> &,
-		std::vector<AngularTransform> &,
-		float );
+	void preSolve( ManifoldGpuPackage &,
+				   ManifoldGpuPackage &,
+				   std::vector<LinearTransform> &,
+				   std::vector<AngularTransform> &,
+				   std::vector<LinearTransform> &,
+				   std::vector<AngularTransform> &,
+				   float );
 
 	// If the solver's implementation resides on the CPU, returns the offset
 	void solve( ManifoldGpuPackage &,

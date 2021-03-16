@@ -15,6 +15,8 @@ constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
 constexpr float cEpsilon = 0.0001f;
+constexpr float cPersistentThresholdSq_Manifold = 0.0005f;
+constexpr float cPersistentThresholdSq_Contact  = 8.0f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
 using ColliderFaceNormals = std::array<std::array<glm::vec3, cColliderFaceCount>, cMaxColliderCount>;
@@ -516,12 +518,142 @@ Manifold createEdgeContact(EdgeQuery edgeQuery, int boxAIdx, int boxBIdx)
 	return manifold;
 }
 
+glm::vec3 getCOM(BoxCollider boxCollider)
+{
+	return 0.5f * (boxCollider[5] + boxCollider[3]);
+}
+
+// @return: number of valid manifolds
+int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
+						 ManifoldGpuPackage *pBackManifoldPkg,
+						 BoxColliderGpuPackage const &boxColliderPkg )
+{
+	static int frameCount = 0;
+	printf("Frame: %d\n", frameCount++);
+
+	int availableIdx = 0;
+
+	for (int manifoldIdx = 0; manifoldIdx < pBackManifoldPkg->misc.x; ++manifoldIdx)
+	{
+		Manifold manifold = pBackManifoldPkg->manifolds[manifoldIdx];
+
+		int validContactCount = 0;
+		Contact validContacts[4];
+
+		for (int contactIdx = 0; contactIdx < manifold.contactBoxIndicesAndContactCount.z; ++contactIdx)
+		{
+			Contact contact = manifold.contacts[contactIdx];
+
+			BoxCollider referenceBox = boxColliderPkg[manifold.contactBoxIndicesAndContactCount.x];
+			BoxCollider incidentBox  = boxColliderPkg[manifold.contactBoxIndicesAndContactCount.y];
+
+			glm::vec3 currentGlobalReferencePos = getCOM(referenceBox) + glm::vec3(contact.referenceRelativePosition);
+			glm::vec3 currentGlobalIncidentPos  = getCOM(incidentBox) + glm::vec3(contact.incidentRelativePosition);
+
+			glm::vec3 rReferenceIncident = currentGlobalIncidentPos - currentGlobalReferencePos;
+
+			glm::vec3 rReference = glm::vec3(contact.position) - currentGlobalReferencePos;
+			glm::vec3 rIncident  = glm::vec3(contact.position) - currentGlobalIncidentPos;
+
+			bool stillOverlapping = glm::dot(glm::vec3(manifold.contactNormal), rReferenceIncident) <= 0.0f;
+
+			bool rReferenceCloseEnough = glm::dot(rReference, rReference) < cPersistentThresholdSq_Manifold;
+			bool rIncidentCloseEnough  = glm::dot(rIncident, rIncident) < cPersistentThresholdSq_Manifold;
+
+			if (stillOverlapping && rReferenceCloseEnough && rIncidentCloseEnough)
+			{
+				validContacts[validContactCount++] = contact;
+			}
+		}
+
+		assert(validContactCount <= 4);
+
+		// Remove the manifold entirely if the number of valid contact count is zero.
+		if (validContactCount > 0)
+		{
+			printf("Pair (%d, %d) still valid!\n", manifold.contactBoxIndicesAndContactCount.x, manifold.contactBoxIndicesAndContactCount.y);
+
+			for (int validContactIdx = 0; validContactIdx < validContactCount; ++validContactIdx)
+			{
+				manifold.contacts[validContactIdx] = validContacts[validContactIdx];
+			}
+
+			manifold.contactBoxIndicesAndContactCount.z = validContactCount;
+
+			pFrontManifoldPkg->manifolds[availableIdx++] = manifold;
+		}
+	}
+
+	printf("Old Manifold Validation finished!\n\n");
+
+	return availableIdx;
+}
+
+bool validateNewManifold( ManifoldGpuPackage *pFrontManifoldPkg,
+						  Manifold const &newManifold,
+						  int validManifoldCount)
+{
+	printf("Start Validate New Manifold\n");
+	assert(validManifoldCount <= cMaxObjectCount);
+
+	// Find any existing manifold - potential data race here
+	for (int i = 0; i < validManifoldCount; ++i)
+	{
+		Manifold &currentCheckingManifold = pFrontManifoldPkg->manifolds[i];
+
+		// Assume each manifold is unique
+		if (   newManifold.contactBoxIndicesAndContactCount.x == currentCheckingManifold.contactBoxIndicesAndContactCount.x
+			&& newManifold.contactBoxIndicesAndContactCount.y == currentCheckingManifold.contactBoxIndicesAndContactCount.y )
+		{
+			int currentCheckingManifoldContactCount = currentCheckingManifold.contactBoxIndicesAndContactCount.z;
+
+			// Should the separation distance be updated?
+			currentCheckingManifold.contactNormal = newManifold.contactNormal;
+
+			for (int j = 0; j < newManifold.contactBoxIndicesAndContactCount.z; ++j)
+			{
+				Contact const &newContact = newManifold.contacts[j];
+
+				for (int l = 0; l < currentCheckingManifoldContactCount; ++l)
+				{
+					Contact const &existingContact = currentCheckingManifold.contacts[l];
+
+					glm::vec3 r = glm::vec3(newContact.position) - glm::vec3(existingContact.position);
+
+					// Proximity check
+					if (dot(r, r) > cPersistentThresholdSq_Contact)
+					{
+						printf("Potential issue: %d\n", currentCheckingManifold.contactBoxIndicesAndContactCount.z);
+						printf("z1: %d, z2: %d, r: (%f, %f, %f)\n\n", newManifold.contactBoxIndicesAndContactCount.z, currentCheckingManifoldContactCount, r.x, r.y, r.z);
+
+						currentCheckingManifold.contacts[currentCheckingManifold.contactBoxIndicesAndContactCount.z++] = newContact;
+					}
+				}
+			}
+
+			if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
+			{
+				reduceContactPoints(currentCheckingManifold);
+			}
+
+			return false;
+		}
+	}
+
+	printf("End Validate New Manifold.\n\n");
+
+	return true;
+
+}
+
 // The size of the collisionPairs buffer can be sent here for a more elegant solution.
-void P3::sat( ManifoldGpuPackage *pManifoldPkg,
+void P3::sat( ManifoldGpuPackage *pFrontManifoldPkg,
+			  ManifoldGpuPackage *pBackManifoldPkg,
 			  BoxColliderGpuPackage const &boxColliderPkg,
 			  const CollisionPairGpuPackage *pCollisionPairPkg )
 {
-	int availableIdx = 0;
+	int availableIdx = validateOldManifold(pFrontManifoldPkg, pBackManifoldPkg, boxColliderPkg);
+	int validManifoldCount = availableIdx;
 	int boxAIdx = -1;
 	int boxBIdx = -1;
 	BoxCollider boxA = nullptr;
@@ -567,8 +699,13 @@ void P3::sat( ManifoldGpuPackage *pManifoldPkg,
 		//}
 		manifold = createFaceContact(faceQueryA, faceQueryB, boxA, boxB, boxAIdx, boxBIdx);
 
-		pManifoldPkg->manifolds[availableIdx++] = manifold;
+		if (validateNewManifold(pFrontManifoldPkg, manifold, validManifoldCount))
+		{
+			pFrontManifoldPkg->manifolds[availableIdx++] = manifold;
+		}
+
+		printf("availableIdx: %d\n\n", availableIdx);
 	}
 
-	pManifoldPkg->misc.x = availableIdx;
+	pFrontManifoldPkg->misc.x = availableIdx;
 }

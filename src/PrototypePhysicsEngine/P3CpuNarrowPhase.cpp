@@ -197,8 +197,8 @@ namespace P3
 ManifoldGpuPackage *CpuNarrowPhase::step( BoxColliderGpuPackage const &boxColliderPkg,
 										  const CollisionPairGpuPackage *pCollisionPairPkg )
 {
-	sat(mpManifoldPkg, boxColliderPkg, pCollisionPairPkg);
+	sat(mpManifoldPkg[mFrontBufferIdx], mpManifoldPkg[!mFrontBufferIdx], boxColliderPkg, pCollisionPairPkg);
 
-	return mpManifoldPkg;
+	return mpManifoldPkg[mFrontBufferIdx];
 }
 }

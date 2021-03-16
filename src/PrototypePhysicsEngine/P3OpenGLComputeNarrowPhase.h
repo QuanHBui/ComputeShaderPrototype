@@ -24,6 +24,7 @@ public:
 	void step();
 
 	ManifoldGpuPackage *getPManifoldPkg() { return mpManifoldPkg[mFrontBufferIdx]; }
+	ManifoldGpuPackage *getPBackManifoldPkg() { return mpManifoldPkg[!mFrontBufferIdx]; }
 	
 	// Only call this if you know what you are doing
 	void swapBuffers()

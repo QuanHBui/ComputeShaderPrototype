@@ -43,16 +43,32 @@ namespace P3
 class CpuNarrowPhase
 {
 public:
-	void init() { mpManifoldPkg = new ManifoldGpuPackage(); }
+	void init()
+	{
+		mpManifoldPkg[0] = new ManifoldGpuPackage();
+		mpManifoldPkg[1] = new ManifoldGpuPackage();
+	}
 
 	ManifoldGpuPackage *step(BoxColliderGpuPackage const &, const CollisionPairGpuPackage *);
 
-	ManifoldGpuPackage const *getPManifoldPkg() const { return mpManifoldPkg; }
+	ManifoldGpuPackage *getPManifoldPkg() { return mpManifoldPkg[mFrontBufferIdx]; }
+	ManifoldGpuPackage *getPBackManifoldPkg() { return mpManifoldPkg[!mFrontBufferIdx]; }
 
-	~CpuNarrowPhase() { delete mpManifoldPkg; }
+	void swapBuffers()
+	{
+		mFrontBufferIdx = !mFrontBufferIdx;
+	}
+
+	~CpuNarrowPhase()
+	{
+		delete mpManifoldPkg[0];
+		delete mpManifoldPkg[1];
+	}
 
 private:
-	ManifoldGpuPackage *mpManifoldPkg;
+	ManifoldGpuPackage *mpManifoldPkg[2];
+
+	int mFrontBufferIdx = 0;
 };
 }
 

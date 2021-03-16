@@ -22,7 +22,7 @@
 #include "P3Transform.h"
 
 //#define BROAD_PHASE_CPU
-//#define NARROW_PHASE_CPU
+#define NARROW_PHASE_CPU
 
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
 
