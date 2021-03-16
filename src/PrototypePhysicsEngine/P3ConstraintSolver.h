@@ -42,7 +42,6 @@ public:
 	};
 
 	void preSolve( ManifoldGpuPackage &,
-				   ManifoldGpuPackage &,
 				   std::vector<LinearTransform> &,
 				   std::vector<AngularTransform> &,
 				   std::vector<LinearTransform> &,

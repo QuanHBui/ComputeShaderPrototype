@@ -240,7 +240,6 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 #ifdef NARROW_PHASE_CPU
 	mConstraintSolver.preSolve(
 		*mpManifoldPkg,
-		*(mCpuNarrowPhase.getPBackManifoldPkg()),
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,
@@ -259,7 +258,6 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// TODO: Use the implementation on the GPU
 	mConstraintSolver.preSolve(
 		*mpManifoldPkg,
-		*mGpuNarrowPhase.getPBackManifoldPkg(),
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,
