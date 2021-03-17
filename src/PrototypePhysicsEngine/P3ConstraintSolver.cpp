@@ -4,8 +4,8 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
-constexpr float cBaumgarteFactor = 0.01f;
-constexpr float cPenetrationSlop = 0.0005f;
+constexpr float cBaumgarteFactor = 0.001f;
+constexpr float cPenetrationSlop = 0.005f;
 constexpr int cIterationCount = 100;
 
 // http://box2d.org/2014/02/computing-a-basis/
@@ -53,7 +53,7 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 			manifold.frictionRestitution.x = 10.0f;
 
 		if (manifold.frictionRestitution.y <= 0.0f)
-			manifold.frictionRestitution.y = 0.25f;
+			manifold.frictionRestitution.y = 0.010f;
 
 		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
 		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
@@ -111,21 +111,20 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 			contact.normalTangentMassesBias.w = -cBaumgarteFactor * std::min(0.0f, manifold.contactNormal.w + cPenetrationSlop) / dt;
 
 			// Warm start
-			Contact const &oldContact = manifold.contacts[contactPointIdx];
-			glm::vec3 oldP = glm::vec3(manifold.contactNormal) * oldContact.normalTangentBiasImpulses.x;
+			glm::vec3 oldP = glm::vec3(manifold.contactNormal) *contact.normalTangentBiasImpulses.x;
 
 			// Friction
-			oldP += glm::vec3(manifold.contactTangents[0]) * oldContact.normalTangentBiasImpulses.y;
-			oldP += glm::vec3(manifold.contactTangents[1]) * oldContact.normalTangentBiasImpulses.z;
+			oldP += glm::vec3(manifold.contactTangents[0]) * contact.normalTangentBiasImpulses.y;
+			oldP += glm::vec3(manifold.contactTangents[1]) * contact.normalTangentBiasImpulses.z;
 
 			vA -= oldP * referenceLinearTransform.inverseMass;
-			wA -= referenceAngularTransform.inverseInertia * glm::cross(glm::vec3(oldContact.referenceRelativePosition), oldP);
+			wA -= referenceAngularTransform.inverseInertia * glm::cross(glm::vec3(contact.referenceRelativePosition), oldP);
 
 			vB += oldP * incidentLinearTransform.inverseMass;
-			wB += incidentAngularTransform.inverseInertia * glm::cross(glm::vec3(oldContact.incidentRelativePosition), oldP);
+			wB += incidentAngularTransform.inverseInertia * glm::cross(glm::vec3(contact.incidentRelativePosition), oldP);
 
 			// Restitution bias
-			float dv = glm::dot(vB + glm::cross(wB, glm::vec3(oldContact.incidentRelativePosition)) - vA - glm::cross(wA, glm::vec3(oldContact.referenceRelativePosition))
+			float dv = glm::dot(vB + glm::cross(wB, glm::vec3(contact.incidentRelativePosition)) - vA - glm::cross(wA, glm::vec3(contact.referenceRelativePosition))
 				, glm::vec3(manifold.contactNormal));
 
 			if (dv < -1.0f)

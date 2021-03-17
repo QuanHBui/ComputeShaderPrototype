@@ -11,6 +11,8 @@
 #include <iostream>
 
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "P3Simplex.h"
 #include "P3Sat.h"
@@ -289,8 +291,10 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	for (int j = 0; j < mRigidAngularTransformContainer.size(); ++j)
 	{
 		AngularTransform &angularTransform = mRigidAngularTransformContainer[j];
-		angularTransform.orientationAxis += dt * angularTransform.angularVelocity;
-		angularTransform.tempOrientation += dt * glm::length(angularTransform.orientationAxis);
+
+		// @source: Game Physics Engine Development by Ian Millington
+		addScaledVector(angularTransform.orientation, angularTransform.angularVelocity, dt / 2.0f);
+		angularTransform.orientation = glm::normalize(angularTransform.orientation);
 
 		if (angularTransform.angularVelocity == glm::vec3(0.0f))
 		{
@@ -298,7 +302,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		}
 		else
 		{
-			mBoxColliderCtmContainer[j] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.orientationAxis));
+			mBoxColliderCtmContainer[j] *= glm::mat4_cast(angularTransform.orientation);
 		}
 	}
 
@@ -373,6 +377,7 @@ int P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::ve
 	mBoxColliderContainer.back().update(glm::translate(position));
 
 	mRigidAngularTransformContainer.emplace_back();
+	mRigidAngularTransformContainer.back().orientation = glm::normalize(glm::quat(glm::vec3(0.0f)));
 
 	mBoxColliderCtmContainer.emplace_back(glm::translate(position));
 
@@ -401,6 +406,9 @@ int P3DynamicsWorld::addRigidBody( float mass, glm::vec3 const &position, glm::v
 	mBoxColliderContainer.back().update(glm::translate(position) * extraTransforms);
 
 	mRigidAngularTransformContainer.emplace_back();
+	mRigidAngularTransformContainer.back().orientation = glm::normalize(glm::quat(glm::vec3(0.0f)));
+	mRigidAngularTransformContainer.back().inertia = glm::mat3(std::numeric_limits<float>::max());
+	mRigidAngularTransformContainer.back().inverseInertia = glm::mat3(0.0f);
 
 	mBoxColliderCtmContainer.emplace_back();
 
@@ -442,6 +450,7 @@ int P3DynamicsWorld::addStaticBody(glm::vec3 const &position)
 	mBoxColliderContainer.back().update(glm::translate(position));
 
 	mStaticAngularTransformContainer.emplace_back();
+	mStaticAngularTransformContainer.back().orientation = glm::normalize(glm::quat(glm::vec3(0.0f)));
 	mStaticAngularTransformContainer.back().inertia = glm::mat3(std::numeric_limits<float>::max());
 	mStaticAngularTransformContainer.back().inverseInertia = glm::mat3(0.0f);
 

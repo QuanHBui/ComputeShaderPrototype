@@ -77,8 +77,10 @@ void sweepX()
 		return;
 	}
 
-	for (int j = i + 1; j < currNumColliders; ++j)
+	for (int j = 0; j < currNumColliders; ++j)
 	{
+		if (j == i) continue;
+
 		if (minCoords[i].x < maxCoords[j].x && maxCoords[i].x > minCoords[j].x)
 		{
 			uint availableIdx = atomicCounterIncrement(nextAvailableIdx_1);
@@ -98,6 +100,7 @@ void sweepY()
 
 	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1))
 	{
+		barrier();
 		return;
 	}
 
@@ -126,6 +129,7 @@ void sweepZ()
 
 	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2))
 	{
+		barrier();
 		return;
 	}
 

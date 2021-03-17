@@ -6,6 +6,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+// @source: Game Physics Engine Development by Ian Millington
+inline void addScaledVector(glm::quat &ogQuat, glm::vec3 const &v, float scale)
+{
+	glm::quat q(0, v.x * scale, v.y * scale, v.z * scale);
+
+	ogQuat += q * 0.5f;
+}
+
 /**
  * This aims to be used as a component. Should be an upgrade to the other rigid body class
  * Based on Baraff-Witkins lecture notes and Glenn Fiedler's blog post
@@ -46,10 +54,7 @@ struct AngularTransform
 	glm::mat3 inverseInertia{1.0f};
 
 	//----------------- State variables -----------------//
-	float tempOrientation = 0.0f; // Placeholder for rotational angle
-	glm::vec3 orientationAxis{};
 	glm::quat orientation{};
-	glm::quat spin{};
 	glm::vec3 angularVelocity{};
 	glm::vec3 angularMomentum{};
 };

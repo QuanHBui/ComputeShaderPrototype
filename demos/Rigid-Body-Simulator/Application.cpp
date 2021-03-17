@@ -104,8 +104,6 @@ void Application::initPhysicsWorld(Demo demo)
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -13.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-14.0f, 19.0f, 6.5f), glm::vec3(0.0f, 0.0f, 0.0f));
-
 		for (int i = 0; i < 3; ++i)
 		{
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -11.0f, 5.0f), glm::vec3(0.0f));
@@ -580,7 +578,7 @@ void Application::updateModelMatrices()
 		}
 		else
 		{
-			mModelMatrixContainer[j] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.orientationAxis));
+			mModelMatrixContainer[j] *= glm::mat4_cast(angularTransform.orientation);
 		}
 	}
 
@@ -609,7 +607,7 @@ void Application::updateModelMatrices()
 		}
 		else
 		{
-			mModelMatrixContainer[l + offset] *= glm::rotate(angularTransform.tempOrientation, glm::normalize(angularTransform.orientationAxis));
+			mModelMatrixContainer[l + offset] *= glm::mat4_cast(angularTransform.orientation);
 		}
 	}
 }
