@@ -15,7 +15,7 @@ constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
 constexpr float cEpsilon = 0.0001f;
-constexpr float cPersistentThresholdSq_Manifold = 0.001f;
+constexpr float cPersistentThresholdSq_Manifold = 0.25f;
 constexpr float cPersistentThresholdSq_Contact  = 4.0f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
@@ -555,7 +555,7 @@ int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 			glm::vec3 rReference = glm::vec3(contact.position) - currentGlobalReferencePos;
 			glm::vec3 rIncident  = glm::vec3(contact.position) - currentGlobalIncidentPos;
 
-			bool stillOverlapping = glm::dot(glm::vec3(manifold.contactNormal), rReferenceIncident) <= 0.0f;
+			bool stillOverlapping = glm::dot(glm::vec3(manifold.contactNormal), rReferenceIncident) <= cEpsilon;
 
 			bool rReferenceCloseEnough = glm::dot(rReference, rReference) < cPersistentThresholdSq_Manifold;
 			bool rIncidentCloseEnough  = glm::dot(rIncident, rIncident) < cPersistentThresholdSq_Manifold;
@@ -565,8 +565,6 @@ int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 				validContacts[validContactCount++] = contact;
 			}
 		}
-
-		assert(validContactCount <= 4);
 
 		// Remove the manifold entirely if the number of valid contact count is zero.
 		if (validContactCount > 0)
@@ -627,13 +625,13 @@ bool validateNewManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 						printf("z1: %d, z2: %d, r: (%f, %f, %f)\n\n", newManifold.contactBoxIndicesAndContactCount.z, currentCheckingManifoldContactCount, r.x, r.y, r.z);
 
 						currentCheckingManifold.contacts[currentCheckingManifold.contactBoxIndicesAndContactCount.z++] = newContact;
+
+						if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
+						{
+							reduceContactPoints(currentCheckingManifold);
+						}
 					}
 				}
-			}
-
-			if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
-			{
-				reduceContactPoints(currentCheckingManifold);
 			}
 
 			return false;

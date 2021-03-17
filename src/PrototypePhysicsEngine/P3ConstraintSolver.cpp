@@ -5,7 +5,7 @@
 #include "P3Transform.h"
 
 constexpr float cBaumgarteFactor = 0.01f;
-constexpr float cPenetrationSlop = 0.001f;
+constexpr float cPenetrationSlop = 0.0005f;
 constexpr int cIterationCount = 100;
 
 // http://box2d.org/2014/02/computing-a-basis/
@@ -53,7 +53,7 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 			manifold.frictionRestitution.x = 10.0f;
 
 		if (manifold.frictionRestitution.y <= 0.0f)
-			manifold.frictionRestitution.y = 0.1f;
+			manifold.frictionRestitution.y = 0.25f;
 
 		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
 		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
