@@ -68,7 +68,7 @@ void Application::initRenderSystem()
 	mRenderSystem.init(width, height);
 
 	// Move camera a bit closer. This depends on which demo is showing.
-	mFlyCamera.setPosition(glm::vec3(0.0f, 2.0f, 50.0f));
+	mFlyCamera.setPosition(glm::vec3(0.0f, 1.0f, 50.0f));
 	mFlyCamera.updateViewMatrix();
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
@@ -99,6 +99,8 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -9.0f, 5.0f), glm::vec3(-50.0f, 0.0f, 0.0f));
+
 		for (int h = 0; h < 6; ++h)
 		{
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -13.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -109,8 +111,15 @@ void Application::initPhysicsWorld(Demo demo)
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -11.0f, 5.0f), glm::vec3(0.0f));
 		}
 
-		mPhysicsWorld.addStaticBody(glm::vec3( 2.0f, -2.0f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-4.0f, -7.0f, 5.0f));
+		for (int i = 0; i < 2; ++i)
+		{
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(4.0f + float(i) * 3.0f, -9.0f, 5.0f), glm::vec3(0.0f));
+		}
+
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(5.5f, -7.0f, 5.0f), glm::vec3(0.0f));
+
+		mPhysicsWorld.addStaticBody(glm::vec3(-8.0f, -2.0f, 5.0f));
+		mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -7.0f, 5.0f));
 
 		// Left wall
 		for (int j = 0; j < 20; ++j)
@@ -411,7 +420,7 @@ void Application::renderFrame(float dt)
 
 	mRenderSystem.setView(mFlyCamera.getViewMatrix());
 
-	mRenderSystem.render(mModelMatrixContainer, mpCollisionPairPkg);
+	mRenderSystem.render(mModelMatrixContainer, mpCollisionPairPkg, mPhysicsWorld.getRigidBodyCount());
 	//mRenderSystem.renderInstanced(mModelMatrixContainer);
 
 	if (showHitBoxVerts)

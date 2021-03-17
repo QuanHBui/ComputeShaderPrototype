@@ -68,6 +68,7 @@ public:
 	unsigned int getOccupancy() const { return mBodyContainer.size(); }
 	unsigned int getNumBoxColliders() const { return mBoxColliderContainer.size(); }
 	unsigned int getMaxCapacity() const { return mMaxCapacity; }
+	unsigned int getRigidBodyCount() const { return mRigidLinearTransformContainer.size(); }
 	std::vector<P3BoxCollider> const &getBoxColliders() const { return mBoxColliderContainer; }
 
 	std::vector<LinearTransform> const &getRigidLinearTransformContainer() const

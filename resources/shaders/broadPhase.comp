@@ -71,11 +71,7 @@ void sweepX()
 	// Check for collision on the x-axis
 	int i = int(gl_LocalInvocationID.x);
 
-	if (i >= currNumColliders)
-	{
-		barrier();
-		return;
-	}
+	if (i >= currNumColliders) return;
 
 	for (int j = 0; j < currNumColliders; ++j)
 	{
@@ -90,19 +86,13 @@ void sweepX()
 			collisionPairs[availableIdx].y = int(minCoords[j].w);
 		}
 	}
-
-	syncStorageBuffer();
 }
 
 void sweepY()
 {
 	uint collisionPairIdx = gl_LocalInvocationID.x;
 
-	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1))
-	{
-		barrier();
-		return;
-	}
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_1)) return;
 
 	// Look through the previous collision pair buffer
 	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].x;
@@ -119,19 +109,13 @@ void sweepY()
 		collisionPairs[availableIdx].z = int(minCoords[i].w); // w comp stores object ID
 		collisionPairs[availableIdx].w = int(minCoords[j].w);
 	}
-
-	syncStorageBuffer();
 }
 
 void sweepZ()
 {
 	uint collisionPairIdx = gl_LocalInvocationID.x;
 
-	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2))
-	{
-		barrier();
-		return;
-	}
+	if (collisionPairIdx >= atomicCounter(nextAvailableIdx_2)) return;
 
 	int boxColliderIdx_1 = collisionPairs[collisionPairIdx].z;
 	int boxColliderIdx_2 = collisionPairs[collisionPairIdx].w;
@@ -156,8 +140,6 @@ void sweepZ()
 			collisionPairs[availableIdx].y = int(minCoords[j].w);
 		}
 	}
-
-	syncStorageBuffer();
 }
 
 void main()
@@ -233,6 +215,7 @@ void main()
 //	barrier(); //=======================================================//
 
 	sweepX();
+	syncStorageBuffer();
 
 	// Sort y
 //	isEven = false;
@@ -264,6 +247,7 @@ void main()
 //	barrier(); //=======================================================//
 //
 	sweepY();
+	syncStorageBuffer();
 
 	// Sort z
 //	isEven = false;
@@ -295,4 +279,5 @@ void main()
 //	barrier(); //=======================================================//
 
 	sweepZ();
+	syncStorageBuffer();
 }

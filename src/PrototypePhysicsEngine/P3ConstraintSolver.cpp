@@ -6,7 +6,7 @@
 
 constexpr float cBaumgarteFactor = 0.001f;
 constexpr float cPenetrationSlop = 0.005f;
-constexpr int cIterationCount = 100;
+constexpr int cIterationCount = 25;
 
 // http://box2d.org/2014/02/computing-a-basis/
 void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
@@ -50,10 +50,10 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 		Manifold &manifold  = manifoldPkg.manifolds[i];
 
 		if (manifold.frictionRestitution.x <= 0.0f)
-			manifold.frictionRestitution.x = 10.0f;
+			manifold.frictionRestitution.x = 1.0f;
 
 		if (manifold.frictionRestitution.y <= 0.0f)
-			manifold.frictionRestitution.y = 0.010f;
+			manifold.frictionRestitution.y = 0.05f;
 
 		int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
 		int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;

@@ -37,7 +37,7 @@ public:
 
 	void init(int, int);
 
-	void render(MatrixContainer const &, const CollisionPairGpuPackage *);
+	void render(MatrixContainer const &, const CollisionPairGpuPackage *, int);
 	void renderInstanced(MatrixContainer const &);
 	void renderDebug(std::vector<P3BoxCollider> const &, const ManifoldGpuPackage *);
 

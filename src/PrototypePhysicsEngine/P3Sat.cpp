@@ -15,8 +15,8 @@ constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
 constexpr float cEpsilon = 0.0001f;
-constexpr float cPersistentThresholdSq_Manifold = 0.25f;
-constexpr float cPersistentThresholdSq_Contact  = 4.0f;
+constexpr float cPersistentThresholdSq_Manifold = 0.005f;
+constexpr float cPersistentThresholdSq_Contact  = 0.025f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
 using ColliderFaceNormals = std::array<std::array<glm::vec3, cColliderFaceCount>, cMaxColliderCount>;

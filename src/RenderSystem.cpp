@@ -18,7 +18,7 @@ void RenderSystem::init(int width, int height)
 	initDebug();
 }
 
-void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionPairGpuPackage *collisionPairs)
+void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionPairGpuPackage *collisionPairs, int rigidBodyCount)
 {
 	// Clear framebuffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -33,11 +33,14 @@ void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionP
 	MeshKey shapeIdx   = QUAD;
 
 	// Iterate through the input composite model matrices
-	for ( MatrixContainerConstIter it = modelMatrices.begin()
-		; it != modelMatrices.end()
-		; ++it )
+	for (int i = 0; i < modelMatrices.size(); ++i)
 	{
+		glm::mat4 const &modelMatrix = modelMatrices[i];
 		unsigned int redOrNo = 0u;
+		unsigned int isRigid = 0u;
+
+		isRigid = i < rigidBodyCount;
+
 		// Check collision pair list if this mesh has collided
 		for (int i = 0; i < collisionPairs->misc.x; ++i)
 		{
@@ -55,13 +58,14 @@ void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionP
 
 		GLuint progID = renderProgram.getPID();
 
+		glUniform1ui(glGetUniformLocation(progID, "isRigid"), isRigid);
 		glUniform1ui(glGetUniformLocation(progID, "redOrNo"), redOrNo);
 		glUniformMatrix4fv(glGetUniformLocation(progID, "projection"),
 			1, GL_FALSE, glm::value_ptr(mProjection));
 		glUniformMatrix4fv(glGetUniformLocation(progID, "view"),
 			1, GL_FALSE, glm::value_ptr(mView));
 		glUniformMatrix4fv(glGetUniformLocation(progID, "model"),
-			1, GL_FALSE, glm::value_ptr(*it));
+			1, GL_FALSE, glm::value_ptr(modelMatrix));
 
 		shapeIdx = mMeshKeys[meshKeyIdx++];
 
