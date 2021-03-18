@@ -1,0 +1,343 @@
+#version 430
+
+#define MAX_COLLIDER_COUNT 1024
+#define MAX_COLLIDER_COUNT_HALF 512
+#define NUM_COLLIDER_VERTS 8
+#define MAX_CONTACT_POINT_COUNT 16
+#define ITERATION_COUNT 20
+#define BAUMGARTE_FACTOR 0.001f
+#define PENETRATION_SLOP 0.005f
+
+precision highp float;
+
+layout(local_size_x = MAX_COLLIDER_COUNT) in;
+
+struct Contact
+{
+	vec4 position;
+	vec4 separation;
+	vec4 referenceRelativePosition;
+	vec4 incidentRelativePosition;
+	vec4 normalTangentBiasImpulses;
+	vec4 normalTangentMassesBias;
+};
+
+struct Manifold
+{
+	ivec4 contactBoxIndicesAndContactCount; // x = refBoxIdx, y = incidentBoxIdx, z = contact count
+	Contact contacts[MAX_CONTACT_POINT_COUNT];
+	vec4 contactNormal; // w stores the penetration depth.
+	vec4 contactTangents[2];
+	vec4 frictionRestitution;
+};
+
+struct LinearTransform
+{
+	//----------------- Constant quantities -----------------//
+	vec4 massInverseMass;
+
+	//----------------- State variables -----------------//
+	vec4 position;
+	vec4 velocity;
+	vec4 momentum;
+};
+
+struct AngularTransform
+{
+	//----------------- Constant quantities -----------------//
+	mat4 inertia;
+	mat4 inverseInertia;
+
+	//----------------- State variables -----------------//
+	vec4 orientation;
+	vec4 angularVelocity;
+	vec4 angularMomentum;
+};
+
+uniform float dt;
+uniform uint rigidLinearSize;
+uniform uint rigidAngularSize;
+uniform uint staticLinearSize;
+uniform uint staticAngularSize;
+
+// This is the out buffer that we are going to append to
+layout(std430, binding = 0) coherent buffer out_manifold_data
+{
+	ivec4 manifoldMisc;
+	Manifold manifolds[MAX_COLLIDER_COUNT];
+};
+
+layout(std430, binding = 1) coherent buffer rigid_linear_transforms
+{
+	LinearTransform rigidLinearTransforms[MAX_COLLIDER_COUNT_HALF];
+};
+
+layout(std430, binding = 2) coherent buffer rigid_angular_transforms
+{
+	AngularTransform rigidAngularTransforms[MAX_COLLIDER_COUNT_HALF];
+};
+
+layout(std430, binding = 3) coherent buffer static_linear_transforms
+{
+	LinearTransform staticLinearTransforms[MAX_COLLIDER_COUNT_HALF];
+};
+
+layout(std430, binding = 4) coherent buffer static_angular_transforms
+{
+	AngularTransform staticAngularTransforms[MAX_COLLIDER_COUNT_HALF];
+};
+
+void syncStorageBuffer()
+{
+	barrier();
+	memoryBarrierBuffer();
+}
+
+void computeBasis(vec4 a, inout vec4 b, inout vec4 c)
+{
+	// Suppose vector a has all equal components and is a unit vector:
+	// a = (s, s, s)
+	// Then 3*s*s = 1, s = sqrt(1/3) = 0.57735. This means that at
+	// least one component of a unit vector must be greater or equal
+	// to 0.57735.
+
+	vec3 aVec3 = a.xyz;
+	vec3 bVec3 = b.xyz;
+	vec3 cVec3 = c.xyz;
+
+	if (abs(a.x) >= 0.57735f)
+		bVec3 = vec3(a.y, -a.x, 0.0f);
+	else
+		bVec3 = vec3(0.0f, a.z, -a.y);
+
+	bVec3 = normalize(bVec3);
+	cVec3 = cross(aVec3, bVec3);
+
+	b = vec4(bVec3, 0.0f);
+	c = vec4(cVec3, 0.0f);
+}
+
+LinearTransform getLinearTransform(int index)
+{
+	if (index >= rigidLinearSize)
+	{
+		return staticLinearTransforms[index - rigidLinearSize];
+	}
+	else
+	{
+		return rigidLinearTransforms[index];
+	}
+}
+
+AngularTransform getAngularTransform(int index)
+{
+	if (index >= rigidAngularSize)
+	{
+		return staticAngularTransforms[index - rigidAngularSize];
+	}
+	else
+	{
+		return rigidAngularTransforms[index];
+	}
+}
+
+void setTransforms(vec3 v, vec3 w, int index)
+{
+	int realIdx = 0;
+
+	if (index >= rigidLinearSize)
+	{
+		realIdx = index - int(rigidLinearSize);
+		staticLinearTransforms[realIdx].velocity = vec4(v, 0.0f);
+		staticAngularTransforms[realIdx].angularVelocity = vec4(w, 0.0f);
+	}
+	else
+	{
+		rigidLinearTransforms[index].velocity = vec4(v, 0.0f);
+		rigidAngularTransforms[index].angularVelocity = vec4(w, 0.0f);
+	}
+}
+
+void preStep(uint manifoldIdx)
+{
+	if (manifoldIdx >= manifoldMisc.x) return;
+
+	Manifold manifold = manifolds[manifoldIdx];
+
+	if (manifold.frictionRestitution.x <= 0.0f)
+		manifold.frictionRestitution.x = 1.0f;
+
+	if (manifold.frictionRestitution.y <= 0.0f)
+		manifold.frictionRestitution.y = 0.05f;
+
+	int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
+	int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
+
+	LinearTransform referenceLinearTransform   = getLinearTransform(referenceBoxIdx);
+	AngularTransform referenceAngularTransform = getAngularTransform(referenceBoxIdx);
+
+	LinearTransform incidentLinearTransform   = getLinearTransform(incidentBoxIdx);
+	AngularTransform incidentAngularTransform = getAngularTransform(incidentBoxIdx);
+
+	// Compute the basis
+	computeBasis(manifold.contactNormal, manifold.contactTangents[0], manifold.contactTangents[1]);
+
+	vec3 vA = referenceLinearTransform.velocity.xyz;
+	vec3 wA = referenceAngularTransform.angularVelocity.xyz;
+	vec3 vB = incidentLinearTransform.velocity.xyz;
+	vec3 wB = incidentAngularTransform.angularVelocity.xyz;
+
+	// Iterate through each contact points
+	for (int contactPointIdx = 0
+		; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z
+		; ++contactPointIdx)
+	{
+		Contact contact = manifold.contacts[contactPointIdx];
+
+		// Relative positions of the contact point to the 2 bodies
+		contact.referenceRelativePosition = contact.position - referenceLinearTransform.position;
+		contact.incidentRelativePosition  = contact.position - incidentLinearTransform.position;
+
+		// Precalculate J M^-1 JT for contact and friction constraint
+		vec3 referenceRelativePosCrossNormal = cross(vec3(contact.referenceRelativePosition), vec3(manifold.contactNormal));
+		vec3 incidentRelativePosCrossNormal  = cross(vec3(contact.incidentRelativePosition), vec3(manifold.contactNormal));
+
+		float normalTotalInverseMass  = referenceLinearTransform.massInverseMass.y + incidentLinearTransform.massInverseMass.y;
+		float tangentInverseMasses[2] = { normalTotalInverseMass, normalTotalInverseMass };
+
+		normalTotalInverseMass += dot(referenceRelativePosCrossNormal, mat3(referenceAngularTransform.inverseInertia) * referenceRelativePosCrossNormal)
+			+ dot(incidentRelativePosCrossNormal, mat3(incidentAngularTransform.inverseInertia) * incidentRelativePosCrossNormal);
+
+		contact.normalTangentMassesBias.x = 1.0f / normalTotalInverseMass;
+
+		// Compute the inverse masses in the 2 tangent components
+		for (int j = 0; j < 2; ++j)
+		{
+			vec3 referenceRelativePosCrossTangent = cross(vec3(manifold.contactTangents[j]), vec3(contact.referenceRelativePosition));
+			vec3 incidentRelativePosCrossTangent  = cross(vec3(manifold.contactTangents[j]), vec3(contact.incidentRelativePosition));
+			tangentInverseMasses[j] += dot(referenceRelativePosCrossTangent, mat3(referenceAngularTransform.inverseInertia) * referenceRelativePosCrossTangent)
+				+ dot(incidentRelativePosCrossTangent, mat3(incidentAngularTransform.inverseInertia) * incidentRelativePosCrossTangent);
+			contact.normalTangentMassesBias[j + 1] = 1.0f / tangentInverseMasses[j];
+		}
+
+		// Precalculate the bias factor
+		contact.normalTangentMassesBias.w = -BAUMGARTE_FACTOR * min(0.0f, manifold.contactNormal.w + PENETRATION_SLOP) / dt;
+
+		// Warm start
+		vec3 oldP = vec3(manifold.contactNormal) *contact.normalTangentBiasImpulses.x;
+
+		// Friction
+		oldP += vec3(manifold.contactTangents[0]) * contact.normalTangentBiasImpulses.y;
+		oldP += vec3(manifold.contactTangents[1]) * contact.normalTangentBiasImpulses.z;
+
+		vA -= oldP * referenceLinearTransform.massInverseMass.y;
+		wA -= mat3(referenceAngularTransform.inverseInertia) * cross(vec3(contact.referenceRelativePosition), oldP);
+
+		vB += oldP * incidentLinearTransform.massInverseMass.y;
+		wB += mat3(incidentAngularTransform.inverseInertia) * cross(vec3(contact.incidentRelativePosition), oldP);
+
+		// Restitution bias
+		float dv = dot(vB + cross(wB, vec3(contact.incidentRelativePosition)) - vA - cross(wA, vec3(contact.referenceRelativePosition))
+			, vec3(manifold.contactNormal));
+
+		if (dv < -1.0f)
+		{
+			contact.normalTangentMassesBias.w += -(manifold.frictionRestitution.y) * dv;
+		}
+
+		setTransforms(vA, wA, referenceBoxIdx);
+		setTransforms(vB, wB, incidentBoxIdx);
+	}
+}
+
+void iterativeSolve(uint manifoldIdx)
+{
+	if (manifoldIdx >= manifoldMisc.x) return;
+
+	Manifold manifold = manifolds[manifoldIdx];
+
+	int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
+	int incidentBoxIdx  = manifold.contactBoxIndicesAndContactCount.y;
+
+	LinearTransform referenceLinearTransform   = getLinearTransform(referenceBoxIdx);
+	AngularTransform referenceAngularTransform = getAngularTransform(referenceBoxIdx);
+
+	LinearTransform incidentLinearTransform   = getLinearTransform(incidentBoxIdx);
+	AngularTransform incidentAngularTransform = getAngularTransform(incidentBoxIdx);
+
+	vec3 vA = referenceLinearTransform.velocity.xyz;
+	vec3 wA = referenceAngularTransform.angularVelocity.xyz;
+	vec3 vB = incidentLinearTransform.velocity.xyz;
+	vec3 wB = incidentAngularTransform.angularVelocity.xyz;
+
+	for (int contactPointIdx = 0; contactPointIdx < manifold.contactBoxIndicesAndContactCount.z; ++contactPointIdx)
+	{
+		Contact contact = manifold.contacts[contactPointIdx];
+
+		// Relative velocity at contact
+		vec3 dv = vB + cross(wB, vec3(contact.incidentRelativePosition)) - vA 
+						- cross(wA, vec3(contact.referenceRelativePosition));
+
+		// For friction
+		for (int k = 0; k < 2; ++k)
+		{
+			float lambda = -dot(dv, vec3(manifold.contactTangents[k])) * contact.normalTangentMassesBias[k + 1];
+
+			// Frictional impulse
+			float maxLambda = manifold.frictionRestitution.x * contact.normalTangentBiasImpulses.x;
+
+			// Clamp frictional impulse
+			float oldTangentImpulse = contact.normalTangentBiasImpulses[k + 1];
+			contact.normalTangentBiasImpulses[k + 1] = clamp(oldTangentImpulse + lambda, -maxLambda, maxLambda);
+			lambda = contact.normalTangentBiasImpulses[k + 1] - oldTangentImpulse;
+
+			// Apply frictional impulse
+			vec3 tangentImpulse = manifold.contactTangents[k].xyz * lambda;
+			vA -= tangentImpulse * referenceLinearTransform.massInverseMass.y;
+			wA -= mat3(referenceAngularTransform.inverseInertia) * cross(vec3(contact.referenceRelativePosition), tangentImpulse);
+
+			vB += tangentImpulse * incidentLinearTransform.massInverseMass.y;
+			wB += mat3(incidentAngularTransform.inverseInertia) * cross(vec3(contact.incidentRelativePosition), tangentImpulse);
+		}
+
+		// Solve contact constraint
+		dv = vB + cross(wB, vec3(contact.incidentRelativePosition)) - vA - cross(wA, vec3(contact.referenceRelativePosition));
+
+		// Normal impulse
+		float vn = dot(dv, vec3(manifold.contactNormal));
+
+		// Factor in positional bias
+		float lambda = contact.normalTangentMassesBias.x * (-vn + contact.normalTangentMassesBias.w);
+
+		// Clamp impulse
+		float tempNormalImpulse = contact.normalTangentBiasImpulses.x;
+		contact.normalTangentBiasImpulses.x = max(tempNormalImpulse + lambda, 0.0f);
+		lambda = contact.normalTangentBiasImpulses.x - tempNormalImpulse;
+
+		// Apply impulse
+		vec3 normalImpulse = vec3(manifold.contactNormal) * lambda;
+		vA -= normalImpulse * referenceLinearTransform.massInverseMass.y;
+		wA -= mat3(referenceAngularTransform.inverseInertia) * cross(vec3(contact.referenceRelativePosition), normalImpulse);
+
+		vB += normalImpulse * incidentLinearTransform.massInverseMass.y;
+		wB += mat3(incidentAngularTransform.inverseInertia) * cross(vec3(contact.incidentRelativePosition), normalImpulse);
+	}
+
+	// Directly apply the change in velocities
+	setTransforms(vA, wA, referenceBoxIdx);
+	setTransforms(vB, wB, incidentBoxIdx);
+}
+
+void main()
+{
+	uint manifoldIdx = gl_LocalInvocationID.x;
+
+	preStep(manifoldIdx);
+	syncStorageBuffer();
+
+	for (int i = 0; i < ITERATION_COUNT; ++i)
+	{
+		iterativeSolve(manifoldIdx);
+		syncStorageBuffer();
+	}
+}

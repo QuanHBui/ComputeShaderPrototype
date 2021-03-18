@@ -6,6 +6,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "P3Common.h"
+
 // @source: Game Physics Engine Development by Ian Millington
 inline void addScaledVector(glm::quat &ogQuat, glm::vec3 const &v, float scale)
 {
@@ -26,17 +28,17 @@ inline void addScaledVector(glm::quat &ogQuat, glm::vec3 const &v, float scale)
 
 struct LinearTransform
 {
-	LinearTransform() {};
-	LinearTransform(float, float, glm::vec3 const &, glm::vec3 const &, glm::vec3 const &);
-
 	//----------------- Constant quantities -----------------//
 	float mass = 0.0f;
 	float inverseMass = 0.0f;
 
+	// To be ignored
+	float paddings[2] = { 0.0f, 0.0f };
+
 	//----------------- State variables -----------------//
-	glm::vec3 position{};
-	glm::vec3 velocity{};
-	glm::vec3 momentum{};
+	glm::vec4 position{};
+	glm::vec4 velocity{};
+	glm::vec4 momentum{};
 };
 
 //------------------ Data pack for the GPU (SoA) --------------------//
@@ -50,13 +52,13 @@ struct LinearTransformGpuPackage
 struct AngularTransform
 {
 	//----------------- Constant quantities -----------------//
-	glm::mat3 inertia{1.0f};
-	glm::mat3 inverseInertia{1.0f};
+	glm::mat4 inertia{1.0f};
+	glm::mat4 inverseInertia{1.0f};
 
 	//----------------- State variables -----------------//
 	glm::quat orientation{};
-	glm::vec3 angularVelocity{};
-	glm::vec3 angularMomentum{};
+	glm::vec4 angularVelocity{};
+	glm::vec4 angularMomentum{};
 };
 
 #endif // P3_TRANSFORM_H

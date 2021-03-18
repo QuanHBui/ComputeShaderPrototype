@@ -5,8 +5,6 @@
 
 #include <vector>
 
-#include <glad/glad.h>
-
 #include "P3Common.h"
 
 struct AngularTransform;
@@ -25,22 +23,6 @@ struct ManifoldGpuPackage;
 class P3ConstraintSolver
 {
 public:
-	P3ConstraintSolver() {}
-
-	// TODO: Overloaded constructor for any configuration setting
-	P3ConstraintSolver(GLuint boxCollidersID, GLuint manifoldsID)
-		: mBoxCollidersID(boxCollidersID), mManifoldsID(manifoldsID) {}
-
-	// By default, reserve enough space for 10 things.
-	void init(int reserveObjCount = 10)
-	{
-		for (int i = 0; i < reserveObjCount; ++i)
-		{
-			mLinearImpulseContainer.emplace_back();
-			mAngularImpulseContainer.emplace_back();
-		}
-	};
-
 	void preSolve( ManifoldGpuPackage &,
 				   std::vector<LinearTransform> &,
 				   std::vector<AngularTransform> &,
@@ -48,25 +30,12 @@ public:
 				   std::vector<AngularTransform> &,
 				   float );
 
-	// If the solver's implementation resides on the CPU, returns the offset
-	void solve( ManifoldGpuPackage &,
-				std::vector<LinearTransform> &,
-				std::vector<AngularTransform> &,
-				std::vector<LinearTransform> &,
-				std::vector<AngularTransform> & );
 	// Else if on GPU, prob needs to know the handles of ManifoldGpuPackage from init()
 	void iterativeSolve( ManifoldGpuPackage &,
 						 std::vector<LinearTransform> &,
 						 std::vector<AngularTransform> &,
 						 std::vector<LinearTransform> &,
 						 std::vector<AngularTransform> & );
-
-	std::vector<glm::vec3> const &getLinearImpulseContainer() const { return mLinearImpulseContainer; }
-	std::vector<glm::vec3> const &getAngularImpulseContainer() const { return mAngularImpulseContainer; }
-
-	void reset();
-
-	~P3ConstraintSolver() {}
 
 private:
 	LinearTransform &getLinearTransform( int index,
@@ -96,13 +65,6 @@ private:
 			return rigidAngularTransformContainer[index];
 		}
 	}
-
-	GLuint mBoxCollidersID = 0u, mManifoldsID = 0u;
-
-	std::vector<glm::vec3> mLinearImpulseContainer;
-	std::vector<glm::vec3> mAngularImpulseContainer;
-
-	int mResetCounter = 0;
 };
 
 #endif // P3_CONSTRAINT_SOLVER

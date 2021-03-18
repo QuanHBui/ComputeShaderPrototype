@@ -562,7 +562,7 @@ void Application::updateModelMatrices()
 	// First wipe, rigid bodies
 	for (int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
 	{
-		glm::mat4 translation = glm::translate(mRigidLinearTransformContainer[i].position);
+		glm::mat4 translation = glm::translate(glm::vec3(mRigidLinearTransformContainer[i].position));
 
 		if (i >= mModelMatrixContainer.size())
 		{
@@ -581,7 +581,7 @@ void Application::updateModelMatrices()
 	{
 		AngularTransform const &angularTransform = mRigidAngularTransformContainer[j];
 
-		if (angularTransform.angularVelocity == glm::vec3(0.0f))
+		if (glm::vec3(angularTransform.angularVelocity) == glm::vec3(0.0f))
 		{
 			mModelMatrixContainer[j] *= glm::mat4(1.0f);
 		}
@@ -594,7 +594,7 @@ void Application::updateModelMatrices()
 	// Static bodies
 	for (int k = 0; k < mStaticLinearTransformContainer.size(); ++k)
 	{
-		glm::mat4 translation = glm::translate(mStaticLinearTransformContainer[k].position);
+		glm::mat4 translation = glm::translate(glm::vec3(mStaticLinearTransformContainer[k].position));
 
 		if ((k + offset) >= mModelMatrixContainer.size())
 		{
@@ -610,7 +610,7 @@ void Application::updateModelMatrices()
 	{
 		AngularTransform const &angularTransform = mStaticAngularTransformContainer[l];
 
-		if (angularTransform.angularVelocity == glm::vec3(0.0f))
+		if (glm::vec3(angularTransform.angularVelocity) == glm::vec3(0.0f))
 		{
 			mModelMatrixContainer[l + offset] *= glm::mat4(1.0f);
 		}

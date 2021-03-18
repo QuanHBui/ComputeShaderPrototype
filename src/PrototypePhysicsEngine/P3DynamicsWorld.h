@@ -16,13 +16,13 @@
 #include "P3BroadPhaseCollisionDetection.h"
 #include "P3Collider.h"
 #include "P3ConstraintSolver.h"
-#include "P3Integrator.h"
+#include "P3OpenGLComputeSolver.h"
 #include "P3NarrowPhaseCollisionDetection.h"
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
 //#define BROAD_PHASE_CPU
-#define NARROW_PHASE_CPU
+//#define NARROW_PHASE_CPU
 
 using LinearTransformContainerPtr = std::shared_ptr<std::vector<LinearTransform>>;
 
@@ -117,7 +117,7 @@ public:
 private:
 	//---------------- Constant physics quantities ----------------//
 	float mGravity{ 0.001f }, mAirDrag{ 2.0f };
-	size_t mMaxCapacity{ 20u };
+	size_t mMaxCapacity{ cMaxObjectCount };
 
 	//------------------------- Entity list -------------------------//
 	std::vector<int> mBodyContainer;
@@ -150,7 +150,7 @@ private:
 	P3::CpuNarrowPhase mCpuNarrowPhase;
 
 	P3ConstraintSolver mConstraintSolver; // Produces forces to make sure things don't phase past each other
-	P3Integrator mIntegrator;             // Actually integrates the force vector and apply to linear transform
+	P3OpenGLComputeSolver mOglConstraintSolver;
 };
 
 #endif // P3_DYNAMICS_WORLD_H

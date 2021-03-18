@@ -105,13 +105,13 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp">
-      <Filter>Source Files\PhysicsEngine</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sap.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuBroadPhase.cpp">
+      <Filter>Source Files\PhysicsEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeSolver.cpp">
       <Filter>Source Files\PhysicsEngine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -123,9 +123,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h">
@@ -209,6 +206,9 @@
     <ClInclude Include="..\..\src\GLSL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeSolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\shaders\assignMortonCodes.comp">
@@ -254,6 +254,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\..\resources\shaders\broadPhase.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\solver.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

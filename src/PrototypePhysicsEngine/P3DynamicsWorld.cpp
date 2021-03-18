@@ -28,7 +28,7 @@ void P3DynamicsWorld::init()
 	mCpuBroadPhase.init();
 	mCpuNarrowPhase.init();
 	mGpuNarrowPhase.init(mGpuBroadPhase.getBoxCollidersID(), mGpuBroadPhase.getCollisionPairsID());
-	mConstraintSolver.init();
+	mOglConstraintSolver.init(mGpuNarrowPhase.getManifoldBufferID());
 }
 
 void P3DynamicsWorld::detectCollisions()
@@ -100,10 +100,10 @@ void P3DynamicsWorld::updateMultipleBoxes(float dt)
 	}
 
 	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mMeshColliderContainer[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
+		mMeshColliderContainer[i].update(glm::translate(glm::vec3(mRigidLinearTransformContainer[i].position)));
 
 	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mBoxColliderContainer[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
+		mBoxColliderContainer[i].update(glm::translate(glm::vec3(mRigidLinearTransformContainer[i].position)));
 
 	radians += 1.0f;
 }
@@ -111,123 +111,123 @@ void P3DynamicsWorld::updateMultipleBoxes(float dt)
  // Order of operations for each timestep: Collision -> apply forces -> solve constraints -> update positions
 void P3DynamicsWorld::updateBowlingGame(float dt)
 {
-	// To define a plane, we need a normal and a point
-	glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
-	glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
+	//// To define a plane, we need a normal and a point
+	//glm::vec3 surfaceNormal{ 0.0f, 1.0f, 0.0f };
+	//glm::vec3 surfacePoint{ 0.0f, 1.0f, 0.0f };
 
-	std::vector<glm::vec3> sampleVelocityContainer;
+	//std::vector<glm::vec3> sampleVelocityContainer;
 
-	for (int rigidBodyID : mBodyContainer)
-	{
-		LinearTransform &linearTransform = mRigidLinearTransformContainer[rigidBodyID];
+	//for (int rigidBodyID : mBodyContainer)
+	//{
+	//	LinearTransform &linearTransform = mRigidLinearTransformContainer[rigidBodyID];
 
-		glm::vec3 accumulateImpulse{ 0.0f };
-		glm::vec3 sampleVelocity = linearTransform.velocity;
-		glm::vec3 samplePosition = linearTransform.position;
+	//	glm::vec3 accumulateImpulse{ 0.0f };
+	//	glm::vec3 sampleVelocity = linearTransform.velocity;
+	//	glm::vec3 samplePosition = linearTransform.position;
 
-		// Collision detection - broad phase + near phase
-		bool hasCollided = false;
-		if (rigidBodyID < 5u && getOccupancy() > 5u)
-		{
-			for (unsigned int i = 5u; i < getOccupancy(); ++i)
-			{
-				// A very very terrible broad phase
-				if (glm::length(mRigidLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
-				{
-					// A very very terrible narrow phase
-					P3Simplex gjkSimplex;
-					hasCollided = P3Gjk(mMeshColliderContainer[rigidBodyID], mMeshColliderContainer[i], gjkSimplex);
+	//	// Collision detection - broad phase + near phase
+	//	bool hasCollided = false;
+	//	if (rigidBodyID < 5u && getOccupancy() > 5u)
+	//	{
+	//		for (unsigned int i = 5u; i < getOccupancy(); ++i)
+	//		{
+	//			// A very very terrible broad phase
+	//			if (glm::length(mRigidLinearTransformContainer[i].position - linearTransform.position) <= 1.25f)
+	//			{
+	//				// A very very terrible narrow phase
+	//				P3Simplex gjkSimplex;
+	//				hasCollided = P3Gjk(mMeshColliderContainer[rigidBodyID], mMeshColliderContainer[i], gjkSimplex);
 
-					// A very very terrible collision resolution
-					if (hasCollided)
-					{
-						P3Epa(mMeshColliderContainer[rigidBodyID], mMeshColliderContainer[i], gjkSimplex);
+	//				// A very very terrible collision resolution
+	//				if (hasCollided)
+	//				{
+	//					P3Epa(mMeshColliderContainer[rigidBodyID], mMeshColliderContainer[i], gjkSimplex);
 
-						// Response impulse
-						//accumulateImpulse += mLinearTransformContainer[i].momentum;
-						//std::cout << "Collided!" << std::endl;
-					}
-				}
-			}
-		}
+	//					// Response impulse
+	//					//accumulateImpulse += mLinearTransformContainer[i].momentum;
+	//					//std::cout << "Collided!" << std::endl;
+	//				}
+	//			}
+	//		}
+	//	}
 
-		// Apply forces - gravity most likely
-		sampleVelocity.y -= 9.81f * dt;
+	//	// Apply forces - gravity most likely
+	//	sampleVelocity.y -= 9.81f * dt;
 
-		// Check for constraint and solve it
-		// MULTIPLE ITERATIONS
-		// NO BOUNCE!
-		int iterations = 4;
-		while (iterations--)
-		{
-			// Update position of rigid body after apply forces
-			sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
-			samplePosition += sampleVelocity * float(dt);
+	//	// Check for constraint and solve it
+	//	// MULTIPLE ITERATIONS
+	//	// NO BOUNCE!
+	//	int iterations = 4;
+	//	while (iterations--)
+	//	{
+	//		// Update position of rigid body after apply forces
+	//		sampleVelocity += accumulateImpulse * linearTransform.inverseMass;
+	//		samplePosition += sampleVelocity * float(dt);
 
-			// Express the constraint in term of position. This is a position constraint.
-			if (samplePosition.y - (-3.0f) < 0.0f)
-			{
-				// We have to modify the accumulate velocity to solve this position constraint
-				// How much in the y direction that we have to push the object, this y direction can be generalize
-				//  to just the surface/plane normal.
-				// THE IMPULSE CAN PUSH, BUT NOT PULL.
-				float signedDistance = samplePosition.y - (-3.0f);
+	//		// Express the constraint in term of position. This is a position constraint.
+	//		if (samplePosition.y - (-3.0f) < 0.0f)
+	//		{
+	//			// We have to modify the accumulate velocity to solve this position constraint
+	//			// How much in the y direction that we have to push the object, this y direction can be generalize
+	//			//  to just the surface/plane normal.
+	//			// THE IMPULSE CAN PUSH, BUT NOT PULL.
+	//			float signedDistance = samplePosition.y - (-3.0f);
 
-				samplePosition.y -= signedDistance;
-				linearTransform.position = samplePosition;
-				// Make current velocity zero
-				accumulateImpulse += glm::abs(sampleVelocity.y) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
-			}
-		}
+	//			samplePosition.y -= signedDistance;
+	//			linearTransform.position = glm::vec4(samplePosition, 0.0f);
+	//			// Make current velocity zero
+	//			accumulateImpulse += glm::abs(sampleVelocity.y) * glm::normalize(glm::vec3(0.0f, -signedDistance, 0.0f));
+	//		}
+	//	}
 
-		// Apply the final impulse
-		sampleVelocity = glm::vec3(linearTransform.velocity) + accumulateImpulse * linearTransform.inverseMass;
-		sampleVelocity.y -= 9.81f * dt;
-		sampleVelocityContainer.emplace_back(sampleVelocity);
-	}
+	//	// Apply the final impulse
+	//	sampleVelocity = glm::vec3(linearTransform.velocity) + accumulateImpulse * linearTransform.inverseMass;
+	//	sampleVelocity.y -= 9.81f * dt;
+	//	sampleVelocityContainer.emplace_back(sampleVelocity);
+	//}
 
-	std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
-	for ( sampleVelocityContainerIter  = sampleVelocityContainer.begin()
-		; sampleVelocityContainerIter != sampleVelocityContainer.end()
-		; sampleVelocityContainerIter++)
-	{
-		size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
-		mRigidLinearTransformContainer[i].velocity  = *sampleVelocityContainerIter;
-		mRigidLinearTransformContainer[i].momentum  = *sampleVelocityContainerIter * mRigidLinearTransformContainer[i].mass;
-		mRigidLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
-	}
+	//std::vector<glm::vec3>::iterator sampleVelocityContainerIter;
+	//for ( sampleVelocityContainerIter  = sampleVelocityContainer.begin()
+	//	; sampleVelocityContainerIter != sampleVelocityContainer.end()
+	//	; sampleVelocityContainerIter++)
+	//{
+	//	size_t i = std::distance(sampleVelocityContainer.begin(), sampleVelocityContainerIter);
+	//	mRigidLinearTransformContainer[i].velocity  = glm::vec4(*sampleVelocityContainerIter, 0.0f);
+	//	mRigidLinearTransformContainer[i].momentum  = glm::vec4(*sampleVelocityContainerIter, 0.0f) * mRigidLinearTransformContainer[i].mass;
+	//	mRigidLinearTransformContainer[i].position += *sampleVelocityContainerIter * float(dt);
+	//}
 
-	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mMeshColliderContainer[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
+	//for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
+	//	mMeshColliderContainer[i].update(glm::translate(glm::vec3(mRigidLinearTransformContainer[i].position)));
 
-	for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
-		mBoxColliderContainer[i].update(glm::translate(mRigidLinearTransformContainer[i].position));
+	//for (unsigned int i = 0; i < mRigidLinearTransformContainer.size(); ++i)
+	//	mBoxColliderContainer[i].update(glm::translate(glm::vec3(mRigidLinearTransformContainer[i].position)));
 }
 
 // Specifically for the controllable box demo
 void P3DynamicsWorld::updateControllableBox(float dt, glm::vec3 const &deltaP)
 {
-	// 1st box is static, 2nd box is kinematic/controllable.
-	mRigidLinearTransformContainer[1].position += deltaP;
+	//// 1st box is static, 2nd box is kinematic/controllable.
+	//mRigidLinearTransformContainer[1].position += deltaP;
 
-	glm::mat4 extraTransforms = glm::rotate(0.785f, glm::vec3(0.0f, 1.0f, 0.0f));
-	// TODO: This is extremely ad hoc, please fix!
-	glm::mat4 temp = glm::translate(mRigidLinearTransformContainer[1].position) * extraTransforms;
-	mMeshColliderContainer[1].update(temp);
-	mBoxColliderContainer[1].update(temp);
+	//glm::mat4 extraTransforms = glm::rotate(0.785f, glm::vec3(0.0f, 1.0f, 0.0f));
+	//// TODO: This is extremely ad hoc, please fix!
+	//glm::mat4 temp = glm::translate(glm::vec3(mRigidLinearTransformContainer[1].position)) * extraTransforms;
+	//mMeshColliderContainer[1].update(temp);
+	//mBoxColliderContainer[1].update(temp);
 
-	float static angle = 0.0f;
-	// Box 4 is scaled non-uniformly and rotating.
-	glm::mat4 scale     = glm::scale(glm::vec3(3.0f, 1.0f, 3.0f));
-	glm::mat4 rotate    = glm::rotate(angle, glm::vec3(0.0f, 1.0f, 0.0f));
-	rotate = glm::mat4(1.0f);
-	glm::mat4 translate = glm::translate(mRigidLinearTransformContainer[3].position);
-	glm::mat4 ctm       = translate * rotate * scale;
-	mMeshColliderContainer[3].update(ctm);
-	mBoxColliderContainer[3].update(ctm);
+	//float static angle = 0.0f;
+	//// Box 4 is scaled non-uniformly and rotating.
+	//glm::mat4 scale     = glm::scale(glm::vec3(3.0f, 1.0f, 3.0f));
+	//glm::mat4 rotate    = glm::rotate(angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	//rotate = glm::mat4(1.0f);
+	//glm::mat4 translate = glm::translate(glm::vec3(mRigidLinearTransformContainer[3].position));
+	//glm::mat4 ctm       = translate * rotate * scale;
+	//mMeshColliderContainer[3].update(ctm);
+	//mBoxColliderContainer[3].update(ctm);
 
-	angle += dt * 0.52f;
-	angle  = angle >= 6.28f ? 0.0f : angle; // This is so that we won't get floating point overflow.
+	//angle += dt * 0.52f;
+	//angle  = angle >= 6.28f ? 0.0f : angle; // This is so that we won't get floating point overflow.
 }
 
 void P3DynamicsWorld::updateGravityTest(float dt)
@@ -258,23 +258,31 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	);
 #else
 	// TODO: Use the implementation on the GPU
-	mConstraintSolver.preSolve(
-		*mpManifoldPkg,
+	//mConstraintSolver.preSolve(
+	//	*mpManifoldPkg,
+	//	mRigidLinearTransformContainer,
+	//	mRigidAngularTransformContainer,
+	//	mStaticLinearTransformContainer,
+	//	mStaticAngularTransformContainer,
+	//	dt
+	//);
+
+	//mConstraintSolver.iterativeSolve(
+	//	*mpManifoldPkg,
+	//	mRigidLinearTransformContainer,
+	//	mRigidAngularTransformContainer,
+	//	mStaticLinearTransformContainer,
+	//	mStaticAngularTransformContainer
+	//);
+#endif
+
+	mOglConstraintSolver.step(
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,
 		mStaticAngularTransformContainer,
 		dt
 	);
-
-	mConstraintSolver.iterativeSolve(
-		*mpManifoldPkg,
-		mRigidLinearTransformContainer,
-		mRigidAngularTransformContainer,
-		mStaticLinearTransformContainer,
-		mStaticAngularTransformContainer
-	);
-#endif
 
 	// Apply final linear transforms
 	// There must be a better way to connect linear transforms and hit boxes.
@@ -284,7 +292,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		LinearTransform &linearTransform = mRigidLinearTransformContainer[i];
 		linearTransform.position += dt * linearTransform.velocity;
 
-		mBoxColliderCtmContainer[i] = glm::translate(linearTransform.position);
+		mBoxColliderCtmContainer[i] = glm::translate(glm::vec3(linearTransform.position));
 	}
 
 	// Apply final angular transforms
@@ -296,7 +304,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 		addScaledVector(angularTransform.orientation, angularTransform.angularVelocity, dt / 2.0f);
 		angularTransform.orientation = glm::normalize(angularTransform.orientation);
 
-		if (angularTransform.angularVelocity == glm::vec3(0.0f))
+		if (glm::vec3(angularTransform.angularVelocity) == glm::vec3(0.0f))
 		{
 			mBoxColliderCtmContainer[j] *= glm::mat4(1.0f);
 		}
@@ -365,9 +373,9 @@ int P3DynamicsWorld::addRigidBody(float mass, glm::vec3 const &position, glm::ve
 	LinearTransform &lastLinearTransform = mRigidLinearTransformContainer.back();
 	lastLinearTransform.mass = mass;
 	lastLinearTransform.inverseMass = 1.0f / mass;
-	lastLinearTransform.position = position;
-	lastLinearTransform.velocity = velocity;
-	lastLinearTransform.momentum = mass * velocity;
+	lastLinearTransform.position = glm::vec4(position, 1.0f);
+	lastLinearTransform.velocity = glm::vec4(velocity, 0.0f);
+	lastLinearTransform.momentum = mass * lastLinearTransform.velocity;
 
 	mMeshColliderContainer.emplace_back();
 	mMeshColliderContainer.back().update(glm::translate(position));
@@ -394,9 +402,9 @@ int P3DynamicsWorld::addRigidBody( float mass, glm::vec3 const &position, glm::v
 	LinearTransform &lastLinearTransform = mRigidLinearTransformContainer.back();
 	lastLinearTransform.mass = mass;
 	lastLinearTransform.inverseMass = 1.0f / mass;
-	lastLinearTransform.position = position;
-	lastLinearTransform.velocity = velocity;
-	lastLinearTransform.momentum = mass * velocity;
+	lastLinearTransform.position = glm::vec4(position, 1.0f);
+	lastLinearTransform.velocity = glm::vec4(velocity, 0.0f);
+	lastLinearTransform.momentum = mass * lastLinearTransform.velocity;
 
 	mMeshColliderContainer.emplace_back();
 	mMeshColliderContainer.back().update(glm::translate(position) * extraTransforms);
@@ -438,9 +446,9 @@ int P3DynamicsWorld::addStaticBody(glm::vec3 const &position)
 	LinearTransform &lastLinearTransform = mStaticLinearTransformContainer.back();
 	lastLinearTransform.mass = std::numeric_limits<float>::max();
 	lastLinearTransform.inverseMass = 0.0f;
-	lastLinearTransform.position = position;
-	lastLinearTransform.velocity = glm::vec3(0.0f);
-	lastLinearTransform.momentum = glm::vec3(std::numeric_limits<float>::max());
+	lastLinearTransform.position = glm::vec4(position, 1.0f);
+	lastLinearTransform.velocity = glm::vec4(0.0f);
+	lastLinearTransform.momentum = glm::vec4(glm::vec3(std::numeric_limits<float>::max()), 0.0f);
 
 	mMeshColliderContainer.emplace_back();
 	mMeshColliderContainer.back().update(glm::translate(position));
@@ -565,7 +573,7 @@ void P3DynamicsWorld::controllableBoxDemo()
 {
 	addRigidBody(1.0f, glm::vec3(-6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // The static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 7.0f), glm::vec3(0.0f),
-				 glm::rotate(0.785f, glm::vec3(0.0f, 1.0f, 0.0f))); // The kinematic box
+				 glm::rotate(0.785f, glm::vec3(0.0f, 1.0f, 0.0f)));     // The kinematic box
 	addRigidBody(1.0f, glm::vec3( 6.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Another static box
 	addRigidBody(1.0f, glm::vec3( 0.0f, -2.0f, 5.0f), glm::vec3(0.0f)); // Static box with different size and rotating
 }

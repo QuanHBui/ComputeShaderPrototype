@@ -36,6 +36,8 @@ public:
 		mSsboIDs[Buffer::MANIFOLD_BACK]  = temp;
 	}
 
+	GLuint getManifoldBufferID() { return mSsboIDs[Buffer::MANIFOLD_FRONT]; }
+
 	void reset();
 
 	~P3OpenGLComputeNarrowPhase()

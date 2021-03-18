@@ -667,16 +667,16 @@ void P3::sat( ManifoldGpuPackage *pFrontManifoldPkg,
 
 		// Look at faces of A
 		FaceQuery faceQueryA = queryFaceDirections(boxA, boxB);
-		if (faceQueryA.largestDist > 0.0f) continue; // We have found a separating axis. No overlap.
+		if (faceQueryA.largestDist > cEpsilon) continue; // We have found a separating axis. No overlap.
 
 		FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
-		if (faceQueryB.largestDist > 0.0f) continue;
+		if (faceQueryB.largestDist > cEpsilon) continue;
 
 		//EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
 		//// TODO: This is stupidly hacky, don't leave this like this.
-		//if (edgeQuery.largestDist > 0) edgeQuery.largestDist = -edgeQuery.largestDist;
+		//if (edgeQuery.largestDist > cEpsilon) edgeQuery.largestDist = -edgeQuery.largestDist;
 
-		//if (edgeQuery.largestDist > 0.0f) continue;
+		//if (edgeQuery.largestDist > cEpsilon) continue;
 
 		// If we get to here, there's no separating axis, the 2 boxes must overlap.
 		// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist

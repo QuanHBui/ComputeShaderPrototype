@@ -15,7 +15,8 @@ precision highp float;
 #define INCLUDED_VERT_SET 1
 #define FLT_MAX 9999.9f
 #define EPSILON 0.0001f
-#define PERSISTENT_THRESHOLD_SQ 6.0f
+#define PERSISTENT_THRESHOLD_SQ_MANIFOLD 0.005f
+#define PERSISTENT_THRESHOLD_SQ_CONTACT 0.025f
 
 layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
@@ -282,7 +283,7 @@ EdgeQuery queryEdgeDirections(BoxCollider boxA, BoxCollider boxB)
 
 			// Check if the normal is in the wrong direction - compare to the center of box A
 			//  If so, flip the normal to make sure it's pointing outward from the box center.
-			if (dot(edgeNormal, startA - centerA) < 0.0f)
+			if (dot(edgeNormal, startA - centerA) < EPSILON)
 				edgeNormal *= -1.0f;
 
 			// With edgeNormal and a vertex from edgeA, we got a plane. We need to find the
@@ -729,27 +730,29 @@ bool validateNewManifold(Manifold newManifold)
 		// Assume each manifold is unique
 		if (newManifold.contactBoxIndicesAndContactCount.xy == currentCheckingManifold.contactBoxIndicesAndContactCount.xy)
 		{
+			int currentCheckingManifoldContactCount = currentCheckingManifold.contactBoxIndicesAndContactCount.z;
+
 			for (int j = 0; j < newManifold.contactBoxIndicesAndContactCount.z; ++j)
 			{
 				Contact newContact = newManifold.contacts[j];
 
-				for (int l = 0; l < currentCheckingManifold.contactBoxIndicesAndContactCount.z; ++l)
+				for (int l = 0; l < currentCheckingManifoldContactCount; ++l)
 				{
 					Contact existingContact = currentCheckingManifold.contacts[l];
 
 					vec3 r = newContact.position.xyz - existingContact.position.xyz;
 
 					// Proximity check
-					if (dot(r, r) > PERSISTENT_THRESHOLD_SQ)
+					if (dot(r, r) > PERSISTENT_THRESHOLD_SQ_CONTACT)
 					{
 						currentCheckingManifold.contacts[currentCheckingManifold.contactBoxIndicesAndContactCount.z++] = newContact;
+
+						if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
+						{
+							reduceContactPoints(currentCheckingManifold);
+						}
 					}
 				}
-			}
-
-			if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
-			{
-				reduceContactPoints(currentCheckingManifold);
 			}
 
 			// This is terrible.
@@ -777,13 +780,13 @@ void separatingAxisTest(uint collisionPairIdx)
 	const float queryBias = 0.5f;
 
 	FaceQuery faceQueryA = queryFaceDirections(boxA, boxB); // Look at faces of A
-	if (faceQueryA.largestDist > 0.0f) return; // We have found a separating axis. No overlap.
+	if (faceQueryA.largestDist > EPSILON) return; // We have found a separating axis. No overlap.
 
 	FaceQuery faceQueryB = queryFaceDirections(boxB, boxA); // Look at faces of B
-	if (faceQueryB.largestDist > 0.0f) return;
+	if (faceQueryB.largestDist > EPSILON) return;
 
 //	EdgeQuery edgeQuery = queryEdgeDirections(boxA, boxB); // Look at edges of A and B
-//	if (edgeQuery.largestDist > 0.0f) return;
+//	if (edgeQuery.largestDist > EPSILON) return;
 
 	// If we get to here, there's no separating axis, the 2 boxes must overlap.
 	// Remember that at this point, largestFaceADist, largestFaceBDist, and edgeLargestDist
@@ -837,10 +840,10 @@ void validateOldManifold(uint manifoldIdx)
 		vec3 rReference = contact.position.xyz - currentGlobalReferencePos;
 		vec3 rIncident  = contact.position.xyz - currentGlobalIncidentPos;
 
-		bool stillOverlapping = dot(manifold.contactNormal.xyz, rReferenceIncident) <= 0.0f;
+		bool stillOverlapping = dot(manifold.contactNormal.xyz, rReferenceIncident) <= EPSILON;
 
-		bool rReferenceCloseEnough = dot(rReference, rReference) < PERSISTENT_THRESHOLD_SQ;
-		bool rIncidentCloseEnough  = dot(rIncident, rIncident) < PERSISTENT_THRESHOLD_SQ;
+		bool rReferenceCloseEnough = dot(rReference, rReference) < PERSISTENT_THRESHOLD_SQ_MANIFOLD;
+		bool rIncidentCloseEnough  = dot(rIncident, rIncident) < PERSISTENT_THRESHOLD_SQ_MANIFOLD;
 
 		if (stillOverlapping && rReferenceCloseEnough && rIncidentCloseEnough)
 		{

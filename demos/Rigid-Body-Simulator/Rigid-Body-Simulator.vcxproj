@@ -166,13 +166,13 @@
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Collider.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuBroadPhase.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3CpuNarrowPhase.cpp" />
-    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Integrator.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3ConstraintSolver.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Epa.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Gjk.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.cpp" />
+    <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeSolver.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sap.cpp" />
     <ClCompile Include="..\..\src\PrototypePhysicsEngine\P3Sat.cpp" />
     <ClCompile Include="..\..\src\RenderSystem.cpp" />
@@ -201,11 +201,11 @@
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3DynamicsWorld.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Epa.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Gjk.h" />
-    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Integrator.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCollisionDetection.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3NarrowPhaseCommon.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeBroadPhase.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeNarrowPhase.h" />
+    <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3OpenGLComputeSolver.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sap.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Sat.h" />
     <ClInclude Include="..\..\src\PrototypePhysicsEngine\P3Transform.h" />
@@ -226,6 +226,7 @@
     <None Include="..\..\resources\shaders\ParticleBuffer.comp" />
     <None Include="..\..\resources\shaders\sat.comp" />
     <None Include="..\..\resources\shaders\simplePhysicsPipeline.comp" />
+    <None Include="..\..\resources\shaders\solver.comp" />
     <None Include="..\..\resources\shaders\sortLeafNodes.comp" />
     <None Include="..\..\resources\shaders\triTriTest.comp" />
     <None Include="..\..\resources\shaders\updateAabbs.comp" />
