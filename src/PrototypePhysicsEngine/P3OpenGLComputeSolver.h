@@ -9,12 +9,16 @@
 
 #include "P3Transform.h"
 
+struct Manifold;
+struct ManifoldGpuPackage;
+
 class P3OpenGLComputeSolver
 {
 public:
 	void init(GLuint);
 
-	void step( std::vector<LinearTransform> &,
+	void step( int,
+			   std::vector<LinearTransform> &,
 			   std::vector<AngularTransform> &,
 			   std::vector<LinearTransform> &,
 			   std::vector<AngularTransform> &,
@@ -30,10 +34,14 @@ private:
 	AngularTransform *mpStaticAngularTransforms;
 	
 	GLuint mDtUniformLoc = 0u;
+	GLuint mManifoldIdxUniformLoc = 0u;
 	GLuint mRigidLinearSizeUniformLoc   = 0u;
 	GLuint mRigidAngularSizeUniformLoc  = 0u;
 	GLuint mStaticLinearSizeUniformLoc  = 0u;
 	GLuint mStaticAngularSizeUniformLoc = 0u;
+
+	GLuint mPreStepSubroutineIdx = 0u;
+	GLuint mIterativeSolveSubroutineIdx = 0u;
 
 	GLuint mSolverComputeID = 0u;
 };

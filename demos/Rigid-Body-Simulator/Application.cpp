@@ -11,7 +11,7 @@
 #include "OpenGLUtils.h"
 #include "Shape.h"
 
-#include "P3Engine/P3Engine.h"
+#include "PrototypePhysicsEngine/P3DynamicsWorld.h"
 
 // UI stuff
 #include "imgui.h"
@@ -99,9 +99,9 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -9.0f, 5.0f), glm::vec3(-50.0f, 0.0f, 0.0f));
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -9.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-		for (int h = 0; h < 6; ++h)
+		for (int h = 0; h < 5; ++h)
 		{
 			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -13.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		}

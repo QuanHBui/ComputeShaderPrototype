@@ -15,8 +15,8 @@ constexpr int cColliderEdgeCount = 12;
 constexpr int cColliderFaceCount =  6;
 constexpr int cColliderVertCount =  8;
 constexpr float cEpsilon = 0.0001f;
-constexpr float cPersistentThresholdSq_Manifold = 0.005f;
-constexpr float cPersistentThresholdSq_Contact  = 0.025f;
+constexpr float cPersistentThresholdSq_Manifold = 0.5f;
+constexpr float cPersistentThresholdSq_Contact  = 0.25f;
 
 using BoxCollider = glm::vec4 const *; // A constant array
 using ColliderFaceNormals = std::array<std::array<glm::vec3, cColliderFaceCount>, cMaxColliderCount>;
@@ -529,7 +529,6 @@ int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 						 BoxColliderGpuPackage const &boxColliderPkg )
 {
 	static int frameCount = 0;
-	printf("Frame: %d\n", frameCount++);
 
 	int availableIdx = 0;
 
@@ -569,8 +568,6 @@ int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 		// Remove the manifold entirely if the number of valid contact count is zero.
 		if (validContactCount > 0)
 		{
-			printf("Pair (%d, %d) still valid!\n", manifold.contactBoxIndicesAndContactCount.x, manifold.contactBoxIndicesAndContactCount.y);
-
 			for (int validContactIdx = 0; validContactIdx < validContactCount; ++validContactIdx)
 			{
 				manifold.contacts[validContactIdx] = validContacts[validContactIdx];
@@ -582,8 +579,6 @@ int validateOldManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 		}
 	}
 
-	printf("Old Manifold Validation finished!\n\n");
-
 	return availableIdx;
 }
 
@@ -591,7 +586,6 @@ bool validateNewManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 						  Manifold const &newManifold,
 						  int validManifoldCount)
 {
-	printf("Start Validate New Manifold\n");
 	assert(validManifoldCount <= cMaxObjectCount);
 
 	// Find any existing manifold - potential data race here
@@ -621,9 +615,6 @@ bool validateNewManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 					// Proximity check
 					if (dot(r, r) > cPersistentThresholdSq_Contact)
 					{
-						printf("Potential issue: %d\n", currentCheckingManifold.contactBoxIndicesAndContactCount.z);
-						printf("z1: %d, z2: %d, r: (%f, %f, %f)\n\n", newManifold.contactBoxIndicesAndContactCount.z, currentCheckingManifoldContactCount, r.x, r.y, r.z);
-
 						currentCheckingManifold.contacts[currentCheckingManifold.contactBoxIndicesAndContactCount.z++] = newContact;
 
 						if (currentCheckingManifold.contactBoxIndicesAndContactCount.z > 4)
@@ -637,8 +628,6 @@ bool validateNewManifold( ManifoldGpuPackage *pFrontManifoldPkg,
 			return false;
 		}
 	}
-
-	printf("End Validate New Manifold.\n\n");
 
 	return true;
 
@@ -701,8 +690,6 @@ void P3::sat( ManifoldGpuPackage *pFrontManifoldPkg,
 		{
 			pFrontManifoldPkg->manifolds[availableIdx++] = manifold;
 		}
-
-		printf("availableIdx: %d\n\n", availableIdx);
 	}
 
 	pFrontManifoldPkg->misc.x = availableIdx;

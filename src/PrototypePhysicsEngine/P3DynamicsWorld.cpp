@@ -235,7 +235,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 	// Apply forces
 	for (LinearTransform &linearTransform : mRigidLinearTransformContainer)
 	{
-		linearTransform.velocity.y -= 9.0f * dt;
+		linearTransform.velocity.y -= 9.8f * dt;
 	}
 
 	// Solve constraints - produces final impulses at certain contact points
@@ -277,6 +277,7 @@ void P3DynamicsWorld::updateGravityTest(float dt)
 #endif
 
 	mOglConstraintSolver.step(
+		mpManifoldPkg->misc.x,
 		mRigidLinearTransformContainer,
 		mRigidAngularTransformContainer,
 		mStaticLinearTransformContainer,

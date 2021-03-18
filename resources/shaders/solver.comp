@@ -4,13 +4,12 @@
 #define MAX_COLLIDER_COUNT_HALF 512
 #define NUM_COLLIDER_VERTS 8
 #define MAX_CONTACT_POINT_COUNT 16
-#define ITERATION_COUNT 20
-#define BAUMGARTE_FACTOR 0.001f
-#define PENETRATION_SLOP 0.005f
+#define BAUMGARTE_FACTOR 0.01f
+#define PENETRATION_SLOP 0.05f
 
 precision highp float;
 
-layout(local_size_x = MAX_COLLIDER_COUNT) in;
+layout(local_size_x = 1) in;
 
 struct Contact
 {
@@ -42,6 +41,17 @@ struct LinearTransform
 	vec4 momentum;
 };
 
+struct LinearTransformSequential
+{
+	//----------------- Constant quantities -----------------//
+	vec4 massInverseMass;
+
+	//----------------- State variables -----------------//
+	ivec4 position;
+	ivec4 velocity;
+	ivec4 momentum;
+};
+
 struct AngularTransform
 {
 	//----------------- Constant quantities -----------------//
@@ -54,13 +64,28 @@ struct AngularTransform
 	vec4 angularMomentum;
 };
 
+struct AngularTransformSequential
+{
+	//----------------- Constant quantities -----------------//
+	mat4 inertia;
+	mat4 inverseInertia;
+
+	//----------------- State variables -----------------//
+	ivec4 orientation;
+	ivec4 angularVelocity;
+	ivec4 angularMomentum;
+};
+
 uniform float dt;
+uniform uint manifoldIdx;
 uniform uint rigidLinearSize;
 uniform uint rigidAngularSize;
 uniform uint staticLinearSize;
 uniform uint staticAngularSize;
 
-// This is the out buffer that we are going to append to
+subroutine void solveStage(uint i);
+subroutine uniform solveStage solve;
+
 layout(std430, binding = 0) coherent buffer out_manifold_data
 {
 	ivec4 manifoldMisc;
@@ -158,10 +183,9 @@ void setTransforms(vec3 v, vec3 w, int index)
 	}
 }
 
+subroutine(solveStage)
 void preStep(uint manifoldIdx)
 {
-	if (manifoldIdx >= manifoldMisc.x) return;
-
 	Manifold manifold = manifolds[manifoldIdx];
 
 	if (manifold.frictionRestitution.x <= 0.0f)
@@ -182,6 +206,7 @@ void preStep(uint manifoldIdx)
 	// Compute the basis
 	computeBasis(manifold.contactNormal, manifold.contactTangents[0], manifold.contactTangents[1]);
 
+	// Atomic lock this
 	vec3 vA = referenceLinearTransform.velocity.xyz;
 	vec3 wA = referenceAngularTransform.angularVelocity.xyz;
 	vec3 vB = incidentLinearTransform.velocity.xyz;
@@ -224,7 +249,7 @@ void preStep(uint manifoldIdx)
 		contact.normalTangentMassesBias.w = -BAUMGARTE_FACTOR * min(0.0f, manifold.contactNormal.w + PENETRATION_SLOP) / dt;
 
 		// Warm start
-		vec3 oldP = vec3(manifold.contactNormal) *contact.normalTangentBiasImpulses.x;
+		vec3 oldP = vec3(manifold.contactNormal) * contact.normalTangentBiasImpulses.x;
 
 		// Friction
 		oldP += vec3(manifold.contactTangents[0]) * contact.normalTangentBiasImpulses.y;
@@ -245,15 +270,18 @@ void preStep(uint manifoldIdx)
 			contact.normalTangentMassesBias.w += -(manifold.frictionRestitution.y) * dv;
 		}
 
+		manifold.contacts[contactPointIdx] = contact;
+
 		setTransforms(vA, wA, referenceBoxIdx);
 		setTransforms(vB, wB, incidentBoxIdx);
 	}
+
+	manifolds[manifoldIdx] = manifold;
 }
 
+subroutine(solveStage)
 void iterativeSolve(uint manifoldIdx)
 {
-	if (manifoldIdx >= manifoldMisc.x) return;
-
 	Manifold manifold = manifolds[manifoldIdx];
 
 	int referenceBoxIdx = manifold.contactBoxIndicesAndContactCount.x;
@@ -276,7 +304,7 @@ void iterativeSolve(uint manifoldIdx)
 
 		// Relative velocity at contact
 		vec3 dv = vB + cross(wB, vec3(contact.incidentRelativePosition)) - vA 
-						- cross(wA, vec3(contact.referenceRelativePosition));
+				- cross(wA, vec3(contact.referenceRelativePosition));
 
 		// For friction
 		for (int k = 0; k < 2; ++k)
@@ -321,23 +349,19 @@ void iterativeSolve(uint manifoldIdx)
 
 		vB += normalImpulse * incidentLinearTransform.massInverseMass.y;
 		wB += mat3(incidentAngularTransform.inverseInertia) * cross(vec3(contact.incidentRelativePosition), normalImpulse);
+
+		manifold.contacts[contactPointIdx] = contact;
 	}
 
 	// Directly apply the change in velocities
 	setTransforms(vA, wA, referenceBoxIdx);
 	setTransforms(vB, wB, incidentBoxIdx);
+
+	manifolds[manifoldIdx] = manifold;
 }
 
 void main()
 {
-	uint manifoldIdx = gl_LocalInvocationID.x;
-
-	preStep(manifoldIdx);
+	solve(manifoldIdx);
 	syncStorageBuffer();
-
-	for (int i = 0; i < ITERATION_COUNT; ++i)
-	{
-		iterativeSolve(manifoldIdx);
-		syncStorageBuffer();
-	}
 }

@@ -4,9 +4,9 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
-constexpr float cBaumgarteFactor = 0.001f;
-constexpr float cPenetrationSlop = 0.005f;
-constexpr int cIterationCount = 20;
+constexpr float cBaumgarteFactor = 0.01f;
+constexpr float cPenetrationSlop = 0.05f;
+constexpr int cIterationCount = 50;
 
 // http://box2d.org/2014/02/computing-a-basis/
 void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)
@@ -106,7 +106,7 @@ void P3ConstraintSolver::preSolve( ManifoldGpuPackage &manifoldPkg,
 			contact.normalTangentMassesBias.w = -cBaumgarteFactor * std::min(0.0f, manifold.contactNormal.w + cPenetrationSlop) / dt;
 
 			// Warm start
-			glm::vec3 oldP = glm::vec3(manifold.contactNormal) *contact.normalTangentBiasImpulses.x;
+			glm::vec3 oldP = glm::vec3(manifold.contactNormal) * contact.normalTangentBiasImpulses.x;
 
 			// Friction
 			oldP += glm::vec3(manifold.contactTangents[0]) * contact.normalTangentBiasImpulses.y;
@@ -166,7 +166,7 @@ void P3ConstraintSolver::iterativeSolve( ManifoldGpuPackage &manifoldPkg,
 				Contact &contact = manifold.contacts[contactPointIdx];
 
 				// Relative velocity at contact
-				glm::vec3 dv = vB + glm::cross(wB, glm::vec3(contact.incidentRelativePosition)) - vA 
+				glm::vec3 dv = vB + glm::cross(wB, glm::vec3(contact.incidentRelativePosition)) - vA
 							 - glm::cross(wA, glm::vec3(contact.referenceRelativePosition));
 
 				// For friction
