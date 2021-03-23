@@ -4,7 +4,7 @@
 #include "P3NarrowPhaseCommon.h"
 #include "OpenGLUtils.h"
 
-constexpr int cIterationCount = 15;
+constexpr int cIterationCount = 5;
 
 void P3OpenGLComputeSolver::init(GLuint manifoldBuffersID)
 {

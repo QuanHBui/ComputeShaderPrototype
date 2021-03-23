@@ -99,51 +99,280 @@ void Application::initPhysicsWorld(Demo demo)
 		break;
 
 	case Demo::ROTATIONAL_TEST:
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -9.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		//===============================================================================================//
+		// BASIC STACK
 
-		for (int h = 0; h < 5; ++h)
+		//mPhysicsWorld.addRigidBody(1.0f, glm::vec3(0.0f, -9.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+		//for (int h = 0; h < 5; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -13.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		//}
+
+		//for (int i = 0; i < 3; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -11.0f, 5.0f), glm::vec3(0.0f));
+		//}
+
+		//for (int i = 0; i < 2; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(4.0f + float(i) * 3.0f, -9.0f, 5.0f), glm::vec3(0.0f));
+		//}
+
+		//mPhysicsWorld.addRigidBody(1.0f, glm::vec3(5.5f, -7.0f, 5.0f), glm::vec3(0.0f));
+
+		//mPhysicsWorld.addStaticBody(glm::vec3(-8.0f, -2.0f, 5.0f));
+		//mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -7.0f, 5.0f));
+
+		//// Floor
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f , -15.0f, 5.0f));
+		//}
+
+		//// Left wall
+		//for (int k = 0; k < 10; ++k)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f, -13.0f + float(k) * 2.0f, 5.0f));
+		//}
+
+		//// Right wall
+		//for (int l = 0; l < 10; ++l)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(18.0f, -13.0f + float(l) * 2.0f, 5.0f));
+		//}
+
+		//// Ceiling
+		//for (int m = 0; m < 20; ++m)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(m) * 2.0f, 7.0f, 5.0f));
+		//}
+
+		//===============================================================================================//
+		//// STACKING & SHOOT
+
+		//mPhysicsWorld.addRigidBody(1.0f, glm::vec3(300.0f, 30.0f, 5.0f), glm::vec3(-100.0f, 0.0f, 0.0f));
+
+		//// Left stack
+		//for (int h = 0; h < 15; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -18.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		//}
+
+		//// Pyramid
+		//for (int i = 0; i < 6; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-1.5f + float(i) * 3.0f, -16.0f, 5.0f), glm::vec3(0.0f));
+		//}
+		//for (int i = 0; i < 5; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-0.5f + float(i) * 3.0f, -14.0f, 5.0f), glm::vec3(0.0f));
+		//}
+		//for (int i = 0; i < 4; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f + float(i) * 3.0f, -12.0f, 5.0f), glm::vec3(0.0f));
+		//}
+		//for (int i = 0; i < 3; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -10.0f, 5.0f), glm::vec3(0.0f));
+		//}
+		//for (int i = 0; i < 2; ++i)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(4.0f + float(i) * 3.0f, -8.0f, 5.0f), glm::vec3(0.0f));
+		//}
+
+		//mPhysicsWorld.addRigidBody(1.0f, glm::vec3(5.5f, -6.0f, 5.0f), glm::vec3(0.0f));
+
+		//// Floor
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, -1.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 1.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 3.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f , -20.0f, 5.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 7.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 9.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 11.0f));
+		//}
+		//for (int j = 0; j < 20; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 13.0f));
+		//}
+
+		//===================================================================================//
+
+		//===============================================================================================//
+		// EXTREME STACKING
+
+		// Left stack
+		for (int h = 0; h < 15; ++h)
 		{
-			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -13.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-15.0f, -18.0f + h * 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 
+		// Pyramid
+		for (int i = 0; i < 6; ++i)
+		{
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-1.5f + float(i) * 3.0f, -16.0f, 5.0f), glm::vec3(0.0f));
+		}
+		for (int i = 0; i < 5; ++i)
+		{
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-0.5f + float(i) * 3.0f, -14.0f, 5.0f), glm::vec3(0.0f));
+		}
+		for (int i = 0; i < 4; ++i)
+		{
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(1.0f + float(i) * 3.0f, -12.0f, 5.0f), glm::vec3(0.0f));
+		}
 		for (int i = 0; i < 3; ++i)
 		{
-			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -11.0f, 5.0f), glm::vec3(0.0f));
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(2.5f + float(i) * 3.0f, -10.0f, 5.0f), glm::vec3(0.0f));
 		}
-
 		for (int i = 0; i < 2; ++i)
 		{
-			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(4.0f + float(i) * 3.0f, -9.0f, 5.0f), glm::vec3(0.0f));
+			mPhysicsWorld.addRigidBody(1.0f, glm::vec3(4.0f + float(i) * 3.0f, -8.0f, 5.0f), glm::vec3(0.0f));
 		}
 
-		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(5.5f, -7.0f, 5.0f), glm::vec3(0.0f));
-
-		mPhysicsWorld.addStaticBody(glm::vec3(-8.0f, -2.0f, 5.0f));
-		mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -7.0f, 5.0f));
-
-		// Left wall
-		for (int j = 0; j < 20; ++j)
-		{
-			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f , -15.0f, 5.0f));
-		}
+		mPhysicsWorld.addRigidBody(1.0f, glm::vec3(5.5f, -6.0f, 5.0f), glm::vec3(0.0f));
 
 		// Floor
-		for (int k = 0; k < 10; ++k)
+		for (int j = 0; j < 20; ++j)
 		{
-			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f, -13.0f + float(k) * 2.0f, 5.0f));
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, -1.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 1.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 3.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 5.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 7.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 9.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 11.0f));
+		}
+		for (int j = 0; j < 20; ++j)
+		{
+			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(j) * 2.0f, -20.0f, 13.0f));
 		}
 
-		// Right wall
-		for (int l = 0; l < 10; ++l)
-		{
-			mPhysicsWorld.addStaticBody(glm::vec3(18.0f, -13.0f + float(l) * 2.0f, 5.0f));
-		}
+		//===============================================================================================//
+		// CUP
 
-		// Ceiling
-		for (int m = 0; m < 20; ++m)
-		{
-			mPhysicsWorld.addStaticBody(glm::vec3(-20.0f + float(m) * 2.0f, 7.0f, 5.0f));
-		}
+		//for (int h = 0; h < 6; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-7.0f + h * 3.0f, 10.0f + h * 2.0f, 4.0f), glm::vec3(0.0f));
+		//}
+
+		//for (int h = 0; h < 6; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(7.0f + h * -3.0f, 23.0f + h * 2.0f, 4.0f), glm::vec3(0.0f));
+		//}
+
+		//for (int h = 0; h < 6; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-7.0f + h * 3.0f, 37.0f + h * 2.0f, 4.0f), glm::vec3(0.0f));
+		//}
+
+		//for (int h = 0; h < 6; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(7.0f + h * -3.0f, 51.0f + h * 2.0f, 4.0f), glm::vec3(0.0f));
+		//}
+
+		//for (int h = 0; h < 6; ++h)
+		//{
+		//	mPhysicsWorld.addRigidBody(1.0f, glm::vec3(-7.0f + h * 3.0f, 65.0f + h * 2.0f, 4.0f), glm::vec3(0.0f));
+		//}
+
+		//// Floor
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -15.0f, 1.0f));
+		//}
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -15.0f, 3.0f));
+		//}
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -15.0f, 5.0f));
+		//}
+
+		//// Left wall
+		//for (int k = 0; k < 5; ++k)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -13.0f + float(k) * 2.0f, 5.0f));
+		//}
+		//for (int k = 0; k < 5; ++k)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -13.0f + float(k) * 2.0f, 3.0f));
+		//}
+		//for (int k = 0; k < 5; ++k)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f, -13.0f + float(k) * 2.0f, 1.0f));
+		//}
+
+		//// Right wall
+		//for (int l = 0; l < 5; ++l)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(10.0f, -13.0f + float(l) * 2.0f, 5.0f));
+		//}
+		//for (int l = 0; l < 5; ++l)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(10.0f, -13.0f + float(l) * 2.0f, 3.0f));
+		//}
+		//for (int l = 0; l < 5; ++l)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(10.0f, -13.0f + float(l) * 2.0f, 1.0f));
+		//}
+
+		//// Back wall
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -15.0f, -1.0f));
+		//}
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -13.0f, -1.0f));
+		//}
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -11.0f, -1.0f));
+		//}
+		//for (int j = 0; j < 11; ++j)
+		//{
+		//	mPhysicsWorld.addStaticBody(glm::vec3(-10.0f + float(j) * 2.0f, -9.0f, -1.0f));
+		//}
 
 		mRenderSystem.registerMeshForBody(RenderSystem::MeshKey::CUBE, mPhysicsWorld.getOccupancy());
 		break;

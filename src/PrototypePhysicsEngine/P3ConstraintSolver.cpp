@@ -4,9 +4,9 @@
 #include "P3NarrowPhaseCommon.h"
 #include "P3Transform.h"
 
-constexpr float cBaumgarteFactor = 0.01f;
-constexpr float cPenetrationSlop = 0.05f;
-constexpr int cIterationCount = 50;
+constexpr float cBaumgarteFactor = 0.1f;
+constexpr float cPenetrationSlop = 0.005f;
+constexpr int cIterationCount = 100;
 
 // http://box2d.org/2014/02/computing-a-basis/
 void computeBasis(const glm::vec4 &a, glm::vec4 &b, glm::vec4 &c)

@@ -42,19 +42,6 @@ void RenderSystem::render(MatrixContainer const &modelMatrices, const CollisionP
 		isRigid = i < rigidBodyCount;
 
 		// Check collision pair list if this mesh has collided
-		for (int i = 0; i < collisionPairs->misc.x; ++i)
-		{
-			glm::ivec4 const &collisionPair = (*collisionPairs)[i];
-
-			if (collisionPair.x < 0.0) break;
-
-			if (collisionPair.x == objectIdx || collisionPair.y == objectIdx)
-			{
-				redOrNo = 1u;
-
-				break;
-			}
-		}
 
 		GLuint progID = renderProgram.getPID();
 

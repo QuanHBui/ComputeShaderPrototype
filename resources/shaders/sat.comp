@@ -16,7 +16,7 @@ precision highp float;
 #define FLT_MAX 9999.9f
 #define EPSILON 0.0001f
 #define PERSISTENT_THRESHOLD_SQ_MANIFOLD 0.0005f
-#define PERSISTENT_THRESHOLD_SQ_CONTACT 0.0005f
+#define PERSISTENT_THRESHOLD_SQ_CONTACT 0.0025f
 
 layout(local_size_x = MAX_COLLIDER_COUNT) in;
 
