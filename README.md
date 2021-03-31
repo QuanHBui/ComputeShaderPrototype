@@ -20,11 +20,11 @@ The `-j` flag allows you to specify how many threads your build system can use, 
 
 ## Screenshots
 
-![Alt text](/docs/screenshots/StackingResults.jpg?raw=true "Normal stacking")
+![Alt text](/docs/screenshots/StackingResults.png?raw=true "Normal stacking")
 
-![Alt text](/docs/screenshots/ExtremeStacking.jpg?raw=true "Extreme stacking")
+![Alt text](/docs/screenshots/ExtremeStacking.png?raw=true "Extreme stacking")
 
-![Alt text](/docs/screenshots/PoolOfBoxes.jpg?raw=true "Pool of boxes")
+![Alt text](/docs/screenshots/PoolOfBoxes.png?raw=true "Pool of boxes")
 
 ## Dependencies
 All dependencies are in `ext/`
