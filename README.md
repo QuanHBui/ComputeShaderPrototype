@@ -1,5 +1,5 @@
 # ComputeShaderPrototype
-Prototype for a lightweight OpenGL rendering engine featuring compute shader
+Prototype for a lightweight OpenGL rendering engine featuring compute shader. Note: The current build works best with Microsoft Visual Studio 2019.
 
 ## To build
 ### With visual studio:
@@ -17,6 +17,14 @@ This will use the `CMakeLists.txt` in the current directory to as a source to bu
 `Ninja -j 4`
 
 The `-j` flag allows you to specify how many threads your build system can use, in this case I use 4.
+
+## Screenshots
+
+![Alt text](/docs/screenshots/StackingResults.jpg?raw=true "Normal stacking")
+
+![Alt text](/docs/screenshots/ExtremeStacking.jpg?raw=true "Extreme stacking")
+
+![Alt text](/docs/screenshots/PoolOfBoxes.jpg?raw=true "Pool of boxes")
 
 ## Dependencies
 All dependencies are in `ext/`
